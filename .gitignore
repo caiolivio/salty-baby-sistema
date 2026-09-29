@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.vercel/
+*.log
+.DS_Store
+# dados exportados do Notion (contêm CPF): nunca versionar
+dados/
+*.csv
