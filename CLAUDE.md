@@ -42,13 +42,14 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 ### Códigos
 - **Fornecedora:** `F` + número sequencial, gerado automaticamente (F01 a F47 já existem e são mantidos; a próxima é F48, depois de F99 vem F100). O código é um campo próprio, nunca parte do nome.
 - **Peça:** `<código da fornecedora>-<5 dígitos>`, com numeração sequencial por fornecedora (ex.: `F48-00001`).
-  - Peças importadas do Notion mantêm o código antigo com 4 dígitos (ex.: `F31-0015`).
+  - Peças importadas do Notion também **recebem código novo** nesse formato, numeradas por fornecedora na ordem de entrada. O código antigo fica guardado num campo próprio, e a busca encontra a peça pelos dois.
   - Peças da própria loja usam o prefixo `SB` (ex.: `SB-00012`).
 - Um código nunca é reaproveitado, nem depois que a peça é excluída.
 
 ### Peça
 - A quantidade inicial é 1. A administradora pode alterar.
 - Gênero: masculino, feminino ou unissex.
+- Tamanhos, nesta ordem: RN (0 a 3 meses), P (3 a 6 meses), M (6 a 9 meses), G (9 meses a 1 ano), 1 ano, 18 meses, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16 e 18 anos. A ordem é usada para filtrar a vitrine e sugerir o próximo tamanho.
 - **Conservação** é um campo próprio: nova com etiqueta, seminova ou com marcas de uso. "Variação" é outro campo.
 - Outros campos: marca, cor, tamanho, categoria, medidas, descrição, fotos e data de entrada.
 - Não é possível marcar uma peça como vendida sem valor de venda.
@@ -127,7 +128,12 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 
 - Hoje a loja usa o modelo "Organiza Brechó 2.0" no Notion (cerca de 271 peças, fornecedoras F01 a F47). As bases chegam exportadas em CSV.
 - Na importação:
-  - manter os códigos;
+  - dar código novo a todas as peças (ver "Códigos") e guardar o código antigo;
+  - a fornecedora vem do vínculo da peça no Notion, não do código antigo (há peças com o prefixo errado);
+  - peças com "Consignado = Não" são da loja e recebem o prefixo `SB`;
+  - o repasse de 1% do Macaquinho F10-0000 é erro de digitação e vira 40%;
+  - vendas ainda não acertadas têm o repasse recalculado sobre o valor com desconto (o Notion calculou sobre o preço cheio);
+  - tamanho "prematuro" vira RN;
   - separar o código da fornecedora do nome;
   - mover "Usado" do campo Variação para Conservação;
   - **recalcular o lucro**, porque o Notion ignora o repasse. Exemplo: R$ 15 com 40% de repasse dá R$ 9 de lucro, e o Notion mostra R$ 15.
