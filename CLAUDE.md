@@ -21,8 +21,16 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 ## Stack
 
 - Next.js (App Router) + TypeScript, em um projeto só: vitrine, área do cliente, área da fornecedora e painel.
-- Supabase: Postgres, Auth e Storage para as fotos. Controle de acesso com Row Level Security, por perfil.
-- Hospedagem na VPS própria da Salty, na Hostinger, com o painel CloudPanel (site Node.js). A publicação é automática a partir do GitHub, e o Caio nunca precisa rodar comandos no servidor. Tarefas agendadas (reserva, lembretes, relatórios) rodam no cron do servidor.
+- Tudo roda na VPS, sem serviços pagos de terceiros (decisão do Caio, para não gerar custo que cresce com o uso):
+  - banco de dados **MySQL** do próprio CloudPanel, acessado pelo Prisma, com migrações versionadas no repositório;
+  - login próprio com Auth.js e senhas com hash, com os perfis administradora, ajudante, cliente e fornecedora;
+  - fotos numa pasta da VPS, fora do código, reduzidas no envio (sharp);
+  - controle de acesso por perfil feito no servidor, em toda rota e ação (o MySQL não tem Row Level Security), com testes automáticos das permissões.
+- Hospedagem na VPS própria da Salty, na Hostinger, com o painel CloudPanel (site Node.js). A VPS já tem outros sites, então o sistema não pode atrapalhá-los.
+  - A publicação é automática a partir do GitHub, e o Caio nunca precisa rodar comandos no servidor. O build roda no GitHub Actions, não na VPS.
+  - Existe um site de teste separado, com banco próprio, para testar cada parte antes de ela ir para o ar.
+  - Tarefas agendadas (reserva, lembretes, relatórios) rodam no cron do servidor.
+  - Backup diário do banco e das fotos, com uma cópia guardada fora da VPS.
 - PWA instalável. O ícone é a cauda de baleia da marca.
 - Valores em dinheiro são guardados em **centavos (inteiro)**, nunca em float.
 - Repasse, desconto e lucro são **gravados em cada item vendido** no momento da venda. Uma mudança futura de percentual não pode alterar o histórico.
