@@ -22,7 +22,7 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 
 - Next.js (App Router) + TypeScript, em um projeto só: vitrine, área do cliente, área da fornecedora e painel.
 - Supabase: Postgres, Auth e Storage para as fotos. Controle de acesso com Row Level Security, por perfil.
-- Hospedagem na Vercel. Tarefas agendadas (reserva, lembretes, relatórios) em cron.
+- Hospedagem na VPS própria da Salty, na Hostinger, com o painel CloudPanel (site Node.js). A publicação é automática a partir do GitHub, e o Caio nunca precisa rodar comandos no servidor. Tarefas agendadas (reserva, lembretes, relatórios) rodam no cron do servidor.
 - PWA instalável. O ícone é a cauda de baleia da marca.
 - Valores em dinheiro são guardados em **centavos (inteiro)**, nunca em float.
 - Repasse, desconto e lucro são **gravados em cada item vendido** no momento da venda. Uma mudança futura de percentual não pode alterar o histórico.
