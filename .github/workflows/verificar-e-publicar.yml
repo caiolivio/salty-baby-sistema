@@ -85,6 +85,10 @@ jobs:
           DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
           DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
         run: |
+          # Remove espaços e quebras de linha que às vezes entram ao colar o segredo.
+          limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+          DB_USUARIO="$(limpar "$DB_USUARIO")"
+          DB_SENHA="$(limpar "$DB_SENHA")"
           {
             echo "NODE_ENV=production"
             echo "PORT=$PORTA"
