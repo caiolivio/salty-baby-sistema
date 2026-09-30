@@ -99,6 +99,9 @@ export function podeApagarImportacao(): boolean {
 export async function apagarDadosImportados(): Promise<void> {
   if (!podeApagarImportacao()) throw new Error("Apagar a importação não é permitido neste site.");
   await prisma.$transaction([
+    // Pedidos do site apontam para peças, vendas e clientes: saem primeiro.
+    prisma.itemPedido.deleteMany(),
+    prisma.pedido.deleteMany(),
     prisma.itemVenda.deleteMany(),
     prisma.venda.deleteMany(),
     prisma.cliente.deleteMany(),

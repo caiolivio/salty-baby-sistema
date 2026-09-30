@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatarTelefone,
+  lerCodigoPeca,
+  lerTelefoneCliente,
+  linkWhatsappCliente,
   fimDaReserva,
   incluirNoCarrinho,
   lerCarrinho,
@@ -82,5 +86,26 @@ describe("pedido", () => {
         "As peças ficam reservadas por 15 minutos. Como faço o pagamento?",
       ].join("\n"),
     );
+  });
+});
+
+describe("dados da cliente", () => {
+  it("lê o WhatsApp com ou sem DDI e máscara", () => {
+    expect(lerTelefoneCliente("(12) 98105-3623")).toBe("12981053623");
+    expect(lerTelefoneCliente("+55 12 98105-3623")).toBe("12981053623");
+    expect(lerTelefoneCliente("1238810000")).toBe("1238810000");
+    expect(lerTelefoneCliente("98105-3623")).toBeUndefined();
+    expect(lerTelefoneCliente(null)).toBeUndefined();
+  });
+
+  it("formata e monta o link", () => {
+    expect(formatarTelefone("12981053623")).toBe("(12) 98105-3623");
+    expect(formatarTelefone("1238810000")).toBe("(12) 3881-0000");
+    expect(linkWhatsappCliente("12981053623")).toBe("https://wa.me/5512981053623");
+  });
+
+  it("lê o código da peça em maiúsculas", () => {
+    expect(lerCodigoPeca(" f06-00001 ")).toBe("F06-00001");
+    expect(lerCodigoPeca("F06 00001")).toBeUndefined();
   });
 });

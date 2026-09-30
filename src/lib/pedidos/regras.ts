@@ -40,6 +40,33 @@ export function lerNomeCliente(valor: unknown): string | undefined {
   return nome.length >= 2 && nome.length <= 120 ? nome : undefined;
 }
 
+/**
+ * WhatsApp da cliente: só os dígitos, com DDD (10 ou 11 dígitos). Aceita o 55
+ * do Brasil na frente e tira. Devolve undefined se não parecer um telefone.
+ */
+export function lerTelefoneCliente(valor: unknown): string | undefined {
+  let digitos = typeof valor === "string" ? valor.replace(/\D/g, "") : "";
+  if ((digitos.length === 12 || digitos.length === 13) && digitos.startsWith("55")) digitos = digitos.slice(2);
+  return digitos.length === 10 || digitos.length === 11 ? digitos : undefined;
+}
+
+/** (12) 98105-3623 */
+export function formatarTelefone(digitos: string): string {
+  if (!/^\d{10,11}$/.test(digitos)) return digitos;
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, -4)}-${digitos.slice(-4)}`;
+}
+
+/** Link para a loja chamar a cliente no WhatsApp. */
+export function linkWhatsappCliente(digitos: string): string {
+  return `https://wa.me/55${digitos}`;
+}
+
+/** Busca de peça pelo código novo ou antigo, sem diferença de maiúsculas. */
+export function lerCodigoPeca(valor: unknown): string | undefined {
+  const codigo = typeof valor === "string" ? valor.trim().toUpperCase() : "";
+  return /^[A-Z0-9-]{2,20}$/.test(codigo) ? codigo : undefined;
+}
+
 export type ItemDaMensagem = {
   codigo: string;
   nome: string;

@@ -45,7 +45,11 @@ export type ResultadoFechar = { ok: true; id: string } | { ok: false; indisponiv
  * Fecha o pedido: reserva cada peça (só se ainda estiver à venda) e cria o
  * pedido com o próximo número. Se alguma peça já tiver saído, nada é reservado.
  */
-export async function fecharPedido(pecaIds: string[], nomeCliente: string, agora = new Date()): Promise<ResultadoFechar> {
+export async function fecharPedido(
+  pecaIds: string[],
+  cliente: { nome: string; telefone: string },
+  agora = new Date(),
+): Promise<ResultadoFechar> {
   try {
     const id = await prisma.$transaction(async (tx) => {
       const pecas = await tx.peca.findMany({
@@ -76,7 +80,8 @@ export async function fecharPedido(pecaIds: string[], nomeCliente: string, agora
       const pedido = await tx.pedido.create({
         data: {
           numero,
-          nomeCliente,
+          nomeCliente: cliente.nome,
+          telefoneCliente: cliente.telefone,
           reservadoAte: fimDaReserva(agora),
           totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos, 0),
           itens: {
@@ -95,4 +100,79 @@ export async function fecharPedido(pecaIds: string[], nomeCliente: string, agora
     if (erro instanceof PecasIndisponiveis) return { ok: false, indisponiveis: erro.ids };
     throw erro;
   }
+}
+
+// Edição do pedido no painel, enquanto ele não foi pago nem cancelado.
+
+export type ResultadoEdicao = { ok: true } | { ok: false; erro: string };
+
+class Recusa extends Error {}
+
+async function editar(pedidoId: string, mudar: (tx: Transacao, pedido: PedidoAberto) => Promise<void>): Promise<ResultadoEdicao> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const pedido = await tx.pedido.findUnique({
+        where: { id: pedidoId },
+        select: { id: true, status: true, itens: { select: { pecaId: true, ordem: true } } },
+      });
+      if (!pedido) throw new Recusa("Pedido não encontrado.");
+      if (pedido.status !== "reservado" && pedido.status !== "expirado") {
+        throw new Recusa(pedido.status === "pago" ? "Este pedido já foi pago." : "Este pedido foi cancelado.");
+      }
+      await mudar(tx, { ...pedido, status: pedido.status });
+      const itens = await tx.itemPedido.findMany({ where: { pedidoId }, select: { precoCentavos: true } });
+      await tx.pedido.update({
+        where: { id: pedidoId },
+        data: { totalCentavos: itens.reduce((soma, i) => soma + i.precoCentavos, 0) },
+      });
+    });
+    return { ok: true };
+  } catch (erro) {
+    if (erro instanceof Recusa) return { ok: false, erro: erro.message };
+    throw erro;
+  }
+}
+
+type Transacao = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+type PedidoAberto = { id: string; status: "reservado" | "expirado"; itens: { pecaId: string; ordem: number }[] };
+
+/** Tira uma peça do pedido. Se ela estava reservada por ele, volta para a vitrine. */
+export function tirarPecaDoPedido(pedidoId: string, pecaId: string): Promise<ResultadoEdicao> {
+  return editar(pedidoId, async (tx, pedido) => {
+    if (!pedido.itens.some((i) => i.pecaId === pecaId)) throw new Recusa("Esta peça não está no pedido.");
+    if (pedido.itens.length === 1) throw new Recusa("O pedido precisa de pelo menos uma peça. Para desistir dele, cancele.");
+    await tx.itemPedido.delete({ where: { pedidoId_pecaId: { pedidoId, pecaId } } });
+    if (pedido.status === "reservado") {
+      await tx.peca.updateMany({ where: { id: pecaId, status: "reservada" }, data: { status: "publicada" } });
+    }
+  });
+}
+
+/**
+ * Inclui uma peça à venda no pedido, pelo código novo ou antigo. Num pedido
+ * reservado ela também fica reservada; se a reserva já venceu, só entra na lista.
+ */
+export function incluirPecaNoPedido(pedidoId: string, codigo: string): Promise<ResultadoEdicao> {
+  return editar(pedidoId, async (tx, pedido) => {
+    const peca = await tx.peca.findFirst({
+      where: { OR: [{ codigo }, { codigoAntigo: codigo }] },
+      select: { id: true, codigo: true, precoCentavos: true },
+    });
+    if (!peca) throw new Recusa(`Nenhuma peça com o código ${codigo}.`);
+    if (pedido.itens.some((i) => i.pecaId === peca.id)) throw new Recusa(`A peça ${peca.codigo} já está no pedido.`);
+    const aVenda = { id: peca.id, status: "publicada" as const, quantidade: { gt: 0 } };
+    const disponivel =
+      pedido.status === "reservado"
+        ? (await tx.peca.updateMany({ where: aVenda, data: { status: "reservada" } })).count > 0
+        : (await tx.peca.count({ where: aVenda })) > 0;
+    if (!disponivel) throw new Recusa(`A peça ${peca.codigo} não está à venda agora.`);
+    await tx.itemPedido.create({
+      data: {
+        pedidoId,
+        pecaId: peca.id,
+        ordem: Math.max(-1, ...pedido.itens.map((i) => i.ordem)) + 1,
+        precoCentavos: peca.precoCentavos,
+      },
+    });
+  });
 }
