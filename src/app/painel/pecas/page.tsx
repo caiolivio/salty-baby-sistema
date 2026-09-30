@@ -79,8 +79,8 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
           </thead>
           <tbody>
             {pecas.map((p) => (
-              <tr key={p.id}>
-                <td>
+              <tr key={p.id} className={estilos.comFoto}>
+                <td className={estilos.foto}>
                   {p.fotos[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio
                     <img className={estilos.miniatura} src={enderecoDaFoto(p.fotos[0].arquivo, true)} alt="" loading="lazy" />
@@ -88,7 +88,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                     <span className={estilos.miniatura} />
                   )}
                 </td>
-                <td>
+                <td className={estilos.curta}>
                   <span className={estilos.codigo}>{p.codigo}</span>
                   {p.codigoAntigo && <span className={estilos.antigo}>antigo {p.codigoAntigo}</span>}
                 </td>
@@ -96,10 +96,23 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                   {p.nome}
                   {p.marca && <span className={estilos.antigo}>{p.marca}</span>}
                 </td>
-                <td>{p.fornecedora ? `${p.fornecedora.codigo} ${p.fornecedora.nome}` : "Salty (loja)"}</td>
-                <td>{nomeTamanho(p.tamanho)}</td>
-                <td className={estilos.numero}>{formatarReais(p.precoCentavos)}</td>
-                <td>
+                <td data-rotulo="Fornecedora">
+                  {p.fornecedora ? (
+                    <>
+                      <span className={estilos.curta}>{p.fornecedora.codigo}</span>
+                      <span className={estilos.antigo}>{p.fornecedora.nome}</span>
+                    </>
+                  ) : (
+                    "Salty (loja)"
+                  )}
+                </td>
+                <td className={estilos.curta} data-rotulo="Tamanho">
+                  {nomeTamanho(p.tamanho)}
+                </td>
+                <td className={estilos.numero} data-rotulo="Preço">
+                  {formatarReais(p.precoCentavos)}
+                </td>
+                <td className={estilos.curta} data-rotulo="Situação">
                   {NOMES_SITUACAO[p.status] ?? p.status}
                   {p.quantidade > 1 && ` (${p.quantidade})`}
                 </td>

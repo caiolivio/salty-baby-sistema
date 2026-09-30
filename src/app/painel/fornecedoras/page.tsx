@@ -34,13 +34,13 @@ export default async function Fornecedoras() {
           <tbody>
             {fornecedoras.map((f) => (
               <tr key={f.id}>
-                <td className={estilos.codigo}>{f.codigo}</td>
+                <td className={`${estilos.codigo} ${estilos.curta}`}>{f.codigo}</td>
                 <td>{f.nome}</td>
-                <td>{f.cidade}</td>
-                <td className={estilos.numero}>
+                <td data-rotulo="Cidade">{f.cidade}</td>
+                <td className={estilos.numero} data-rotulo="À venda">
                   <Link href={`/painel/pecas?q=${f.codigo}`}>{contar(emEstoque, f.id)}</Link>
                 </td>
-                <td className={estilos.numero}>{contar(vendidas, f.id)}</td>
+                <td className={estilos.numero} data-rotulo="Vendidas">{contar(vendidas, f.id)}</td>
               </tr>
             ))}
           </tbody>
