@@ -1,0 +1,149 @@
+/* Etiqueta de 50 × 30 mm: QR à esquerda; logo, nome, preço, código e tamanho à direita. */
+
+.a4,
+.rolo {
+  background: #fff;
+  color: #000;
+  min-height: 100vh;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  background: var(--fundo-suave, #eef7f7);
+  border-bottom: 1px solid var(--borda, #cfe3e4);
+  color: var(--tinta, #13212b);
+}
+
+.barra a {
+  color: var(--petroleo, #13506e);
+}
+
+.formatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.imprimir {
+  font: inherit;
+  font-weight: 700;
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--petroleo, #13506e);
+  color: #fff;
+  cursor: pointer;
+}
+
+.dica {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+}
+
+.vazio {
+  padding: 16px;
+}
+
+.folha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 50mm);
+  gap: 0;
+  padding: 16px;
+}
+
+.etiqueta {
+  box-sizing: border-box;
+  width: 50mm;
+  height: 30mm;
+  padding: 2mm;
+  display: flex;
+  gap: 2mm;
+  align-items: center;
+  overflow: hidden;
+  break-inside: avoid;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.15;
+}
+
+.a4 .etiqueta {
+  outline: 0.2mm dashed #999;
+}
+
+.qr {
+  flex: none;
+  width: 22mm;
+  height: 22mm;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3mm;
+}
+
+.logo {
+  display: block;
+  width: 19mm;
+  height: auto;
+  margin-bottom: 0.6mm;
+}
+
+.codigo {
+  font-size: 6pt;
+  white-space: nowrap;
+}
+
+.nome {
+  font-size: 7pt;
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.preco {
+  font-size: 11pt;
+}
+
+@media print {
+  .barra {
+    display: none;
+  }
+
+  .a4,
+  .rolo {
+    min-height: 0;
+  }
+
+  .folha {
+    padding: 0;
+  }
+
+  .a4 .folha {
+    grid-template-columns: repeat(4, 50mm);
+  }
+
+  .rolo .folha {
+    display: block;
+  }
+
+  .rolo .etiqueta {
+    break-after: page;
+  }
+
+  .rolo .etiqueta:last-child {
+    break-after: auto;
+  }
+}

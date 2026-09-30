@@ -46,12 +46,17 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         <h1 className={estilos.titulo}>
           {p.codigo} · {p.nome}
         </h1>
-        <form action={duplicar}>
-          <input type="hidden" name="id" value={p.id} />
-          <button type="submit" className={proprios.botaoSecundario}>
-            Duplicar peça
-          </button>
-        </form>
+        <div className={proprios.acoes}>
+          <Link href={`/etiquetas?ids=${p.id}&voltar=/painel/pecas/${p.id}`} className={proprios.botaoSecundario}>
+            Imprimir etiqueta
+          </Link>
+          <form action={duplicar}>
+            <input type="hidden" name="id" value={p.id} />
+            <button type="submit" className={proprios.botaoSecundario}>
+              Duplicar peça
+            </button>
+          </form>
+        </div>
       </div>
       {aviso.criada && (
         <p className={proprios.aviso} role="status">
