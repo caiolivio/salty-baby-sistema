@@ -68,7 +68,11 @@ for tentativa in $(seq 1 15); do
     CODIGO="${RESPOSTA##* }"
     if [ "$CODIGO" = "200" ] || [ "$CODIGO" = "503" ]; then
       echo "Resposta do sistema: $RESPOSTA"
-      [ "$CODIGO" = "503" ] && echo "::warning::O sistema subiu, mas não conectou no banco de dados."
+      if [ "$CODIGO" = "503" ]; then
+        echo "::warning::O sistema subiu, mas não conectou no banco de dados."
+        # A mensagem do MySQL diz o usuário e a origem recusados (nunca mostra a senha).
+        pm2 logs "$NOME" --err --lines 20 --nostream 2>/dev/null | grep -E "sqlMessage|Access denied|ECONNREFUSED|ENOENT" | tail -5 || true
+      fi
       # Guarda só as 5 versões mais recentes.
       ls -1dt "$BASE"/releases/*/ | tail -n +6 | xargs -r rm -rf
       exit 0
