@@ -1,13 +1,23 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { CANAIS_DIRETOS, DESTINOS, FORMAS_PAGAMENTO, GRUPOS_WHATSAPP } from "@/lib/vendas/regras";
+import { CANAIS_DIRETOS, DESTINOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import estilos from "../../formulario.module.css";
 import { registrarVenda } from "./acoes";
 
 type Opcao = { id: string; nome: string; detalhe: string };
 
-export function FormularioVenda({ hoje, clientes, vazia }: { hoje: string; clientes: Opcao[]; vazia: boolean }) {
+export function FormularioVenda({
+  hoje,
+  clientes,
+  grupos,
+  vazia,
+}: {
+  hoje: string;
+  clientes: Opcao[];
+  grupos: { id: string; nome: string }[];
+  vazia: boolean;
+}) {
   const [estado, acao, enviando] = useActionState(registrarVenda, undefined);
   const v = estado?.valores ?? {};
   const [canal, setCanal] = useState(v.canal ?? "");
@@ -42,9 +52,9 @@ export function FormularioVenda({ hoje, clientes, vazia }: { hoje: string; clien
                 <option value="" disabled>
                   Escolha…
                 </option>
-                {GRUPOS_WHATSAPP.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
+                {grupos.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.nome}
                   </option>
                 ))}
               </select>

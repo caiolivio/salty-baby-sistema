@@ -69,7 +69,7 @@ export async function confirmarPagamento(pedidoId: string, dados: DadosConfirmac
     const vendaId = await prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.findUnique({
         where: { id: pedidoId },
-        include: { itens: { orderBy: { ordem: "asc" } } },
+        include: { itens: { orderBy: { ordem: "asc" } }, grupo: { select: { nome: true } } },
       });
       if (!pedido) throw new Recusa("Pedido não encontrado.");
       if (pedido.status !== "reservado" && pedido.status !== "expirado") {
@@ -84,6 +84,9 @@ export async function confirmarPagamento(pedidoId: string, dados: DadosConfirmac
         data: {
           data: data(hoje),
           canal: "site",
+          // O pedido que veio pelo link do post conta para o grupo.
+          grupoId: pedido.grupoId,
+          grupo: pedido.grupo?.nome ?? null,
           clienteId: pedido.clienteId,
           formaPagamento: dados.forma,
           subtotalCentavos: pedido.totalCentavos,
@@ -132,6 +135,7 @@ export async function registrarVendaDireta(
           data: data(dados.data),
           canal: dados.canal,
           grupo: dados.grupo,
+          grupoId: dados.grupoId,
           clienteId,
           formaPagamento: dados.forma,
           subtotalCentavos: subtotal,

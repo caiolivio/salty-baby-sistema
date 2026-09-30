@@ -74,7 +74,9 @@ export function linkWhatsapp(numero: string | undefined, mensagem: string): stri
 export function mensagemDaPeca(
   peca: { codigo: string; nome: string; tamanho: string | null; preco: string },
   origem: string,
+  grupo?: string,
 ): string {
   const partes = [peca.codigo, peca.nome, peca.tamanho && `tam. ${peca.tamanho}`, peca.preco].filter(Boolean).join(" · ");
-  return `Olá! Tenho interesse nesta peça: ${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
+  const vi = grupo ? `\n(Vi no grupo ${grupo})` : "";
+  return `Olá! Tenho interesse nesta peça: ${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}${vi}`;
 }

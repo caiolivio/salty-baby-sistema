@@ -96,4 +96,10 @@ describe("mensagemDaPeca", () => {
       mensagemDaPeca({ codigo: "SB-00001", nome: "Livro", tamanho: null, preco: "R$ 5,00" }, "https://app.saltybaby.com.br"),
     ).toBe("Olá! Tenho interesse nesta peça: SB-00001 · Livro · R$ 5,00\nhttps://app.saltybaby.com.br/peca/sb-00001");
   });
+
+  it("diz de qual grupo a cliente veio", () => {
+    expect(mensagemDaPeca({ codigo: "SB-00001", nome: "Livro", tamanho: null, preco: "R$ 5,00" }, "https://x", "Meninas")).toBe(
+      "Olá! Tenho interesse nesta peça: SB-00001 · Livro · R$ 5,00\nhttps://x/peca/sb-00001\n(Vi no grupo Meninas)",
+    );
+  });
 });

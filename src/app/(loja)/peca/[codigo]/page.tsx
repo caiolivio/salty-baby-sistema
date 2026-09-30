@@ -10,6 +10,7 @@ import { enderecoDaFoto } from "@/lib/fotos";
 import { CONSERVACOES } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
+import { COOKIE_GRUPO, lerCodigoGrupo, PARAMETRO_GRUPO } from "@/lib/grupos/regras";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { enderecoDaPeca, linkWhatsapp, mensagemDaPeca, WHATSAPP_LOJA } from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
@@ -61,12 +62,19 @@ export async function generateMetadata({ params }: PageProps<"/peca/[codigo]">):
   };
 }
 
-export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">) {
+export default async function PaginaPeca({ params, searchParams }: PageProps<"/peca/[codigo]">) {
   await liberarReservasVencidas();
   const peca = await buscarPeca((await params).codigo);
   if (!peca) notFound();
   const disponivel = peca.status === "publicada" && peca.quantidade > 0;
-  const noCarrinho = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value).includes(peca.id);
+  const biscoitos = await cookies();
+  const noCarrinho = lerCarrinho(biscoitos.get(COOKIE_CARRINHO)?.value).includes(peca.id);
+  // Grupo do link do post (?g=...) ou guardado de uma visita anterior.
+  const codigoGrupo =
+    lerCodigoGrupo((await searchParams)[PARAMETRO_GRUPO]) ?? lerCodigoGrupo(biscoitos.get(COOKIE_GRUPO)?.value);
+  const grupo = codigoGrupo
+    ? await prisma.grupoWhatsapp.findUnique({ where: { codigo: codigoGrupo }, select: { nome: true } })
+    : null;
   const tamanho = TAMANHOS.find((t) => t.valor === peca.tamanho)?.nome ?? peca.tamanho;
   const conservacao = CONSERVACOES.find((c) => c.valor === peca.conservacao)?.nome;
   const categorias = peca.categorias.map((c) => c.categoria.nome).join(", ");
@@ -80,6 +88,7 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
         preco: formatarReais(peca.precoCentavos),
       },
       origemDaRequisicao(await headers()),
+      grupo?.nome,
     ),
   );
   const detalhes: [string, string | null | undefined][] = [

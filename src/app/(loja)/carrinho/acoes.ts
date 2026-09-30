@@ -2,6 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/banco";
+import { COOKIE_GRUPO, lerCodigoGrupo } from "@/lib/grupos/regras";
 import { fecharPedido, liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
 
@@ -45,7 +47,10 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   if (ids.length === 0) return { erro: "Seu carrinho está vazio.", ...digitado };
 
   await liberarReservasVencidas();
-  const resultado = await fecharPedido(ids, { nome, telefone });
+  // Grupo de WhatsApp de onde a cliente veio (guardado pelo link do post).
+  const guardado = lerCodigoGrupo((await cookies()).get(COOKIE_GRUPO)?.value);
+  const grupo = guardado ? await prisma.grupoWhatsapp.findUnique({ where: { codigo: guardado }, select: { id: true } }) : null;
+  const resultado = await fecharPedido(ids, { nome, telefone }, grupo?.id ?? null);
   if (!resultado.ok) {
     return {
       erro: "Algumas peças acabaram de sair e foram marcadas abaixo. Tire-as do carrinho e feche o pedido de novo.",
@@ -53,5 +58,6 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
     };
   }
   await gravarCarrinho([]);
+  (await cookies()).delete(COOKIE_GRUPO);
   redirect(`/pedido/${resultado.id}?novo=1`);
 }

@@ -95,7 +95,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
                     (v.origem ?? "—")
                   )}
                   <span className={estilos.antigo}>
-                    {[v.grupo ? `Grupo ${v.grupo}` : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
+                    {[v.grupo ? (v.canal === "site" ? `Site, pelo grupo ${v.grupo}` : `Grupo ${v.grupo}`) : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
                   </span>
                 </td>
                 <td data-rotulo="Peças">
