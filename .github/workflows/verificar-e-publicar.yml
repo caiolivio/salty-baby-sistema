@@ -121,6 +121,8 @@ jobs:
             printf 'DB_USUARIO=`%s`\n' "$DB_USUARIO"
             printf 'DB_SENHA=`%s`\n' "$DB_SENHA"
             echo "AUTH_URL=$ENDERECO"
+            # Só no site de teste: permite apagar a importação do Notion para testar de novo.
+            echo "IMPORTACAO_PODE_APAGAR=sim"
             printf 'CODIGO_PRIMEIRO_ACESSO=`%s`\n' "$(limpar "$CODIGO_PRIMEIRO_ACESSO")"
             echo "VERSAO=$GITHUB_SHA"
           } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
+import { podeAcessar } from "@/lib/permissoes";
 import { sair } from "./acoes";
 import estilos from "./painel.module.css";
 
@@ -25,6 +26,12 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
           </form>
         </div>
       </header>
+      <nav className={estilos.menu} aria-label="Painel">
+        <Link href="/painel">Início</Link>
+        <Link href="/painel/pecas">Peças</Link>
+        <Link href="/painel/fornecedoras">Fornecedoras</Link>
+        {podeAcessar(usuario.perfis, "painel-administracao") && <Link href="/painel/importar">Importar do Notion</Link>}
+      </nav>
       <main className={estilos.conteudo}>{children}</main>
     </div>
   );

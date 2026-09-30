@@ -44,6 +44,10 @@ if [ ! -s "$SEGREDOS" ]; then
 fi
 cat "$SEGREDOS" >> "$BASE/.env"
 
+# Fotos das peças: numa pasta fixa, fora das versões, para não se perderem a cada publicação.
+mkdir -p "$BASE/fotos"
+echo "FOTOS_DIR=$BASE/fotos" >> "$BASE/.env"
+
 # 3. PM2 mantém o sistema rodando e o reinicia se cair.
 if ! command -v pm2 >/dev/null; then
   echo "Instalando o PM2"

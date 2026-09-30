@@ -61,3 +61,131 @@
 .lista {
   padding-left: 20px;
 }
+
+.menu {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 16px;
+  background: var(--fundo);
+  border-bottom: 1px solid var(--borda);
+}
+
+.menu a {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--petroleo);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menu a:hover {
+  background: var(--fundo-suave);
+}
+
+.busca {
+  display: flex;
+  gap: 8px;
+}
+
+.busca input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+}
+
+.busca button {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--petroleo);
+  color: #fff;
+  cursor: pointer;
+}
+
+.tabelaCaixa {
+  overflow-x: auto;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tabela th,
+.tabela td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.tabela th {
+  color: var(--petroleo);
+  background: var(--fundo-suave);
+}
+
+.tabela td.numero,
+.tabela th.numero {
+  text-align: right;
+}
+
+.miniatura {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--fundo-suave);
+  display: block;
+}
+
+.codigo {
+  font-weight: 700;
+  color: var(--petroleo);
+}
+
+.antigo {
+  display: block;
+  font-size: 0.8rem;
+  color: #4a5a64;
+}
+
+.paginas {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.cartao strong {
+  color: var(--petroleo);
+  font-size: 1.5rem;
+}
