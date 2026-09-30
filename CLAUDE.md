@@ -186,3 +186,10 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Um pull request por parte, com uma descrição em português simples do que mudou e de como testar.
 - Rode lint, typecheck e testes antes de abrir o PR. Os cálculos de repasse, desconto e lucro precisam de testes automáticos.
 - Nunca coloque senhas ou chaves no código. Use variáveis de ambiente.
+
+## Para o Claude Code
+
+- Esta versão do Next.js tem mudanças em relação ao que você conhece. Leia `AGENTS.md` e a documentação em `node_modules/next/dist/docs/` antes de escrever código do Next.
+- Comandos: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+- Publicação: `.github/workflows/verificar-e-publicar.yml` publica no teste.saltybaby.com.br (porta 4100, usuário SSH `sbdeployteste`) em todo pull request e em toda mudança na `main`. O script que roda na VPS é `scripts/servidor/publicar.sh`. O app.saltybaby.com.br (porta 3100, usuário `sbdeployapp`) ainda não recebe publicação.
+- Não há acesso SSH à VPS a partir do Claude Code: para investigar a publicação, leia os registros da execução no GitHub Actions.

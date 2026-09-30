@@ -8,3 +8,7 @@ node_modules/
 # dados exportados do Notion (contêm CPF): nunca versionar
 dados/
 *.csv
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+*.pem

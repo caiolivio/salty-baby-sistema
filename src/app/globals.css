@@ -1,0 +1,35 @@
+/* Cores da marca (CLAUDE.md, "Identidade visual"). O turquesa é só para
+   destaques e ícones: não tem contraste suficiente para texto sobre branco. */
+:root {
+  --turquesa: #32afb5;
+  --petroleo: #13506e;
+  --tinta: #13212b;
+  --fundo: #ffffff;
+  --fundo-suave: #f2f8f8;
+  --borda: #d7e6e7;
+  --sucesso: #1f7a4d;
+  --erro: #b3261e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--petroleo);
+}
