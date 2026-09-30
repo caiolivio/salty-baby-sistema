@@ -5,7 +5,7 @@ import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../painel.module.css";
-import proprios from "./fornecedora.module.css";
+import proprios from "../formulario.module.css";
 
 export const metadata: Metadata = { title: "Fornecedoras · Salty Baby" };
 

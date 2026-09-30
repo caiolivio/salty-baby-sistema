@@ -59,7 +59,9 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Gênero: masculino, feminino ou unissex.
 - Tamanhos, nesta ordem: Prematuro, RN (0 a 3 meses), P (3 a 6 meses), M (6 a 9 meses), G (9 meses a 1 ano), 1 ano, 18 meses, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16 e 18 anos. A ordem é usada para filtrar a vitrine e sugerir o próximo tamanho.
 - **Conservação** é um campo próprio: nova com etiqueta, seminova ou com marcas de uso. "Variação" é outro campo.
-- Outros campos: marca, cor, tamanho, categoria, medidas, descrição, fotos e data de entrada.
+- Outros campos: marca, cor, tamanho, medidas, descrição, fotos e data de entrada.
+- **Categorias:** escolhidas numa lista, e a peça pode ter mais de uma. A administradora inclui, renomeia e tira categorias do cadastro em `/painel/categorias`. As iniciais são Roupas, Calçados, Fantasias, Brinquedos, Livros, Acessórios, Utilitários, Acessórios para carro e Acessórios de bebê.
+- As fotos podem vir da câmera ou da galeria do celular.
 - Não é possível marcar uma peça como vendida sem valor de venda.
 
 ### Cálculos
@@ -198,4 +200,5 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Fotos: gravadas por `src/lib/fotos.ts` em `FOTOS_DIR` (na VPS, `~/saltybaby/fotos`, fora das versões) e servidas em `/fotos/...`.
 - Importação do Notion: a administradora envia o .zip do export em `/painel/importar`. As regras ficam em `src/lib/importacao/notion.ts` (com testes) e só rodam com o banco vazio. No site de teste (`IMPORTACAO_PODE_APAGAR=sim`) dá para apagar e importar de novo.
 - Fornecedoras: o código novo vem da tabela `sequencias` (chave `fornecedora`), reservado dentro da transação em `src/lib/fornecedoras/gravar.ts`. As regras do formulário ficam em `src/lib/fornecedoras/dados.ts` (com testes).
+- Peças: o código vem da tabela `sequencias` (chave `peca:<prefixo>`), reservado em `src/lib/pecas/gravar.ts`. As regras do formulário ficam em `src/lib/pecas/dados.ts` (com testes). A fornecedora de uma peça não muda depois do cadastro, porque o código leva o dela. As fotos são reduzidas no navegador (`src/componentes/reduzir-foto.ts`) e de novo no servidor.
 - Segredos da publicação: `AUTH_SECRET` é criado na própria VPS (`~/saltybaby/segredos-do-servidor.env`). `CODIGO_PRIMEIRO_ACESSO` é um segredo do GitHub, usado só para criar a primeira administradora.

@@ -9,6 +9,7 @@ import estilos from "./painel.module.css";
 // administradora/ajudante, a pessoa não vê nada.
 export default async function LayoutPainel({ children }: LayoutProps<"/painel">) {
   const usuario = await exigirAcesso("painel", "/painel");
+  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
 
   return (
     <div className={estilos.estrutura}>
@@ -28,9 +29,12 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
       </header>
       <nav className={estilos.menu} aria-label="Painel">
         <Link href="/painel">Início</Link>
-        <Link href="/painel/pecas">Peças</Link>
+        <Link href="/painel/pecas" className={estilos.destaque}>
+          Peças
+        </Link>
+        {administradora && <Link href="/painel/categorias">Categorias</Link>}
         <Link href="/painel/fornecedoras">Fornecedoras</Link>
-        {podeAcessar(usuario.perfis, "painel-administracao") && <Link href="/painel/importar">Importar do Notion</Link>}
+        {administradora && <Link href="/painel/importar">Importar do Notion</Link>}
       </nav>
       <main className={estilos.conteudo}>{children}</main>
     </div>

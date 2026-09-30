@@ -1,0 +1,321 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.grupo legend {
+  margin-bottom: 8px;
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+  min-width: 0;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: 2px solid var(--turquesa);
+  outline-offset: 1px;
+  border-color: var(--turquesa);
+}
+
+.marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.marcar input {
+  width: 20px;
+  height: 20px;
+}
+
+.dica {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #4a5a64;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.botao {
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--petroleo);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.botao:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.erro {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdecea;
+  color: var(--erro);
+}
+
+.aviso {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e6f5f5;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.inativa {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+  color: #4a5a64;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.campo textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.fixo {
+  font-weight: 400;
+  padding: 10px 0;
+}
+
+.botaoSecundario {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: 1px solid var(--petroleo);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--petroleo);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.botaoSecundario:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.foto img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--fundo-suave);
+}
+
+.foto form {
+  display: contents;
+}
+
+.foto form.setas,
+.foto div.setas {
+  display: flex;
+  gap: 6px;
+}
+
+.setas button {
+  flex: 1;
+  font-size: 1.1rem;
+}
+
+.foto button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.foto button {
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--fundo);
+  color: var(--petroleo);
+  cursor: pointer;
+}
+
+.principal {
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+
+.campo {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.campo input[type="file"] {
+  width: 100%;
+  padding: 8px;
+}
+
+/* Campo de arquivo escondido dentro de um botão (a etiqueta abre a câmera ou a galeria). */
+.escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+label.botaoSecundario {
+  position: relative;
+  display: inline-block;
+}
+
+label.botaoSecundario:focus-within {
+  outline: 2px solid var(--turquesa);
+  outline-offset: 2px;
+}
+
+.opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.opcoes legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--fundo);
+  cursor: pointer;
+}
+
+.marca:has(input:checked) {
+  border-color: var(--petroleo);
+  background: #e6f5f5;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.marca input {
+  width: 18px;
+  height: 18px;
+}
+
+.linhaCategoria {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.linhaCategoria .campo {
+  flex: 1 1 200px;
+}
+
+.link {
+  font: inherit;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--petroleo);
+  text-decoration: underline;
+  cursor: pointer;
+}

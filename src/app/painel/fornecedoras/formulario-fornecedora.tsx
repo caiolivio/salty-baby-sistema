@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import type { EstadoFornecedora } from "./acoes";
-import estilos from "./fornecedora.module.css";
+import estilos from "../formulario.module.css";
 
 type Acao = (estado: EstadoFornecedora, dados: FormData) => Promise<EstadoFornecedora>;
 
