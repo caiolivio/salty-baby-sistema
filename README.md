@@ -21,4 +21,14 @@ npm test           # cálculos de repasse, desconto e cupom
 npm run lint && npm run typecheck && npm run build
 ```
 
-Para conectar no banco localmente, crie um `.env.local` com `DB_HOST`, `DB_PORT`, `DB_NOME`, `DB_USUARIO` e `DB_SENHA`.
+Para rodar localmente, crie um `.env.local` com:
+
+- `DB_HOST`, `DB_PORT`, `DB_NOME`, `DB_USUARIO` e `DB_SENHA` (um MySQL ou MariaDB local);
+- `AUTH_SECRET` (qualquer texto longo e aleatório) e `CODIGO_PRIMEIRO_ACESSO`.
+
+A estrutura do banco fica em `prisma/schema.prisma`. Para criar uma migração nova, use
+`DATABASE_URL=mysql://... npx prisma migrate dev --name <nome>`. Na publicação, as migrações são aplicadas
+automaticamente (`prisma migrate deploy`, por um túnel SSH até a VPS).
+
+Na primeira vez, a página `/primeiro-acesso` cria a administradora. Ela pede o código do segredo
+`CODIGO_PRIMEIRO_ACESSO` e deixa de funcionar assim que existe uma administradora.
