@@ -42,3 +42,197 @@ model UsuarioPerfil {
   @@index([perfil])
   @@map("usuario_perfis")
 }
+
+/// Numeração que nunca volta atrás: um código usado não é reaproveitado, nem
+/// depois de excluído. Chaves: "fornecedora" e "peca:<prefixo>" (ex.: "peca:F06").
+model Sequencia {
+  chave  String @id @db.VarChar(40)
+  ultimo Int
+
+  @@map("sequencias")
+}
+
+model Fornecedora {
+  id                      String    @id @default(cuid())
+  numero                  Int       @unique
+  /// "F" + número com pelo menos 2 dígitos (F01, F48, F100). Nunca faz parte do nome.
+  codigo                  String    @unique @db.VarChar(10)
+  nome                    String    @db.VarChar(160)
+  telefone                String?   @db.VarChar(40)
+  email                   String?   @db.VarChar(191)
+  /// CPF ou CNPJ: só a administradora vê.
+  documento               String?   @db.VarChar(30)
+  pix                     String?   @db.VarChar(191)
+  endereco                String?   @db.VarChar(255)
+  cep                     String?   @db.VarChar(15)
+  cidade                  String?   @db.VarChar(100)
+  estado                  String?   @db.VarChar(60)
+  pais                    String?   @db.VarChar(60)
+  /// Pontos-base: 4000 = 40%.
+  percentualRepassePadrao Int       @default(4000) @map("percentual_repasse_padrao")
+  ativa                   Boolean   @default(true)
+  criadoEm                DateTime  @default(now()) @map("criado_em")
+  atualizadoEm            DateTime  @updatedAt @map("atualizado_em")
+  pecas                   Peca[]
+
+  @@map("fornecedoras")
+}
+
+enum TipoPeca {
+  consignada
+  loja
+}
+
+enum StatusPeca {
+  rascunho
+  publicada
+  reservada
+  vendida
+  na_sacolinha
+  enviada
+  retirada
+  devolvida
+  doada
+  baixa
+}
+
+enum Genero {
+  masculino
+  feminino
+  unissex
+}
+
+enum Conservacao {
+  nova_com_etiqueta
+  seminova
+  com_marcas_de_uso
+}
+
+model Peca {
+  id                String       @id @default(cuid())
+  /// "<código da fornecedora>-<5 dígitos>" ou "SB-<5 dígitos>" para peças da loja.
+  codigo            String       @unique @db.VarChar(20)
+  /// Código do Notion, guardado para busca.
+  codigoAntigo      String?      @map("codigo_antigo") @db.VarChar(20)
+  nome              String       @db.VarChar(160)
+  tipo              TipoPeca
+  fornecedoraId     String?      @map("fornecedora_id")
+  /// Pontos-base (4000 = 40%). Vazio nas peças da loja, que não têm repasse.
+  percentualRepasse Int?         @map("percentual_repasse")
+  precoCentavos     Int          @map("preco_centavos")
+  custoCentavos     Int?         @map("custo_centavos")
+  quantidade        Int          @default(1)
+  tamanho           String?      @db.VarChar(20)
+  genero            Genero?
+  conservacao       Conservacao?
+  variacao          String?      @db.VarChar(80)
+  marca             String?      @db.VarChar(80)
+  cor               String?      @db.VarChar(80)
+  categoria         String?      @db.VarChar(80)
+  medidas           String?      @db.VarChar(160)
+  descricao         String?      @db.Text
+  status            StatusPeca   @default(rascunho)
+  dataEntrada       DateTime     @map("data_entrada") @db.Date
+  criadoEm          DateTime     @default(now()) @map("criado_em")
+  atualizadoEm      DateTime     @updatedAt @map("atualizado_em")
+  fornecedora       Fornecedora? @relation(fields: [fornecedoraId], references: [id])
+  fotos             FotoPeca[]
+  itensVendidos     ItemVenda[]
+
+  @@index([codigoAntigo])
+  @@index([status])
+  @@index([fornecedoraId])
+  @@map("pecas")
+}
+
+model FotoPeca {
+  id       String   @id @default(cuid())
+  pecaId   String   @map("peca_id")
+  /// Caminho dentro da pasta de fotos da VPS (FOTOS_DIR).
+  arquivo  String   @db.VarChar(191)
+  ordem    Int      @default(0)
+  criadoEm DateTime @default(now()) @map("criado_em")
+  peca     Peca     @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  @@index([pecaId, ordem])
+  @@map("fotos_pecas")
+}
+
+model Cliente {
+  id           String   @id @default(cuid())
+  nome         String   @db.VarChar(160)
+  telefone     String?  @db.VarChar(40)
+  email        String?  @db.VarChar(191)
+  /// Só a administradora vê.
+  cpf          String?  @db.VarChar(20)
+  endereco     String?  @db.VarChar(255)
+  cep          String?  @db.VarChar(15)
+  cidade       String?  @db.VarChar(100)
+  estado       String?  @db.VarChar(60)
+  pais         String?  @db.VarChar(60)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  vendas       Venda[]
+
+  @@map("clientes")
+}
+
+enum CanalVenda {
+  site
+  whatsapp_privado
+  grupo_whatsapp
+  instagram
+  loja
+  bag
+}
+
+enum FormaPagamento {
+  pix
+  cartao
+  dinheiro
+  credito_fornecedora
+}
+
+model Venda {
+  id               String          @id @default(cuid())
+  data             DateTime        @db.Date
+  clienteId        String?         @map("cliente_id")
+  canal            CanalVenda
+  formaPagamento   FormaPagamento? @map("forma_pagamento")
+  subtotalCentavos Int             @map("subtotal_centavos")
+  descontoCentavos Int             @default(0) @map("desconto_centavos")
+  totalCentavos    Int             @map("total_centavos")
+  /// De onde veio a venda antiga, quando importada (ex.: "Notion: ka - liquida").
+  origem           String?         @db.VarChar(191)
+  criadoEm         DateTime        @default(now()) @map("criado_em")
+  cliente          Cliente?        @relation(fields: [clienteId], references: [id])
+  itens            ItemVenda[]
+
+  @@index([data])
+  @@map("vendas")
+}
+
+/// Repasse, desconto e lucro ficam gravados em cada item no momento da venda,
+/// para que uma mudança futura de percentual não altere o histórico.
+model ItemVenda {
+  id                    String    @id @default(cuid())
+  vendaId               String    @map("venda_id")
+  pecaId                String    @map("peca_id")
+  quantidade            Int       @default(1)
+  precoUnitarioCentavos Int       @map("preco_unitario_centavos")
+  descontoCentavos      Int       @default(0) @map("desconto_centavos")
+  valorPagoCentavos     Int       @map("valor_pago_centavos")
+  percentualRepasse     Int?      @map("percentual_repasse")
+  repasseCentavos       Int       @map("repasse_centavos")
+  custoCentavos         Int?      @map("custo_centavos")
+  lucroCentavos         Int       @map("lucro_centavos")
+  /// A fornecedora já recebeu o repasse deste item.
+  repasseRecebido       Boolean   @default(false) @map("repasse_recebido")
+  repasseRecebidoEm     DateTime? @map("repasse_recebido_em") @db.Date
+  venda                 Venda     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  peca                  Peca      @relation(fields: [pecaId], references: [id])
+
+  @@index([vendaId])
+  @@index([pecaId])
+  @@map("itens_venda")
+}

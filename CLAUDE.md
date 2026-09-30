@@ -195,4 +195,6 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Não há acesso SSH à VPS a partir do Claude Code: para investigar a publicação, leia os registros da execução no GitHub Actions.
 - Banco: Prisma com o adaptador MariaDB (`src/lib/banco.ts`). Toda mudança de estrutura é uma migração em `prisma/migrations`, aplicada pela publicação. Migrações precisam funcionar com a versão anterior do sistema ainda no ar.
 - Acesso: as regras de quem entra onde ficam em `src/lib/permissoes.ts` (com testes). Toda página, layout e ação do servidor protegidos começa com `exigirAcesso(...)` de `src/lib/acesso.ts`.
+- Fotos: gravadas por `src/lib/fotos.ts` em `FOTOS_DIR` (na VPS, `~/saltybaby/fotos`, fora das versões) e servidas em `/fotos/...`.
+- Importação do Notion: a administradora envia o .zip do export em `/painel/importar`. As regras ficam em `src/lib/importacao/notion.ts` (com testes) e só rodam com o banco vazio. No site de teste (`IMPORTACAO_PODE_APAGAR=sim`) dá para apagar e importar de novo.
 - Segredos da publicação: `AUTH_SECRET` é criado na própria VPS (`~/saltybaby/segredos-do-servidor.env`). `CODIGO_PRIMEIRO_ACESSO` é um segredo do GitHub, usado só para criar a primeira administradora.
