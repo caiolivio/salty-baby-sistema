@@ -18,7 +18,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
           <span>Salty Baby · Painel</span>
         </Link>
         <div className={estilos.usuario}>
-          <span>{usuario.nome}</span>
+          <span className={estilos.nomeUsuario}>{usuario.nome}</span>
           <form action={sair}>
             <button type="submit" className={estilos.sair}>
               Sair

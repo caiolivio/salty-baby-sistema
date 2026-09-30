@@ -27,11 +27,22 @@
   height: 40px;
 }
 
+.marca span {
+  white-space: nowrap;
+}
+
 .usuario {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 0.95rem;
+}
+
+/* No celular não cabe o nome de quem está logado ao lado da marca. */
+@media (max-width: 480px) {
+  .nomeUsuario {
+    display: none;
+  }
 }
 
 .sair {

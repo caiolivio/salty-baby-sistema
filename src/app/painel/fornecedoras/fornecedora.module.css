@@ -1,0 +1,137 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.grupo legend {
+  margin-bottom: 8px;
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.campo input {
+  font: inherit;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+  min-width: 0;
+}
+
+.campo input:focus {
+  outline: 2px solid var(--turquesa);
+  outline-offset: 1px;
+  border-color: var(--turquesa);
+}
+
+.marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.marcar input {
+  width: 20px;
+  height: 20px;
+}
+
+.dica {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #4a5a64;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.botao {
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--petroleo);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.botao:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.erro {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdecea;
+  color: var(--erro);
+}
+
+.aviso {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e6f5f5;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.inativa {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+  color: #4a5a64;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
