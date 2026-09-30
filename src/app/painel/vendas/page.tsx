@@ -5,6 +5,7 @@ import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
+import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 
 export const metadata: Metadata = { title: "Vendas · Salty Baby" };
@@ -22,7 +23,8 @@ const CANAIS: Record<string, string> = {
 // Valores de repasse e lucro: só a administradora vê.
 export default async function Vendas({ searchParams }: PageProps<"/painel/vendas">) {
   await exigirAcesso("painel-administracao", "/painel/vendas");
-  const pagina = Math.max(1, Number((await searchParams).pagina) || 1);
+  const aviso = await searchParams;
+  const pagina = Math.max(1, Number(aviso.pagina) || 1);
   const [total, vendas, somas] = await Promise.all([
     prisma.venda.count(),
     prisma.venda.findMany({
@@ -43,7 +45,17 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
 
   return (
     <>
-      <h1 className={estilos.titulo}>Vendas</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Vendas</h1>
+        <Link href="/painel/vendas/nova" className={proprios.botao}>
+          + Nova venda
+        </Link>
+      </div>
+      {aviso.registrada && (
+        <p className={proprios.aviso} role="status">
+          Venda registrada. As peças saíram da vitrine.
+        </p>
+      )}
       <div className={estilos.cartoes}>
         <div className={estilos.cartao}>
           <strong>{formatarReais(somas._sum.valorPagoCentavos ?? 0)}</strong>
@@ -77,7 +89,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
                 <td>
                   {v.pedido ? <Link href={`/painel/pedidos/${v.pedido.id}`}>{v.origem}</Link> : (v.origem ?? v.cliente?.nome ?? "—")}
                   <span className={estilos.antigo}>
-                    {[CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
+                    {[v.grupo ? `Grupo ${v.grupo}` : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
                   </span>
                 </td>
                 <td data-rotulo="Peças">

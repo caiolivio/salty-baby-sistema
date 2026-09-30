@@ -202,6 +202,8 @@ model Venda {
   data             DateTime        @db.Date
   clienteId        String?         @map("cliente_id")
   canal            CanalVenda
+  /// Grupo de WhatsApp da venda, quando o canal é grupo_whatsapp.
+  grupo            String?         @db.VarChar(60)
   formaPagamento   FormaPagamento? @map("forma_pagamento")
   subtotalCentavos Int             @map("subtotal_centavos")
   descontoCentavos Int             @default(0) @map("desconto_centavos")

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
@@ -53,14 +54,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
   const aberto = pedido.status === "reservado" || pedido.status === "expirado";
   const itemVendido = (pecaId: string) => pedido.venda?.itens.find((i) => i.pecaId === pecaId);
 
-  const clientes = await prisma.cliente.findMany({
-    orderBy: { nome: "asc" },
-    select: { id: true, nome: true, telefone: true, cidade: true },
-  });
-  const opcoes = clientes.map((c) => {
-    const tel = lerTelefoneCliente(c.telefone);
-    return { id: c.id, nome: c.nome, tel, detalhe: tel ? formatarTelefone(tel) : (c.cidade ?? "") };
-  });
+  const opcoes = await listarOpcoesDeClientes();
   // Sugere a cliente do cadastro com o mesmo WhatsApp, ou com o mesmo nome.
   const mesmoNome = (a: string) => a.trim().toLocaleLowerCase("pt-BR") === pedido.nomeCliente.trim().toLocaleLowerCase("pt-BR");
   const porTelefone = pedido.telefoneCliente ? opcoes.filter((c) => c.tel === pedido.telefoneCliente) : [];

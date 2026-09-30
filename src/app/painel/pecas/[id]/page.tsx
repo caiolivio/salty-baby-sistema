@@ -13,6 +13,7 @@ import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { apagarFotoDaPeca, duplicar, ordenarFoto, salvarPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
+import { venderPeca } from "../../vendas/nova/acoes";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
 
@@ -47,6 +48,14 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           {p.codigo} · {p.nome}
         </h1>
         <div className={proprios.acoes}>
+          {podeAcessar(usuario.perfis, "painel-administracao") && p.status === "publicada" && p.quantidade > 0 && (
+            <form action={venderPeca}>
+              <input type="hidden" name="id" value={p.id} />
+              <button type="submit" className={proprios.botao}>
+                Vender esta peça
+              </button>
+            </form>
+          )}
           <Link href={`/etiquetas?ids=${p.id}&voltar=/painel/pecas/${p.id}`} className={proprios.botaoSecundario}>
             Imprimir etiqueta
           </Link>
