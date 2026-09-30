@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hojeEmSaoPaulo, lerFormularioPeca, reaisNoCampo, situacaoEditavel } from "./dados";
+import { escolherCategorias, hojeEmSaoPaulo, lerFormularioPeca, reaisNoCampo, situacaoEditavel } from "./dados";
 
 const consignada = { consignada: true, repassePadrao: 4000, hoje: "2026-09-30" };
 const loja = { consignada: false, repassePadrao: 4000, hoje: "2026-09-30" };
@@ -68,6 +68,16 @@ describe("lerFormularioPeca", () => {
       ok: false,
       erro: "O repasse vai de 0 a 100%, por exemplo 40.",
     });
+  });
+});
+
+describe("escolherCategorias", () => {
+  it("aceita mais de uma categoria e ignora repetidas", () => {
+    expect(escolherCategorias(["roupas", "fantasias", "roupas"], ["roupas", "fantasias", "livros"])).toEqual(["roupas", "fantasias"]);
+  });
+  it("ignora categorias que não existem ou foram desativadas", () => {
+    expect(escolherCategorias(["roupas", "inventada", 3], ["roupas"])).toEqual(["roupas"]);
+    expect(escolherCategorias([], ["roupas"])).toEqual([]);
   });
 });
 

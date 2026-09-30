@@ -59,7 +59,9 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Gênero: masculino, feminino ou unissex.
 - Tamanhos, nesta ordem: Prematuro, RN (0 a 3 meses), P (3 a 6 meses), M (6 a 9 meses), G (9 meses a 1 ano), 1 ano, 18 meses, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16 e 18 anos. A ordem é usada para filtrar a vitrine e sugerir o próximo tamanho.
 - **Conservação** é um campo próprio: nova com etiqueta, seminova ou com marcas de uso. "Variação" é outro campo.
-- Outros campos: marca, cor, tamanho, categoria, medidas, descrição, fotos e data de entrada.
+- Outros campos: marca, cor, tamanho, medidas, descrição, fotos e data de entrada.
+- **Categorias:** escolhidas numa lista, e a peça pode ter mais de uma. A administradora inclui, renomeia e tira categorias do cadastro em `/painel/categorias`. As iniciais são Roupas, Calçados, Fantasias, Brinquedos, Livros, Acessórios, Utilitários, Acessórios para carro e Acessórios de bebê.
+- As fotos podem vir da câmera ou da galeria do celular.
 - Não é possível marcar uma peça como vendida sem valor de venda.
 
 ### Cálculos

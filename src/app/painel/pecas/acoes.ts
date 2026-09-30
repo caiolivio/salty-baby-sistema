@@ -4,15 +4,26 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel } from "@/lib/pecas/dados";
+import { escolherCategorias, FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel } from "@/lib/pecas/dados";
 import { adicionarFotos, atualizarPeca, criarPeca, duplicarPeca, fotoPrincipal, LIMITE_FOTOS, removerFoto } from "@/lib/pecas/gravar";
 
-export type EstadoPeca = { erro?: string; aviso?: string; valores?: Record<string, string> } | undefined;
+export type EstadoPeca =
+  | { erro?: string; aviso?: string; valores?: Record<string, string>; categorias?: string[] }
+  | undefined;
 
 const TAMANHO_MAXIMO_FOTO = 12 * 1024 * 1024;
 
 const valoresDigitados = (dados: FormData) =>
   Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+
+/** Categorias marcadas que podem ser usadas: as ativas e as que a peça já tinha. */
+async function categoriasMarcadas(dados: FormData, pecaId?: string): Promise<string[]> {
+  const permitidas = await prisma.categoria.findMany({
+    where: { OR: [{ ativa: true }, ...(pecaId ? [{ pecas: { some: { pecaId } } }] : [])] },
+    select: { id: true },
+  });
+  return escolherCategorias(dados.getAll("categorias"), permitidas.map((c) => c.id));
+}
 
 /** Fotos enviadas no formulário, já conferidas. */
 async function fotosDoFormulario(dados: FormData): Promise<Buffer[] | string> {
@@ -27,9 +38,11 @@ const avisoFotos = (recusadas: number) => (recusadas > 0 ? `&fotosRecusadas=${re
 export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
   await exigirAcesso("painel");
   const valores = valoresDigitados(dados);
+  const categorias = await categoriasMarcadas(dados);
+  const erro = (mensagem: string): EstadoPeca => ({ erro: mensagem, valores, categorias });
 
   const escolhida = valores.fornecedoraId ?? "";
-  if (!escolhida) return { erro: "Escolha a fornecedora (ou Salty, se a peça é da loja).", valores };
+  if (!escolhida) return erro("Escolha a fornecedora (ou Salty, se a peça é da loja).");
   const fornecedora =
     escolhida === FORNECEDORA_LOJA
       ? null
@@ -37,18 +50,18 @@ export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<Es
           where: { id: escolhida },
           select: { id: true, codigo: true, percentualRepassePadrao: true },
         });
-  if (escolhida !== FORNECEDORA_LOJA && !fornecedora) return { erro: "Esta fornecedora não existe mais.", valores };
+  if (escolhida !== FORNECEDORA_LOJA && !fornecedora) return erro("Esta fornecedora não existe mais.");
 
   const lido = lerFormularioPeca(valores, {
     consignada: Boolean(fornecedora),
     repassePadrao: fornecedora?.percentualRepassePadrao ?? 0,
     hoje: hojeEmSaoPaulo(),
   });
-  if (!lido.ok) return { erro: lido.erro, valores };
+  if (!lido.ok) return erro(lido.erro);
   const fotos = await fotosDoFormulario(dados);
-  if (typeof fotos === "string") return { erro: fotos, valores };
+  if (typeof fotos === "string") return erro(fotos);
 
-  const { id } = await criarPeca(lido.dados, fornecedora);
+  const { id } = await criarPeca(lido.dados, fornecedora, categorias);
   const { recusadas } = await adicionarFotos(id, fotos);
   redirect(`/painel/pecas/${id}?criada=1${avisoFotos(recusadas)}`);
 }
@@ -62,6 +75,7 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
     select: { tipo: true, status: true, dataEntrada: true, fornecedora: { select: { percentualRepassePadrao: true } } },
   });
   if (!peca) return { erro: "Esta peça não existe mais.", valores };
+  const categorias = await categoriasMarcadas(dados, id);
 
   // Peça já vendida: a situação só muda pelas vendas.
   const editavel = situacaoEditavel(peca.status);
@@ -70,9 +84,9 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
     repassePadrao: peca.fornecedora?.percentualRepassePadrao ?? 0,
     hoje: peca.dataEntrada.toISOString().slice(0, 10),
   });
-  if (!lido.ok) return { erro: lido.erro, valores };
+  if (!lido.ok) return { erro: lido.erro, valores, categorias };
 
-  await atualizarPeca(id, lido.dados, editavel ? undefined : peca.status);
+  await atualizarPeca(id, lido.dados, categorias, editavel ? undefined : peca.status);
   redirect(`/painel/pecas/${id}?salva=1`);
 }
 

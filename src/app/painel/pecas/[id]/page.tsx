@@ -11,7 +11,7 @@ import { NOMES_SITUACAO } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { apagarFotoDaPeca, duplicar, salvarPeca, tornarPrincipal } from "../acoes";
-import { categoriasUsadas } from "../categorias";
+import { opcoesDeCategoria } from "../categorias";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
 
@@ -22,14 +22,17 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   await exigirAcesso("painel", `/painel/pecas/${id}`);
   const aviso = await searchParams;
 
-  const [peca, categorias] = await Promise.all([
-    prisma.peca.findUnique({
-      where: { id },
-      include: { fornecedora: { select: { codigo: true, nome: true } }, fotos: { orderBy: { ordem: "asc" } } },
-    }),
-    categoriasUsadas(),
-  ]);
+  const peca = await prisma.peca.findUnique({
+    where: { id },
+    include: {
+      fornecedora: { select: { codigo: true, nome: true } },
+      fotos: { orderBy: { ordem: "asc" } },
+      categorias: { select: { categoriaId: true } },
+    },
+  });
   if (!peca) notFound();
+  const marcadas = peca.categorias.map((c) => c.categoriaId);
+  const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
   const situacao = NOMES_SITUACAO[p.status] ?? p.status;
 
@@ -112,6 +115,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         textoBotao="Salvar alterações"
         voltar="/painel/pecas"
         categorias={categorias}
+        categoriasMarcadas={marcadas}
         fornecedoraFixa={{
           texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Salty (peça da loja)",
           consignada: p.tipo === "consignada",
@@ -120,7 +124,6 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         iniciais={{
           id: p.id,
           nome: p.nome,
-          categoria: p.categoria ?? "",
           tamanho: p.tamanho ?? "",
           genero: p.genero ?? "",
           conservacao: p.conservacao ?? "",

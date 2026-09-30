@@ -128,6 +128,7 @@ model Peca {
   variacao          String?      @db.VarChar(80)
   marca             String?      @db.VarChar(80)
   cor               String?      @db.VarChar(80)
+  /// Antigo campo de texto livre, substituído por `categorias`. Fica até a próxima limpeza do banco.
   categoria         String?      @db.VarChar(80)
   medidas           String?      @db.VarChar(160)
   descricao         String?      @db.Text
@@ -137,6 +138,7 @@ model Peca {
   atualizadoEm      DateTime     @updatedAt @map("atualizado_em")
   fornecedora       Fornecedora? @relation(fields: [fornecedoraId], references: [id])
   fotos             FotoPeca[]
+  categorias        PecaCategoria[]
   itensVendidos     ItemVenda[]
 
   @@index([codigoAntigo])
@@ -235,4 +237,28 @@ model ItemVenda {
   @@index([vendaId])
   @@index([pecaId])
   @@map("itens_venda")
+}
+
+/// Lista de categorias que a administradora mantém no painel. Uma peça pode ter várias.
+model Categoria {
+  id       String          @id @default(cuid())
+  nome     String          @unique @db.VarChar(60)
+  ordem    Int             @default(0)
+  /// Categoria desativada some do cadastro, mas continua nas peças que já a têm.
+  ativa    Boolean         @default(true)
+  criadoEm DateTime        @default(now()) @map("criado_em")
+  pecas    PecaCategoria[]
+
+  @@map("categorias")
+}
+
+model PecaCategoria {
+  pecaId      String    @map("peca_id")
+  categoriaId String    @map("categoria_id")
+  peca        Peca      @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  @@id([pecaId, categoriaId])
+  @@index([categoriaId])
+  @@map("pecas_categorias")
 }

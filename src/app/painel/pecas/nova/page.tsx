@@ -6,7 +6,7 @@ import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import estilos from "../../painel.module.css";
 import { novaPeca } from "../acoes";
-import { categoriasUsadas } from "../categorias";
+import { opcoesDeCategoria } from "../categorias";
 import { FormularioPeca } from "../formulario-peca";
 
 export const metadata: Metadata = { title: "Nova peça · Salty Baby" };
@@ -20,7 +20,7 @@ export default async function NovaPeca({ searchParams }: PageProps<"/painel/peca
       orderBy: { numero: "asc" },
       select: { id: true, codigo: true, nome: true, percentualRepassePadrao: true },
     }),
-    categoriasUsadas(),
+    opcoesDeCategoria(),
   ]);
 
   return (

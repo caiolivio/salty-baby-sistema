@@ -30,7 +30,12 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
         <Link href="/painel">Início</Link>
         <Link href="/painel/pecas">Peças</Link>
         <Link href="/painel/fornecedoras">Fornecedoras</Link>
-        {podeAcessar(usuario.perfis, "painel-administracao") && <Link href="/painel/importar">Importar do Notion</Link>}
+        {podeAcessar(usuario.perfis, "painel-administracao") && (
+          <>
+            <Link href="/painel/categorias">Categorias</Link>
+            <Link href="/painel/importar">Importar do Notion</Link>
+          </>
+        )}
       </nav>
       <main className={estilos.conteudo}>{children}</main>
     </div>

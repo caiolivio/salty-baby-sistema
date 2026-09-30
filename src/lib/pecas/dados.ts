@@ -76,7 +76,6 @@ const percentual = z.string().transform((t, ctx) => {
 
 const campos = z.object({
   nome: z.string().trim().min(2, "Escreva o nome da peça, por exemplo Macacão.").max(160, "Use no máximo 160 caracteres."),
-  categoria: texto(80),
   tamanho: opcao(TAMANHOS, "Escolha um tamanho da lista."),
   genero: opcao(GENEROS, "Escolha o gênero."),
   conservacao: opcao(CONSERVACOES, "Escolha a conservação."),
@@ -101,7 +100,6 @@ const campos = z.object({
 
 export type DadosPeca = {
   nome: string;
-  categoria: string | null;
   tamanho: string | null;
   genero: (typeof GENEROS)[number]["valor"] | null;
   conservacao: (typeof CONSERVACOES)[number]["valor"] | null;
@@ -155,6 +153,16 @@ export function lerFormularioPeca(
       dataEntrada: d.dataEntrada ?? hoje,
     },
   };
+}
+
+/**
+ * Categorias marcadas no formulário (pode ser mais de uma). Só valem as que
+ * existem e estão ativas; as que a peça já tinha continuam valendo mesmo que a
+ * categoria tenha sido desativada depois.
+ */
+export function escolherCategorias(marcadas: unknown[], permitidas: Iterable<string>): string[] {
+  const validas = new Set(permitidas);
+  return [...new Set(marcadas.filter((m): m is string => typeof m === "string" && validas.has(m)))];
 }
 
 /** Data de hoje em São Paulo, no formato aaaa-mm-dd. */

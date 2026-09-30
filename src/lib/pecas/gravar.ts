@@ -40,6 +40,7 @@ function camposDoBanco(dados: DadosPeca) {
 export async function criarPeca(
   dados: DadosPeca,
   fornecedora: { id: string; codigo: string } | null,
+  categoriaIds: string[],
 ): Promise<{ id: string; codigo: string }> {
   return prisma.$transaction(async (tx) => {
     const codigo = await reservarCodigo(tx, fornecedora?.codigo ?? PREFIXO_LOJA);
@@ -49,6 +50,7 @@ export async function criarPeca(
         codigo,
         tipo: fornecedora ? "consignada" : "loja",
         fornecedoraId: fornecedora?.id ?? null,
+        categorias: { create: categoriaIds.map((categoriaId) => ({ categoriaId })) },
       },
       select: { id: true },
     });
@@ -61,15 +63,30 @@ export async function criarPeca(
  * fornecedora). `manterSituacao` é usado nas peças já vendidas, cuja situação
  * só muda pela venda.
  */
-export async function atualizarPeca(id: string, dados: DadosPeca, manterSituacao?: StatusPeca): Promise<void> {
+export async function atualizarPeca(
+  id: string,
+  dados: DadosPeca,
+  categoriaIds: string[],
+  manterSituacao?: StatusPeca,
+): Promise<void> {
   const campos = camposDoBanco(dados);
-  await prisma.peca.update({ where: { id }, data: { ...campos, status: manterSituacao ?? campos.status } });
+  await prisma.peca.update({
+    where: { id },
+    data: {
+      ...campos,
+      status: manterSituacao ?? campos.status,
+      categorias: { deleteMany: {}, create: categoriaIds.map((categoriaId) => ({ categoriaId })) },
+    },
+  });
 }
 
 /** Cria uma peça igual, com código novo, como rascunho e sem fotos. */
 export async function duplicarPeca(id: string, hoje: string): Promise<{ id: string; codigo: string } | null> {
   return prisma.$transaction(async (tx) => {
-    const original = await tx.peca.findUnique({ where: { id }, include: { fornecedora: { select: { codigo: true } } } });
+    const original = await tx.peca.findUnique({
+      where: { id },
+      include: { fornecedora: { select: { codigo: true } }, categorias: { select: { categoriaId: true } } },
+    });
     if (!original) return null;
     const codigo = await reservarCodigo(tx, original.fornecedora?.codigo ?? PREFIXO_LOJA);
     const copia = await tx.peca.create({
@@ -88,7 +105,7 @@ export async function duplicarPeca(id: string, hoje: string): Promise<{ id: stri
         variacao: original.variacao,
         marca: original.marca,
         cor: original.cor,
-        categoria: original.categoria,
+        categorias: { create: original.categorias.map(({ categoriaId }) => ({ categoriaId })) },
         medidas: original.medidas,
         descricao: original.descricao,
         status: "rascunho",

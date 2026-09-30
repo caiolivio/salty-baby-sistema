@@ -229,3 +229,79 @@
   width: 100%;
   padding: 8px;
 }
+
+/* Campo de arquivo escondido dentro de um botão (a etiqueta abre a câmera ou a galeria). */
+.escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+label.botaoSecundario {
+  position: relative;
+  display: inline-block;
+}
+
+label.botaoSecundario:focus-within {
+  outline: 2px solid var(--turquesa);
+  outline-offset: 2px;
+}
+
+.opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.opcoes legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--fundo);
+  cursor: pointer;
+}
+
+.marca:has(input:checked) {
+  border-color: var(--petroleo);
+  background: #e6f5f5;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.marca input {
+  width: 18px;
+  height: 18px;
+}
+
+.linhaCategoria {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.linhaCategoria .campo {
+  flex: 1 1 200px;
+}

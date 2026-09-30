@@ -17,7 +17,6 @@ export type ValoresPeca = Partial<
     | "id"
     | "fornecedoraId"
     | "nome"
-    | "categoria"
     | "tamanho"
     | "genero"
     | "conservacao"
@@ -44,6 +43,7 @@ export function FormularioPeca({
   fornecedoras,
   fornecedoraFixa,
   categorias,
+  categoriasMarcadas = [],
   situacaoFixa,
 }: {
   acao: Acao;
@@ -54,13 +54,16 @@ export function FormularioPeca({
   fornecedoras?: OpcaoFornecedora[];
   /** Na edição: a fornecedora não muda (o código da peça leva o dela). */
   fornecedoraFixa?: { texto: string; consignada: boolean };
-  categorias: string[];
+  /** Categorias para marcar e as que já estão marcadas. */
+  categorias: { id: string; nome: string }[];
+  categoriasMarcadas?: string[];
   /** Peça vendida: a situação só muda pelas vendas. */
   situacaoFixa?: string;
 }) {
   const [estado, despachar, enviando] = useActionState(acao, undefined);
   const [preparando, setPreparando] = useState(false);
-  const [previas, setPrevias] = useState<string[]>([]);
+  const [previas, setPrevias] = useState<Record<string, string[]>>({});
+  const marcadas = new Set(estado?.categorias ?? categoriasMarcadas);
   const v = (campo: keyof ValoresPeca) => (estado?.valores ? estado.valores[campo] : iniciais[campo]);
   const [fornecedoraId, setFornecedoraId] = useState(v("fornecedoraId") ?? "");
   const escolhida = fornecedoras?.find((f) => f.id === fornecedoraId);
@@ -107,15 +110,6 @@ export function FormularioPeca({
           <label className={estilos.campo}>
             Nome da peça
             <input name="nome" required minLength={2} maxLength={160} defaultValue={v("nome")} placeholder="Macacão, Body, Vestido…" />
-          </label>
-          <label className={estilos.campo}>
-            Categoria
-            <input name="categoria" list="categorias" maxLength={80} defaultValue={v("categoria")} />
-            <datalist id="categorias">
-              {categorias.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
           </label>
           <label className={estilos.campo}>
             Tamanho
@@ -167,6 +161,18 @@ export function FormularioPeca({
             <input name="medidas" maxLength={160} defaultValue={v("medidas")} placeholder="Ex.: comprimento 40 cm" />
           </label>
         </div>
+        <fieldset className={estilos.opcoes}>
+          <legend>Categorias</legend>
+          <span className={estilos.dica}>Marque uma ou mais.</span>
+          <div className={estilos.marcas}>
+            {categorias.map((c) => (
+              <label key={c.id} className={estilos.marca}>
+                <input type="checkbox" name="categorias" value={c.id} defaultChecked={marcadas.has(c.id)} />
+                {c.nome}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label className={estilos.campo}>
           Descrição
           <textarea name="descricao" maxLength={2000} defaultValue={v("descricao")} />
@@ -227,21 +233,35 @@ export function FormularioPeca({
       {novo && (
         <fieldset className={estilos.grupo}>
           <legend>Fotos</legend>
-          <label className={estilos.campo}>
-            Tirar ou escolher fotos
-            <input
-              name="fotos"
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              onChange={(e) => setPrevias([...(e.target.files ?? [])].map((f) => URL.createObjectURL(f)))}
-            />
-            <span className={estilos.dica}>No celular abre a câmera. As fotos são reduzidas antes de enviar.</span>
-          </label>
-          {previas.length > 0 && (
+          <div className={estilos.acoes}>
+            <label className={estilos.botaoSecundario}>
+              Tirar foto
+              <input
+                className={estilos.escondido}
+                name="fotos"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                multiple
+                onChange={(e) => setPrevias((p) => ({ ...p, camera: [...(e.target.files ?? [])].map((f) => URL.createObjectURL(f)) }))}
+              />
+            </label>
+            <label className={estilos.botaoSecundario}>
+              Escolher da galeria
+              <input
+                className={estilos.escondido}
+                name="fotos"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setPrevias((p) => ({ ...p, galeria: [...(e.target.files ?? [])].map((f) => URL.createObjectURL(f)) }))}
+              />
+            </label>
+          </div>
+          <span className={estilos.dica}>As fotos são reduzidas antes de enviar.</span>
+          {Object.values(previas).flat().length > 0 && (
             <div className={estilos.previas}>
-              {previas.map((p) => (
+              {Object.values(previas).flat().map((p) => (
                 // eslint-disable-next-line @next/next/no-img-element -- prévia local, antes do envio
                 <img key={p} src={p} alt="" />
               ))}

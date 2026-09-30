@@ -24,13 +24,26 @@ export function AdicionarFotos({ pecaId }: { pecaId: string }) {
   return (
     <form ref={formulario} onSubmit={enviar} className={estilos.acoes}>
       <input type="hidden" name="id" value={pecaId} />
-      <label className={estilos.campo}>
-        Acrescentar fotos
+      <span>Acrescentar fotos:</span>
+      <label className={estilos.botaoSecundario}>
+        Tirar foto
         <input
+          className={estilos.escondido}
           name="fotos"
           type="file"
           accept="image/*"
           capture="environment"
+          multiple
+          onChange={() => formulario.current?.requestSubmit()}
+        />
+      </label>
+      <label className={estilos.botaoSecundario}>
+        Escolher da galeria
+        <input
+          className={estilos.escondido}
+          name="fotos"
+          type="file"
+          accept="image/*"
           multiple
           onChange={() => formulario.current?.requestSubmit()}
         />
