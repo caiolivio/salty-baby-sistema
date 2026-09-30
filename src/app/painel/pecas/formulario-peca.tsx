@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { reduzirFotosDoFormulario } from "@/componentes/reduzir-foto";
+import { FotosNovas, type FotoNova } from "./fotos-novas";
 import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, SITUACOES_DO_CADASTRO } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
 import estilos from "../formulario.module.css";
@@ -66,7 +67,7 @@ export function FormularioPeca({
 }) {
   const [estado, despachar, enviando] = useActionState(acao, undefined);
   const [preparando, setPreparando] = useState(false);
-  const [previas, setPrevias] = useState<Record<string, string[]>>({});
+  const [fotos, setFotos] = useState<FotoNova[]>([]);
   const marcadas = new Set(estado?.categorias ?? categoriasMarcadas);
   const v = (campo: keyof ValoresPeca) => (estado?.valores ? estado.valores[campo] : iniciais[campo]);
   const [fornecedoraId, setFornecedoraId] = useState(v("fornecedoraId") ?? "");
@@ -78,7 +79,9 @@ export function FormularioPeca({
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setPreparando(true);
-    const dados = await reduzirFotosDoFormulario(new FormData(evento.currentTarget));
+    const formulario = new FormData(evento.currentTarget);
+    for (const foto of fotos) formulario.append("fotos", foto.arquivo); // na ordem escolhida
+    const dados = await reduzirFotosDoFormulario(formulario);
     setPreparando(false);
     startTransition(() => despachar(dados));
   }
@@ -223,45 +226,7 @@ export function FormularioPeca({
         </div>
       </fieldset>
 
-      {novo && (
-        <fieldset className={estilos.grupo}>
-          <legend>Fotos</legend>
-          <div className={estilos.acoes}>
-            <label className={estilos.botaoSecundario}>
-              Tirar foto
-              <input
-                className={estilos.escondido}
-                name="fotos"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                multiple
-                onChange={(e) => setPrevias((p) => ({ ...p, camera: [...(e.target.files ?? [])].map((f) => URL.createObjectURL(f)) }))}
-              />
-            </label>
-            <label className={estilos.botaoSecundario}>
-              Escolher da galeria
-              <input
-                className={estilos.escondido}
-                name="fotos"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => setPrevias((p) => ({ ...p, galeria: [...(e.target.files ?? [])].map((f) => URL.createObjectURL(f)) }))}
-              />
-            </label>
-          </div>
-          <span className={estilos.dica}>As fotos são reduzidas antes de enviar.</span>
-          {Object.values(previas).flat().length > 0 && (
-            <div className={estilos.previas}>
-              {Object.values(previas).flat().map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element -- prévia local, antes do envio
-                <img key={p} src={p} alt="" />
-              ))}
-            </div>
-          )}
-        </fieldset>
-      )}
+      {novo && <FotosNovas fotos={fotos} mudar={setFotos} />}
 
       <div className={estilos.acoes}>
         <button className={estilos.botao} type="submit" disabled={ocupado}>

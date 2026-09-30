@@ -192,7 +192,8 @@
   display: contents;
 }
 
-.foto form.setas {
+.foto form.setas,
+.foto div.setas {
   display: flex;
   gap: 6px;
 }
@@ -222,18 +223,6 @@
   font-weight: 700;
 }
 
-.previas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.previas img {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 8px;
-}
 
 .campo {
   min-width: 0;
