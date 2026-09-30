@@ -9,14 +9,17 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { CONSERVACOES } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { linkWhatsapp, WHATSAPP_LOJA } from "@/lib/vitrine";
+import { linkWhatsapp, mensagemDaPeca, WHATSAPP_LOJA } from "@/lib/vitrine";
 import estilos from "../../loja.module.css";
 
 // Só peças à venda ou reservadas aparecem para o público. Nada de fornecedora,
 // custo ou repasse sai desta página.
 const buscarPeca = cache(async (codigo: string) =>
   prisma.peca.findFirst({
-    where: { codigo: decodeURIComponent(codigo).toUpperCase(), status: { in: ["publicada", "reservada"] } },
+    where: {
+      codigo: decodeURIComponent(codigo).toUpperCase(),
+      status: { in: ["publicada", "reservada"] },
+    },
     select: {
       codigo: true,
       nome: true,
@@ -36,30 +39,51 @@ const buscarPeca = cache(async (codigo: string) =>
   }),
 );
 
-export async function generateMetadata({ params }: PageProps<"/peca/[codigo]">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/peca/[codigo]">): Promise<Metadata> {
   const peca = await buscarPeca((await params).codigo);
   if (!peca) return { title: "Peça não encontrada · Salty Baby" };
   const titulo = `${peca.nome} · ${formatarReais(peca.precoCentavos)} · Salty Baby`;
   const foto = peca.fotos[0];
   return {
     title: titulo,
-    description: [peca.tamanho && `Tamanho ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ") || "Brechó infantil Salty Baby",
+    description:
+      [peca.tamanho && `Tamanho ${peca.tamanho}`, peca.marca]
+        .filter(Boolean)
+        .join(" · ") || "Brechó infantil Salty Baby",
     // Imagem que aparece quando o link é compartilhado no WhatsApp.
     metadataBase: new URL(origemDaRequisicao(await headers())),
-    openGraph: { title: titulo, images: foto ? [enderecoDaFoto(foto.arquivo)] : undefined },
+    openGraph: {
+      title: titulo,
+      images: foto ? [enderecoDaFoto(foto.arquivo)] : undefined,
+    },
   };
 }
 
-export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">) {
+export default async function PaginaPeca({
+  params,
+}: PageProps<"/peca/[codigo]">) {
   const peca = await buscarPeca((await params).codigo);
   if (!peca) notFound();
   const disponivel = peca.status === "publicada" && peca.quantidade > 0;
-  const tamanho = TAMANHOS.find((t) => t.valor === peca.tamanho)?.nome ?? peca.tamanho;
-  const conservacao = CONSERVACOES.find((c) => c.valor === peca.conservacao)?.nome;
+  const tamanho =
+    TAMANHOS.find((t) => t.valor === peca.tamanho)?.nome ?? peca.tamanho;
+  const conservacao = CONSERVACOES.find(
+    (c) => c.valor === peca.conservacao,
+  )?.nome;
   const categorias = peca.categorias.map((c) => c.categoria.nome).join(", ");
   const whatsapp = linkWhatsapp(
     process.env.WHATSAPP_LOJA || WHATSAPP_LOJA,
-    `Olá! Tenho interesse nesta peça: ${peca.codigo} · ${peca.nome}${peca.tamanho ? ` · tam. ${peca.tamanho}` : ""} · ${formatarReais(peca.precoCentavos)}`,
+    mensagemDaPeca(
+      {
+        codigo: peca.codigo,
+        nome: peca.nome,
+        tamanho: peca.tamanho,
+        preco: formatarReais(peca.precoCentavos),
+      },
+      origemDaRequisicao(await headers()),
+    ),
   );
   const detalhes: [string, string | null | undefined][] = [
     ["Tamanho", tamanho],
@@ -86,7 +110,12 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
               <div className={estilos.fotosGrandes}>
                 {peca.fotos.map((foto, i) => (
                   // eslint-disable-next-line @next/next/no-img-element -- fotos já reduzidas no envio
-                  <img key={foto.id} id={`foto-${i + 1}`} src={enderecoDaFoto(foto.arquivo)} alt={`${peca.nome}, foto ${i + 1}`} />
+                  <img
+                    key={foto.id}
+                    id={`foto-${i + 1}`}
+                    src={enderecoDaFoto(foto.arquivo)}
+                    alt={`${peca.nome}, foto ${i + 1}`}
+                  />
                 ))}
               </div>
               {peca.fotos.length > 1 && (
@@ -94,7 +123,10 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
                   {peca.fotos.map((foto, i) => (
                     <a key={foto.id} href={`#foto-${i + 1}`}>
                       {/* eslint-disable-next-line @next/next/no-img-element -- miniatura */}
-                      <img src={enderecoDaFoto(foto.arquivo, true)} alt={`Ver foto ${i + 1}`} />
+                      <img
+                        src={enderecoDaFoto(foto.arquivo, true)}
+                        alt={`Ver foto ${i + 1}`}
+                      />
                     </a>
                   ))}
                 </nav>
@@ -104,8 +136,14 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
         </div>
         <div className={estilos.info}>
           <h1>{peca.nome}</h1>
-          <strong className={estilos.precoGrande}>{formatarReais(peca.precoCentavos)}</strong>
-          {!disponivel && <p className={estilos.reservada}>Esta peça está reservada para outra cliente no momento.</p>}
+          <strong className={estilos.precoGrande}>
+            {formatarReais(peca.precoCentavos)}
+          </strong>
+          {!disponivel && (
+            <p className={estilos.reservada}>
+              Esta peça está reservada para outra cliente no momento.
+            </p>
+          )}
           <dl className={estilos.detalhes}>
             {detalhes
               .filter(([, valor]) => valor)
@@ -116,14 +154,24 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
                 </div>
               ))}
           </dl>
-          {peca.descricao && <p className={estilos.descricao}>{peca.descricao}</p>}
+          {peca.descricao && (
+            <p className={estilos.descricao}>{peca.descricao}</p>
+          )}
           {disponivel &&
             (whatsapp ? (
-              <a className={estilos.botaoWhats} href={whatsapp} target="_blank" rel="noopener noreferrer">
+              <a
+                className={estilos.botaoWhats}
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Quero esta peça (WhatsApp)
               </a>
             ) : (
-              <p className={estilos.comoComprar}>Para comprar, fale com a Salty Baby pelo WhatsApp e informe o código {peca.codigo}.</p>
+              <p className={estilos.comoComprar}>
+                Para comprar, fale com a Salty Baby pelo WhatsApp e informe o
+                código {peca.codigo}.
+              </p>
             ))}
         </div>
       </article>

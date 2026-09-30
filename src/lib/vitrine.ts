@@ -69,3 +69,12 @@ export function linkWhatsapp(numero: string | undefined, mensagem: string): stri
   if (digitos.length < 12) return undefined;
   return `https://wa.me/${digitos}?text=${encodeURIComponent(mensagem)}`;
 }
+
+/** Mensagem pronta do WhatsApp para uma peça, com o link dela no site. */
+export function mensagemDaPeca(
+  peca: { codigo: string; nome: string; tamanho: string | null; preco: string },
+  origem: string,
+): string {
+  const partes = [peca.codigo, peca.nome, peca.tamanho && `tam. ${peca.tamanho}`, peca.preco].filter(Boolean).join(" · ");
+  return `Olá! Tenho interesse nesta peça: ${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
+}
