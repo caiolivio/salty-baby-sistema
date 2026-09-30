@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "./painel.module.css";
 
@@ -10,9 +11,11 @@ export const metadata: Metadata = { title: "Painel · Salty Baby" };
 export default async function Painel() {
   const usuario = await exigirAcesso("painel", "/painel");
   const primeiroNome = usuario.nome.split(" ")[0];
-  const [aVenda, fornecedoras] = await Promise.all([
+  await liberarReservasVencidas();
+  const [aVenda, fornecedoras, reservados] = await Promise.all([
     prisma.peca.count({ where: { status: "publicada" } }),
     prisma.fornecedora.count(),
+    prisma.pedido.count({ where: { status: "reservado" } }),
   ]);
 
   return (
@@ -22,6 +25,10 @@ export default async function Painel() {
         <Link href="/painel/pecas" className={estilos.cartao}>
           <strong>{aVenda}</strong>
           peças à venda
+        </Link>
+        <Link href="/painel/pedidos" className={estilos.cartao}>
+          <strong>{reservados}</strong>
+          {reservados === 1 ? "pedido reservado agora" : "pedidos reservados agora"}
         </Link>
         <Link href="/painel/fornecedoras" className={estilos.cartao}>
           <strong>{fornecedoras}</strong>

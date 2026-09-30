@@ -140,6 +140,7 @@ model Peca {
   fotos             FotoPeca[]
   categorias        PecaCategoria[]
   itensVendidos     ItemVenda[]
+  itensPedido       ItemPedido[]
 
   @@index([codigoAntigo])
   @@index([status])
@@ -261,4 +262,45 @@ model PecaCategoria {
   @@id([pecaId, categoriaId])
   @@index([categoriaId])
   @@map("pecas_categorias")
+}
+
+/// Situação do pedido feito no site. "reservado" segura as peças por 15 minutos.
+enum StatusPedido {
+  reservado
+  expirado
+  cancelado
+  pago
+}
+
+/// Pedido montado no carrinho do site e enviado pelo WhatsApp.
+model Pedido {
+  id            String       @id @default(cuid())
+  /// Número curto que a cliente cita no WhatsApp (tabela sequencias, chave "pedido").
+  numero        Int          @unique
+  nomeCliente   String       @map("nome_cliente") @db.VarChar(120)
+  status        StatusPedido @default(reservado)
+  /// Até quando as peças ficam reservadas.
+  reservadoAte  DateTime     @map("reservado_ate")
+  totalCentavos Int          @map("total_centavos")
+  criadoEm      DateTime     @default(now()) @map("criado_em")
+  atualizadoEm  DateTime     @updatedAt @map("atualizado_em")
+  itens         ItemPedido[]
+
+  @@index([status, reservadoAte])
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  pedidoId      String @map("pedido_id")
+  pecaId        String @map("peca_id")
+  /// Ordem em que a cliente escolheu as peças.
+  ordem         Int    @default(0)
+  /// Preço da peça no momento do pedido.
+  precoCentavos Int    @map("preco_centavos")
+  pedido        Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  peca          Peca   @relation(fields: [pecaId], references: [id])
+
+  @@id([pedidoId, pecaId])
+  @@index([pecaId])
+  @@map("itens_pedido")
 }

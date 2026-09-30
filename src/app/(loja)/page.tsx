@@ -5,6 +5,7 @@ import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { CONSERVACOES } from "@/lib/pecas/dados";
+import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import {
   enderecoDaPeca,
   generosDoPublico,
@@ -18,8 +19,7 @@ import estilos from "./loja.module.css";
 
 export const metadata: Metadata = {
   title: "Salty Baby · Moda Sustentável",
-  description:
-    "Brechó infantil em Caraguatatuba-SP. Roupas, calçados e acessórios de bebê e criança.",
+  description: "Brechó infantil em Caraguatatuba-SP. Roupas, calçados e acessórios de bebê e criança.",
 };
 
 /** Só aparece na vitrine a peça à venda e com estoque. */
@@ -30,6 +30,7 @@ const A_VENDA: Prisma.PecaWhereInput = {
 
 export default async function Vitrine({ searchParams }: PageProps<"/">) {
   const f = lerFiltros(await searchParams);
+  await liberarReservasVencidas();
   const generos = generosDoPublico(f.publico);
   // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino.
   const onde: Prisma.PecaWhereInput = {
@@ -37,16 +38,10 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     ...(f.tamanho && { tamanho: f.tamanho }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     AND: [
-      generos.length > 0
-        ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] }
-        : {},
+      generos.length > 0 ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] } : {},
       f.busca
         ? {
-            OR: [
-              { nome: { contains: f.busca } },
-              { marca: { contains: f.busca } },
-              { codigo: { contains: f.busca } },
-            ],
+            OR: [{ nome: { contains: f.busca } }, { marca: { contains: f.busca } }, { codigo: { contains: f.busca } }],
           }
         : {},
     ],
@@ -85,8 +80,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     }),
   ]);
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA_VITRINE));
-  const nomeConservacao = (c: string | null) =>
-    CONSERVACOES.find((x) => x.valor === c)?.nome;
+  const nomeConservacao = (c: string | null) => CONSERVACOES.find((x) => x.valor === c)?.nome;
   const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.busca);
 
   return (
@@ -129,21 +123,13 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
         )}
         <label className={estilos.buscaCampo}>
           Buscar
-          <input
-            name="q"
-            defaultValue={f.busca ?? ""}
-            placeholder="Nome, marca ou código"
-          />
+          <input name="q" defaultValue={f.busca ?? ""} placeholder="Nome, marca ou código" />
         </label>
         <button type="submit">Ver peças</button>
       </form>
 
       <p className={estilos.contagem}>
-        {total === 0
-          ? "Nenhuma peça encontrada"
-          : total === 1
-            ? "1 peça"
-            : `${total} peças`}
+        {total === 0 ? "Nenhuma peça encontrada" : total === 1 ? "1 peça" : `${total} peças`}
         {filtrando && (
           <>
             {" · "}
@@ -159,26 +145,15 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
               <Link href={enderecoDaPeca(p.codigo)} className={estilos.cartao}>
                 {p.fotos[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element -- fotos já reduzidas no envio
-                  <img
-                    src={enderecoDaFoto(p.fotos[0].arquivo, true)}
-                    alt={p.nome}
-                    loading="lazy"
-                  />
+                  <img src={enderecoDaFoto(p.fotos[0].arquivo, true)} alt={p.nome} loading="lazy" />
                 ) : (
                   <span className={estilos.semFoto}>Sem foto</span>
                 )}
                 <span className={estilos.nome}>{p.nome}</span>
                 <span className={estilos.detalhe}>
-                  {[
-                    p.tamanho && `Tam. ${p.tamanho}`,
-                    nomeConservacao(p.conservacao),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
+                  {[p.tamanho && `Tam. ${p.tamanho}`, nomeConservacao(p.conservacao)].filter(Boolean).join(" · ")}
                 </span>
-                <strong className={estilos.preco}>
-                  {formatarReais(p.precoCentavos)}
-                </strong>
+                <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>
               </Link>
             </li>
           ))}
@@ -187,19 +162,11 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
 
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {f.pagina > 1 && (
-            <Link href={linkDaVitrine(f, { pagina: f.pagina - 1 })}>
-              ← Anteriores
-            </Link>
-          )}
+          {f.pagina > 1 && <Link href={linkDaVitrine(f, { pagina: f.pagina - 1 })}>← Anteriores</Link>}
           <span>
             Página {f.pagina} de {paginas}
           </span>
-          {f.pagina < paginas && (
-            <Link href={linkDaVitrine(f, { pagina: f.pagina + 1 })}>
-              Próximas →
-            </Link>
-          )}
+          {f.pagina < paginas && <Link href={linkDaVitrine(f, { pagina: f.pagina + 1 })}>Próximas →</Link>}
         </nav>
       )}
     </>
