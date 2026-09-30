@@ -84,3 +84,16 @@
   font-size: 1rem;
   color: var(--petroleo);
 }
+
+/* Escolha do período: tudo numa linha (quebra no celular). */
+.periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.periodo > label {
+  flex: 0 1 200px;
+}

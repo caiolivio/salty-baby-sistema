@@ -1,11 +1,10 @@
 import { formatarReais } from "@/lib/dinheiro";
 import estilos from "./cliente.module.css";
 
-const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const nomeDoMes = (aaaamm: string) => `${MESES[Number(aaaamm.slice(5, 7)) - 1]}/${aaaamm.slice(2, 4)}`;
+type Barra = { chave: string; rotulo: string; totalCentavos: number; compras: number };
 
-/** Barras com o valor gasto em cada mês. Passar o mouse (ou tocar) mostra o valor e as compras. */
-export function GraficoGasto({ meses }: { meses: { mes: string; totalCentavos: number; compras: number }[] }) {
+/** Barras com o valor gasto em cada dia ou mês. Passar o mouse (ou tocar) mostra o valor e as compras. */
+export function GraficoGasto({ barras: meses, titulo }: { barras: Barra[]; titulo: string }) {
   const largura = 640;
   const altura = 180;
   const base = altura - 24;
@@ -14,18 +13,20 @@ export function GraficoGasto({ meses }: { meses: { mes: string; totalCentavos: n
   const passo = largura / meses.length;
   const barra = Math.min(36, passo - 8);
   const indiceMaior = meses.findIndex((m) => m.totalCentavos === maior);
+  // Com muitas barras (um mês por dia), mostra só alguns rótulos para não encavalar.
+  const pulo = Math.ceil(meses.length / 12);
 
   return (
     <figure className={estilos.grafico}>
-      <figcaption>Gasto por mês (últimos 12 meses)</figcaption>
-      <svg viewBox={`0 0 ${largura} ${altura}`} role="img" aria-label="Gráfico do valor gasto por mês">
+      <figcaption>{titulo}</figcaption>
+      <svg viewBox={`0 0 ${largura} ${altura}`} role="img" aria-label={titulo}>
         <line x1={0} x2={largura} y1={base} y2={base} className={estilos.eixo} />
         {meses.map((m, i) => {
           const h = m.totalCentavos === 0 ? 0 : Math.max(4, ((base - topo) * m.totalCentavos) / maior);
           const x = i * passo + (passo - barra) / 2;
-          const texto = `${nomeDoMes(m.mes)}: ${formatarReais(m.totalCentavos)} em ${m.compras} compra(s)`;
+          const texto = `${m.rotulo}: ${formatarReais(m.totalCentavos)} em ${m.compras} compra(s)`;
           return (
-            <g key={m.mes} className={estilos.coluna}>
+            <g key={m.chave} className={estilos.coluna}>
               <title>{texto}</title>
               {/* Área de toque maior que a barra. */}
               <rect x={i * passo} y={topo} width={passo} height={base - topo} fill="transparent" />
@@ -40,9 +41,16 @@ export function GraficoGasto({ meses }: { meses: { mes: string; totalCentavos: n
                   {formatarReais(m.totalCentavos)}
                 </text>
               )}
-              <text x={x + barra / 2} y={altura - 6} textAnchor="middle" className={estilos.mes}>
-                {nomeDoMes(m.mes)}
-              </text>
+              {((i % pulo === 0 && meses.length - 1 - i >= pulo / 2) || i === meses.length - 1) && (
+                <text
+                  x={i === 0 ? x : i === meses.length - 1 ? x + barra : x + barra / 2}
+                  y={altura - 6}
+                  textAnchor={i === meses.length - 1 ? "end" : i === 0 ? "start" : "middle"}
+                  className={estilos.mes}
+                >
+                  {m.rotulo}
+                </text>
+              )}
             </g>
           );
         })}

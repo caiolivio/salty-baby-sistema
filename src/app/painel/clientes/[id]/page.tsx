@@ -4,7 +4,16 @@ import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarCpf } from "@/lib/clientes/dados";
-import { estimarCriancas, formatarIdade, gastoPorMes, marcasPreferidas, mesesEntre, tamanhoParaIdade } from "@/lib/clientes/perfil";
+import {
+  agruparGasto,
+  dentroDoPeriodo,
+  estimarCriancas,
+  formatarIdade,
+  lerPeriodo,
+  marcasPreferidas,
+  mesesEntre,
+  tamanhoParaIdade,
+} from "@/lib/clientes/perfil";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -16,6 +25,7 @@ import estilos from "../../painel.module.css";
 import { salvarCliente } from "../acoes";
 import visual from "../cliente.module.css";
 import { FormularioCrianca } from "../criancas";
+import { EscolherPeriodo } from "../escolher-periodo";
 import { GraficoGasto } from "../grafico-gasto";
 import { FormularioCliente } from "../formulario-cliente";
 
@@ -52,7 +62,11 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
   const agora = new Date();
   const hoje = hojeEmSaoPaulo();
   const pecasCompradas = c.vendas.flatMap((v) => v.itens.map((i) => ({ data: v.data, tamanho: i.peca.tamanho, marca: i.peca.marca })));
-  const ticketMedio = c.vendas.length ? Math.round(gasto / c.vendas.length) : 0;
+  const periodo = lerPeriodo(aviso, hoje);
+  const vendasDoPeriodo = c.vendas.filter((v) => dentroDoPeriodo(v.data, periodo));
+  const gastoDoPeriodo = vendasDoPeriodo.reduce((s, v) => s + v.totalCentavos, 0);
+  const ticketMedio = vendasDoPeriodo.length ? Math.round(gastoDoPeriodo / vendasDoPeriodo.length) : 0;
+  const pecasDoPeriodo = vendasDoPeriodo.reduce((s, v) => s + v.itens.length, 0);
   const estimadas = estimarCriancas(pecasCompradas, agora);
   const marcas = marcasPreferidas(pecasCompradas.map((p) => p.marca));
   const mesAno = (d: Date) => formatarData(d).slice(3);
@@ -86,12 +100,39 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         {administradora && c.cpf && <span>CPF {formatarCpf(c.cpf)}</span>}
       </div>
 
-      <h2>Resumo</h2>
+      <h2>Dados da cliente</h2>
+      <FormularioCliente
+        acao={salvarCliente}
+        textoBotao="Salvar alterações"
+        voltar="/painel/clientes"
+        mostrarCpf={administradora}
+        iniciais={{
+          id: c.id,
+          nome: c.nome,
+          telefone: tel ? formatarTelefone(tel) : (c.telefone ?? ""),
+          email: c.email ?? "",
+          cpf: administradora ? (c.cpf ?? "") : "",
+          endereco: c.endereco ?? "",
+          cep: c.cep ?? "",
+          cidade: c.cidade ?? "",
+          estado: c.estado ?? "",
+          observacao: c.observacao ?? "",
+        }}
+      />
+
+      <h2 id="resumo">Resumo · {periodo.rotulo}</h2>
+      <EscolherPeriodo periodo={periodo} hoje={hoje} />
       <div className={visual.resumoCliente}>
         <div className={estilos.cartao}>
-          <strong>{c.vendas.length}</strong>
-          compra(s) · {pecasCompradas.length} peça(s)
+          <strong>{vendasDoPeriodo.length}</strong>
+          compra(s) · {pecasDoPeriodo} peça(s)
         </div>
+        {administradora && (
+          <div className={estilos.cartao}>
+            <strong>{formatarReais(gastoDoPeriodo)}</strong>
+            gasto no período
+          </div>
+        )}
         {administradora && (
           <div className={estilos.cartao}>
             <strong>{formatarReais(ticketMedio)}</strong>
@@ -105,7 +146,13 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           </div>
         )}
       </div>
-      {administradora && c.vendas.length > 0 && <GraficoGasto meses={gastoPorMes(c.vendas, agora)} />}
+      {administradora && vendasDoPeriodo.length > 0 && (
+        <GraficoGasto
+          barras={agruparGasto(c.vendas, periodo)}
+          titulo={`Gasto por ${periodo.por === "dia" ? "dia" : "mês"} · ${periodo.rotulo}`}
+        />
+      )}
+      {vendasDoPeriodo.length === 0 && <p>Nenhuma compra neste período.</p>}
 
       <h2>Crianças</h2>
       {estimadas.length > 0 && (
@@ -222,25 +269,6 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         </div>
       )}
 
-      <h2>Dados da cliente</h2>
-      <FormularioCliente
-        acao={salvarCliente}
-        textoBotao="Salvar alterações"
-        voltar="/painel/clientes"
-        mostrarCpf={administradora}
-        iniciais={{
-          id: c.id,
-          nome: c.nome,
-          telefone: tel ? formatarTelefone(tel) : (c.telefone ?? ""),
-          email: c.email ?? "",
-          cpf: administradora ? (c.cpf ?? "") : "",
-          endereco: c.endereco ?? "",
-          cep: c.cep ?? "",
-          cidade: c.cidade ?? "",
-          estado: c.estado ?? "",
-          observacao: c.observacao ?? "",
-        }}
-      />
     </>
   );
 }

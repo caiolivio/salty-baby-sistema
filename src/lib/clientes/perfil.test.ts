@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimarCriancas, faixaDoTamanho, formatarIdade, gastoPorMes, marcasPreferidas, tamanhoParaIdade } from "./perfil";
+import { agruparGasto, estimarCriancas, faixaDoTamanho, formatarIdade, lerPeriodo, marcasPreferidas, tamanhoParaIdade } from "./perfil";
 
 const d = (t: string) => new Date(`${t}T00:00:00Z`);
 
@@ -91,21 +91,43 @@ describe("resumo da cliente", () => {
     ]);
   });
 
-  it("soma o gasto por mês, com meses vazios", () => {
-    const r = gastoPorMes(
-      [
-        { data: d("2026-09-10"), totalCentavos: 5000 },
-        { data: d("2026-09-20"), totalCentavos: 3000 },
-        { data: d("2026-07-01"), totalCentavos: 1000 },
-        { data: d("2025-01-01"), totalCentavos: 9999 },
-      ],
-      d("2026-09-30"),
-      3,
-    );
-    expect(r).toEqual([
-      { mes: "2026-07", totalCentavos: 1000, compras: 1 },
-      { mes: "2026-08", totalCentavos: 0, compras: 0 },
-      { mes: "2026-09", totalCentavos: 8000, compras: 2 },
-    ]);
+  const vendas = [
+    { data: d("2026-09-10"), totalCentavos: 5000 },
+    { data: d("2026-09-20"), totalCentavos: 3000 },
+    { data: d("2026-07-01"), totalCentavos: 1000 },
+    { data: d("2025-01-01"), totalCentavos: 9999 },
+  ];
+
+  it("resumo anual: 12 meses por mês, com meses vazios", () => {
+    const p = lerPeriodo({}, "2026-09-30");
+    expect(p).toMatchObject({ tipo: "anual", de: "2025-10-01", ate: "2026-09-30", por: "mes" });
+    const r = agruparGasto(vendas, p);
+    expect(r).toHaveLength(12);
+    expect(r[0]).toMatchObject({ chave: "2025-10", rotulo: "out/25", totalCentavos: 0 });
+    expect(r.at(-3)).toMatchObject({ chave: "2026-07", totalCentavos: 1000, compras: 1 });
+    expect(r.at(-1)).toMatchObject({ chave: "2026-09", rotulo: "set/26", totalCentavos: 8000, compras: 2 });
+  });
+
+  it("resumo mensal: um mês escolhido, por dia", () => {
+    const p = lerPeriodo({ periodo: "mensal", mes: "2026-07" }, "2026-09-30");
+    expect(p).toMatchObject({ tipo: "mensal", de: "2026-07-01", ate: "2026-07-31", por: "dia", rotulo: "julho de 2026" });
+    const r = agruparGasto(vendas, p);
+    expect(r).toHaveLength(31);
+    expect(r[0]).toMatchObject({ rotulo: "01/07", totalCentavos: 1000 });
+    // Mês atual vai só até hoje; mês no futuro volta para o atual.
+    expect(lerPeriodo({ periodo: "mensal", mes: "2026-09" }, "2026-09-15").ate).toBe("2026-09-15");
+    expect(lerPeriodo({ periodo: "mensal", mes: "2027-01" }, "2026-09-15").mes).toBe("2026-09");
+  });
+
+  it("resumo por período: datas escolhidas, por dia ou por mês", () => {
+    const curto = lerPeriodo({ periodo: "periodo", de: "2026-09-01", ate: "2026-09-15" }, "2026-09-30");
+    expect(curto).toMatchObject({ de: "2026-09-01", ate: "2026-09-15", por: "dia", rotulo: "01/09/2026 a 15/09/2026" });
+    expect(agruparGasto(vendas, curto).reduce((s, x) => s + x.totalCentavos, 0)).toBe(5000);
+    const longo = lerPeriodo({ periodo: "periodo", de: "2025-01-01", ate: "2026-09-30" }, "2026-09-30");
+    expect(longo.por).toBe("mes");
+    expect(agruparGasto(vendas, longo)).toHaveLength(21);
+    // Datas trocadas são corrigidas; data no futuro vira hoje.
+    expect(lerPeriodo({ periodo: "periodo", de: "2026-09-20", ate: "2026-09-10" }, "2026-09-30")).toMatchObject({ de: "2026-09-10", ate: "2026-09-20" });
+    expect(lerPeriodo({ periodo: "periodo", de: "2026-09-20", ate: "2027-01-01" }, "2026-09-30").ate).toBe("2026-09-30");
   });
 });

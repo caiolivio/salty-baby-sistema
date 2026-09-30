@@ -140,19 +140,79 @@ export function marcasPreferidas(marcas: (string | null)[], limite = 5): { marca
   return [...contagem.values()].sort((a, b) => b.pecas - a.pecas || a.marca.localeCompare(b.marca)).slice(0, limite);
 }
 
-/** Total gasto por mês (aaaa-mm), dos últimos `meses` meses até o mês de hoje, inclusive os vazios. */
-export function gastoPorMes(
+const NOMES_MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+export type TipoPeriodo = "anual" | "mensal" | "periodo";
+
+export type Periodo = {
+  tipo: TipoPeriodo;
+  /** Datas aaaa-mm-dd, inclusive. */
+  de: string;
+  ate: string;
+  /** Mês escolhido (aaaa-mm), no resumo mensal. */
+  mes: string;
+  /** Barras do gráfico por dia ou por mês. */
+  por: "dia" | "mes";
+  rotulo: string;
+};
+
+const data = (t: string) => new Date(`${t}T00:00:00Z`);
+const texto = (d: Date) => d.toISOString().slice(0, 10);
+const dataValida = (t: unknown): t is string => typeof t === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t) && !Number.isNaN(data(t).getTime());
+const brasileira = (t: string) => `${t.slice(8, 10)}/${t.slice(5, 7)}/${t.slice(0, 4)}`;
+
+/**
+ * Período do resumo da cliente: os últimos 12 meses (padrão), um mês escolhido
+ * ou um período de datas. Valores inválidos voltam para o padrão de cada tipo.
+ */
+export function lerPeriodo(valores: { periodo?: unknown; mes?: unknown; de?: unknown; ate?: unknown }, hoje: string): Periodo {
+  const mesAtual = hoje.slice(0, 7);
+  if (valores.periodo === "mensal") {
+    const mes = typeof valores.mes === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(valores.mes) && valores.mes <= mesAtual ? valores.mes : mesAtual;
+    const [ano, m] = mes.split("-").map(Number);
+    const fim = texto(new Date(Date.UTC(ano, m, 0)));
+    return { tipo: "mensal", de: `${mes}-01`, ate: fim < hoje ? fim : hoje, mes, por: "dia", rotulo: `${NOMES_MESES[m - 1]} de ${ano}` };
+  }
+  if (valores.periodo === "periodo") {
+    let ate = dataValida(valores.ate) && valores.ate <= hoje ? valores.ate : hoje;
+    let de = dataValida(valores.de) ? valores.de : texto(new Date(data(ate).getTime() - 29 * DIA));
+    if (de > ate) [de, ate] = [ate, de];
+    const dias = (data(ate).getTime() - data(de).getTime()) / DIA + 1;
+    return { tipo: "periodo", de, ate, mes: mesAtual, por: dias <= 62 ? "dia" : "mes", rotulo: `${brasileira(de)} a ${brasileira(ate)}` };
+  }
+  const inicio = new Date(Date.UTC(Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7)) - 12, 1));
+  return { tipo: "anual", de: texto(inicio), ate: hoje, mes: mesAtual, por: "mes", rotulo: "últimos 12 meses" };
+}
+
+export function dentroDoPeriodo(d: Date, periodo: Periodo): boolean {
+  const t = texto(d);
+  return t >= periodo.de && t <= periodo.ate;
+}
+
+/** Total gasto em cada dia ou mês do período, inclusive os vazios, para o gráfico. */
+export function agruparGasto(
   vendas: { data: Date; totalCentavos: number }[],
-  hoje: Date,
-  meses = 12,
-): { mes: string; totalCentavos: number; compras: number }[] {
-  const lista: { mes: string; totalCentavos: number; compras: number }[] = [];
-  for (let i = meses - 1; i >= 0; i--) {
-    const d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - i, 1));
-    lista.push({ mes: d.toISOString().slice(0, 7), totalCentavos: 0, compras: 0 });
+  periodo: Periodo,
+): { chave: string; rotulo: string; totalCentavos: number; compras: number }[] {
+  const lista: { chave: string; rotulo: string; totalCentavos: number; compras: number }[] = [];
+  if (periodo.por === "dia") {
+    for (let t = data(periodo.de).getTime(); t <= data(periodo.ate).getTime(); t += DIA) {
+      const chave = texto(new Date(t));
+      lista.push({ chave, rotulo: `${chave.slice(8, 10)}/${chave.slice(5, 7)}`, totalCentavos: 0, compras: 0 });
+    }
+  } else {
+    const [a, m] = periodo.de.split("-").map(Number);
+    for (let i = 0; ; i++) {
+      const chave = texto(new Date(Date.UTC(a, m - 1 + i, 1))).slice(0, 7);
+      if (chave > periodo.ate.slice(0, 7)) break;
+      lista.push({ chave, rotulo: `${CURTOS[Number(chave.slice(5, 7)) - 1]}/${chave.slice(2, 4)}`, totalCentavos: 0, compras: 0 });
+    }
   }
   for (const v of vendas) {
-    const item = lista.find((l) => l.mes === v.data.toISOString().slice(0, 7));
+    if (!dentroDoPeriodo(v.data, periodo)) continue;
+    const chave = periodo.por === "dia" ? texto(v.data) : texto(v.data).slice(0, 7);
+    const item = lista.find((l) => l.chave === chave);
     if (item) {
       item.totalCentavos += v.totalCentavos;
       item.compras += 1;
