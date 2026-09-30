@@ -50,7 +50,9 @@ export default async function Pedidos() {
               {pedidos.map((p) => (
                 <tr key={p.id}>
                   <td className={estilos.curta}>
-                    <strong>{p.numero}</strong>
+                    <Link href={`/painel/pedidos/${p.id}`} className={estilos.codigo}>
+                      {p.numero}
+                    </Link>
                   </td>
                   <td>{p.nomeCliente}</td>
                   <td data-rotulo="Peças">
@@ -66,6 +68,11 @@ export default async function Pedidos() {
                   </td>
                   <td data-rotulo="Situação">
                     {NOMES[p.status]}
+                    {(p.status === "reservado" || p.status === "expirado") && (
+                      <Link href={`/painel/pedidos/${p.id}`} className={estilos.antigo}>
+                        Confirmar pagamento
+                      </Link>
+                    )}
                     {p.status === "reservado" && (
                       <>
                         <span className={estilos.antigo}>
