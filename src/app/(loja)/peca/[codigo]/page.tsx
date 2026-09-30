@@ -9,7 +9,7 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { CONSERVACOES } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { linkWhatsapp } from "@/lib/vitrine";
+import { linkWhatsapp, WHATSAPP_LOJA } from "@/lib/vitrine";
 import estilos from "../../loja.module.css";
 
 // Só peças à venda ou reservadas aparecem para o público. Nada de fornecedora,
@@ -58,7 +58,7 @@ export default async function PaginaPeca({ params }: PageProps<"/peca/[codigo]">
   const conservacao = CONSERVACOES.find((c) => c.valor === peca.conservacao)?.nome;
   const categorias = peca.categorias.map((c) => c.categoria.nome).join(", ");
   const whatsapp = linkWhatsapp(
-    process.env.WHATSAPP_LOJA,
+    process.env.WHATSAPP_LOJA || WHATSAPP_LOJA,
     `Olá! Tenho interesse nesta peça: ${peca.codigo} · ${peca.nome}${peca.tamanho ? ` · tam. ${peca.tamanho}` : ""} · ${formatarReais(peca.precoCentavos)}`,
   );
   const detalhes: [string, string | null | undefined][] = [

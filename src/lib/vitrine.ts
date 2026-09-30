@@ -60,10 +60,10 @@ export function tamanhosDisponiveis(existentes: Iterable<string | null>): Tamanh
   return TAMANHOS.filter((t) => tem.has(t.valor)).map((t) => t.valor);
 }
 
-/**
- * Link do WhatsApp da loja com a mensagem pronta. O número vem da variável
- * WHATSAPP_LOJA (só dígitos, com DDI e DDD, ex.: 5512999999999).
- */
+/** WhatsApp da Salty Baby, (12) 98105-3623. A variável WHATSAPP_LOJA pode trocar. */
+export const WHATSAPP_LOJA = "5512981053623";
+
+/** Link do WhatsApp da loja com a mensagem pronta (número só com dígitos, com 55 e DDD). */
 export function linkWhatsapp(numero: string | undefined, mensagem: string): string | undefined {
   const digitos = (numero ?? "").replace(/\D/g, "");
   if (digitos.length < 12) return undefined;

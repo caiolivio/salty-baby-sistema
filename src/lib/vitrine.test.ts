@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enderecoDaPeca, generosDoPublico, lerFiltros, linkDaVitrine, linkWhatsapp, tamanhosDisponiveis } from "./vitrine";
+import { enderecoDaPeca, generosDoPublico, lerFiltros, linkDaVitrine, linkWhatsapp, tamanhosDisponiveis, WHATSAPP_LOJA } from "./vitrine";
 
 describe("vitrine", () => {
   it("lê só filtros válidos", () => {
@@ -49,5 +49,11 @@ describe("linkWhatsapp", () => {
   it("sem número configurado, não há link", () => {
     expect(linkWhatsapp(undefined, "x")).toBeUndefined();
     expect(linkWhatsapp("1299990000", "x")).toBeUndefined();
+  });
+});
+
+describe("número da loja", () => {
+  it("é um WhatsApp válido", () => {
+    expect(linkWhatsapp(WHATSAPP_LOJA, "Oi")).toBe("https://wa.me/5512981053623?text=Oi");
   });
 });
