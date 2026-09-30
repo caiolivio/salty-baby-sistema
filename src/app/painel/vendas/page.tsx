@@ -32,7 +32,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
       skip: (pagina - 1) * POR_PAGINA,
       take: POR_PAGINA,
       include: {
-        cliente: { select: { nome: true } },
+        cliente: { select: { id: true, nome: true } },
         pedido: { select: { id: true } },
         itens: { include: { peca: { select: { id: true, codigo: true, nome: true } } } },
       },
@@ -87,7 +87,13 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
               <tr key={v.id}>
                 <td className={estilos.curta}>{formatarData(v.data)}</td>
                 <td>
-                  {v.pedido ? <Link href={`/painel/pedidos/${v.pedido.id}`}>{v.origem}</Link> : (v.origem ?? v.cliente?.nome ?? "—")}
+                  {v.pedido ? (
+                    <Link href={`/painel/pedidos/${v.pedido.id}`}>{v.origem}</Link>
+                  ) : v.cliente ? (
+                    <Link href={`/painel/clientes/${v.cliente.id}`}>{v.origem ?? v.cliente.nome}</Link>
+                  ) : (
+                    (v.origem ?? "—")
+                  )}
                   <span className={estilos.antigo}>
                     {[v.grupo ? `Grupo ${v.grupo}` : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
                   </span>

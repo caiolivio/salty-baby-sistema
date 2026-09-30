@@ -117,7 +117,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
       </p>
       {cliente ? (
         <p>
-          No cadastro: {cliente.nome}
+          No cadastro: <Link href={`/painel/clientes/${cliente.id}`}>{cliente.nome}</Link>
           {cliente.telefone && ` · ${formatarTelefone(lerTelefoneCliente(cliente.telefone) ?? cliente.telefone)}`}
           {cliente.email && ` · ${cliente.email}`}
           {administradora && cliente.cpf && ` · CPF ${cliente.cpf}`}
