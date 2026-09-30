@@ -10,7 +10,8 @@ export const TAMANHO_GRANDE = 1600;
 export const TAMANHO_MINIATURA = 400;
 
 export function pastaDeFotos(): string {
-  return path.resolve(process.env.FOTOS_DIR ?? path.join(process.cwd(), "dados", "fotos"));
+  // A pasta vem do ambiente: o turbopackIgnore evita que o build copie o projeto inteiro.
+  return path.resolve(/*turbopackIgnore: true*/ process.env.FOTOS_DIR ?? path.join(process.cwd(), "dados", "fotos"));
 }
 
 /** Reduz a foto e grava. Devolve o nome base usado no banco (sem extensão). */
@@ -46,4 +47,12 @@ export async function lerArquivoDeFoto(partes: string[]): Promise<Buffer | null>
 
 export async function apagarFotosDePecas(): Promise<void> {
   await rm(path.join(pastaDeFotos(), "pecas"), { recursive: true, force: true });
+}
+
+/** Apaga os dois tamanhos de uma foto. */
+export async function apagarFoto(base: string): Promise<void> {
+  const raiz = pastaDeFotos();
+  const alvo = path.resolve(raiz, base);
+  if (!alvo.startsWith(raiz + path.sep)) return;
+  await Promise.all([rm(`${alvo}.webp`, { force: true }), rm(`${alvo}-p.webp`, { force: true })]);
 }

@@ -1,0 +1,114 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { exigirAcesso } from "@/lib/acesso";
+import { prisma } from "@/lib/banco";
+import { FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel } from "@/lib/pecas/dados";
+import { adicionarFotos, atualizarPeca, criarPeca, duplicarPeca, fotoPrincipal, LIMITE_FOTOS, removerFoto } from "@/lib/pecas/gravar";
+
+export type EstadoPeca = { erro?: string; aviso?: string; valores?: Record<string, string> } | undefined;
+
+const TAMANHO_MAXIMO_FOTO = 12 * 1024 * 1024;
+
+const valoresDigitados = (dados: FormData) =>
+  Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+
+/** Fotos enviadas no formulário, já conferidas. */
+async function fotosDoFormulario(dados: FormData): Promise<Buffer[] | string> {
+  const arquivos = dados.getAll("fotos").filter((f): f is File => f instanceof File && f.size > 0);
+  if (arquivos.length > LIMITE_FOTOS) return `Envie no máximo ${LIMITE_FOTOS} fotos por peça.`;
+  if (arquivos.some((f) => f.size > TAMANHO_MAXIMO_FOTO)) return "Uma das fotos é grande demais.";
+  return Promise.all(arquivos.map(async (f) => Buffer.from(await f.arrayBuffer())));
+}
+
+const avisoFotos = (recusadas: number) => (recusadas > 0 ? `&fotosRecusadas=${recusadas}` : "");
+
+export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
+  await exigirAcesso("painel");
+  const valores = valoresDigitados(dados);
+
+  const escolhida = valores.fornecedoraId ?? "";
+  if (!escolhida) return { erro: "Escolha a fornecedora (ou Salty, se a peça é da loja).", valores };
+  const fornecedora =
+    escolhida === FORNECEDORA_LOJA
+      ? null
+      : await prisma.fornecedora.findUnique({
+          where: { id: escolhida },
+          select: { id: true, codigo: true, percentualRepassePadrao: true },
+        });
+  if (escolhida !== FORNECEDORA_LOJA && !fornecedora) return { erro: "Esta fornecedora não existe mais.", valores };
+
+  const lido = lerFormularioPeca(valores, {
+    consignada: Boolean(fornecedora),
+    repassePadrao: fornecedora?.percentualRepassePadrao ?? 0,
+    hoje: hojeEmSaoPaulo(),
+  });
+  if (!lido.ok) return { erro: lido.erro, valores };
+  const fotos = await fotosDoFormulario(dados);
+  if (typeof fotos === "string") return { erro: fotos, valores };
+
+  const { id } = await criarPeca(lido.dados, fornecedora);
+  const { recusadas } = await adicionarFotos(id, fotos);
+  redirect(`/painel/pecas/${id}?criada=1${avisoFotos(recusadas)}`);
+}
+
+export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
+  await exigirAcesso("painel");
+  const valores = valoresDigitados(dados);
+  const id = valores.id ?? "";
+  const peca = await prisma.peca.findUnique({
+    where: { id },
+    select: { tipo: true, status: true, dataEntrada: true, fornecedora: { select: { percentualRepassePadrao: true } } },
+  });
+  if (!peca) return { erro: "Esta peça não existe mais.", valores };
+
+  // Peça já vendida: a situação só muda pelas vendas.
+  const editavel = situacaoEditavel(peca.status);
+  const lido = lerFormularioPeca(editavel ? valores : { ...valores, status: "" }, {
+    consignada: peca.tipo === "consignada",
+    repassePadrao: peca.fornecedora?.percentualRepassePadrao ?? 0,
+    hoje: peca.dataEntrada.toISOString().slice(0, 10),
+  });
+  if (!lido.ok) return { erro: lido.erro, valores };
+
+  await atualizarPeca(id, lido.dados, editavel ? undefined : peca.status);
+  redirect(`/painel/pecas/${id}?salva=1`);
+}
+
+export async function duplicar(dados: FormData): Promise<void> {
+  await exigirAcesso("painel");
+  const copia = await duplicarPeca(String(dados.get("id") ?? ""), hojeEmSaoPaulo());
+  if (!copia) redirect("/painel/pecas");
+  redirect(`/painel/pecas/${copia.id}?duplicada=1`);
+}
+
+export async function enviarFotos(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
+  await exigirAcesso("painel");
+  const id = String(dados.get("id") ?? "");
+  if (!(await prisma.peca.findUnique({ where: { id }, select: { id: true } }))) return { erro: "Esta peça não existe mais." };
+  const fotos = await fotosDoFormulario(dados);
+  if (typeof fotos === "string") return { erro: fotos };
+  if (fotos.length === 0) return { erro: "Escolha ou tire uma foto." };
+
+  const { guardadas, recusadas } = await adicionarFotos(id, fotos);
+  revalidatePath(`/painel/pecas/${id}`);
+  if (recusadas > 0) {
+    return { erro: `${guardadas} foto(s) guardada(s). ${recusadas} não entrou(aram): limite de ${LIMITE_FOTOS} fotos ou imagem que não abriu.` };
+  }
+  return { aviso: guardadas === 1 ? "Foto guardada." : `${guardadas} fotos guardadas.` };
+}
+
+export async function apagarFotoDaPeca(dados: FormData): Promise<void> {
+  await exigirAcesso("painel");
+  const id = String(dados.get("id") ?? "");
+  await removerFoto(id, String(dados.get("fotoId") ?? ""));
+  revalidatePath(`/painel/pecas/${id}`);
+}
+
+export async function tornarPrincipal(dados: FormData): Promise<void> {
+  await exigirAcesso("painel");
+  const id = String(dados.get("id") ?? "");
+  await fotoPrincipal(id, String(dados.get("fotoId") ?? ""));
+  revalidatePath(`/painel/pecas/${id}`);
+}

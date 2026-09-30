@@ -6,7 +6,7 @@ import { prisma } from "@/lib/banco";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import estilos from "../../painel.module.css";
 import { salvarFornecedora } from "../acoes";
-import proprios from "../fornecedora.module.css";
+import proprios from "../../formulario.module.css";
 import { FormularioFornecedora } from "../formulario-fornecedora";
 
 export const metadata: Metadata = { title: "Fornecedora · Salty Baby" };
@@ -49,6 +49,7 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
       )}
       <div className={proprios.resumo}>
         <Link href={`/painel/pecas?q=${f.codigo}`}>Ver as peças dela</Link>
+        {f.ativa && <Link href={`/painel/pecas/nova?fornecedora=${f.id}`}>Cadastrar peça dela</Link>}
         <span>{aVenda} em estoque</span>
         <span>{vendidas} vendida(s)</span>
       </div>

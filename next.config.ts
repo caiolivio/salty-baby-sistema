@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   experimental: {
-    // As bases do Notion (texto) chegam numa ação do servidor; o limite padrão é 1 MB.
-    serverActions: { bodySizeLimit: "5mb" },
+    // As bases do Notion e as fotos das peças chegam em ações do servidor; o limite padrão é 1 MB.
+    serverActions: { bodySizeLimit: "25mb" },
   },
 };
 

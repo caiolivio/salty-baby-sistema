@@ -7,6 +7,7 @@ import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { NOMES_SITUACAO } from "@/lib/situacoes";
 import { TAMANHOS } from "@/lib/tamanhos";
+import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 
 export const metadata: Metadata = { title: "Peças · Salty Baby" };
@@ -51,7 +52,12 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
 
   return (
     <>
-      <h1 className={estilos.titulo}>Peças</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Peças</h1>
+        <Link href="/painel/pecas/nova" className={proprios.botao}>
+          + Nova peça
+        </Link>
+      </div>
       <form className={estilos.busca} role="search">
         <input
           name="q"
@@ -89,7 +95,9 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                   )}
                 </td>
                 <td className={estilos.curta}>
-                  <span className={estilos.codigo}>{p.codigo}</span>
+                  <Link href={`/painel/pecas/${p.id}`} className={estilos.codigo}>
+                    {p.codigo}
+                  </Link>
                   {p.codigoAntigo && <span className={estilos.antigo}>antigo {p.codigoAntigo}</span>}
                 </td>
                 <td>

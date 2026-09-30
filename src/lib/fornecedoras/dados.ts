@@ -7,13 +7,7 @@ import { lerPercentual } from "../importacao/notion";
 /** 40% em pontos-base. */
 export const REPASSE_PADRAO = 4000;
 
-/**
- * Próximo número de fornecedora. A sequência só cresce, então um código nunca
- * volta a ser usado; e nunca fica abaixo de um número que já existe.
- */
-export function numeroSeguro(ultimoDaSequencia: number, maiorExistente: number | null): number {
-  return Math.max(ultimoDaSequencia, (maiorExistente ?? 0) + 1);
-}
+export { numeroSeguro } from "../codigos";
 
 const texto = (maximo: number) =>
   z

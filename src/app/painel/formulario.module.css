@@ -37,7 +37,9 @@
   font-size: 0.95rem;
 }
 
-.campo input {
+.campo input,
+.campo select,
+.campo textarea {
   font: inherit;
   font-weight: 400;
   padding: 10px 12px;
@@ -48,7 +50,9 @@
   min-width: 0;
 }
 
-.campo input:focus {
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
   outline: 2px solid var(--turquesa);
   outline-offset: 1px;
   border-color: var(--turquesa);
@@ -134,4 +138,94 @@
   color: #4a5a64;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.campo textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.fixo {
+  font-weight: 400;
+  padding: 10px 0;
+}
+
+.botaoSecundario {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: 1px solid var(--petroleo);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--petroleo);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.botaoSecundario:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.foto img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--fundo-suave);
+}
+
+.foto form {
+  display: contents;
+}
+
+.foto button {
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--fundo);
+  color: var(--petroleo);
+  cursor: pointer;
+}
+
+.principal {
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+.previas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.previas img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.campo {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.campo input[type="file"] {
+  width: 100%;
+  padding: 8px;
 }

@@ -19,3 +19,12 @@ export function chaveSequenciaPeca(prefixo: string): string {
 }
 
 export const CHAVE_SEQUENCIA_FORNECEDORA = "fornecedora";
+
+/**
+ * Próximo número de uma sequência (fornecedora ou peças de uma fornecedora). A
+ * sequência só cresce, então um código nunca volta a ser usado; e nunca fica
+ * abaixo de um número que já existe.
+ */
+export function numeroSeguro(ultimoDaSequencia: number, maiorExistente: number | null): number {
+  return Math.max(ultimoDaSequencia, (maiorExistente ?? 0) + 1);
+}
