@@ -7,6 +7,7 @@ import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { NOMES_SITUACAO } from "@/lib/situacoes";
 import { TAMANHOS } from "@/lib/tamanhos";
+import { ImprimirEtiquetas } from "./imprimir-etiquetas";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 
@@ -70,10 +71,14 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
       <p>
         {total} peça(s){busca && ` encontradas para "${busca}"`}.
       </p>
+      <ImprimirEtiquetas voltar={link(pagina)} />
       <div className={estilos.tabelaCaixa}>
         <table className={estilos.tabela}>
           <thead>
             <tr>
+              <th className={estilos.marcar}>
+                <span className={proprios.escondido}>Etiqueta</span>
+              </th>
               <th>Foto</th>
               <th>Código</th>
               <th>Peça</th>
@@ -86,6 +91,9 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
           <tbody>
             {pecas.map((p) => (
               <tr key={p.id} className={estilos.comFoto}>
+                <td className={estilos.marcar}>
+                  <input type="checkbox" name="ids" value={p.id} form="etiquetas" aria-label={`Etiqueta de ${p.codigo}`} />
+                </td>
                 <td className={estilos.foto}>
                   {p.fotos[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio
