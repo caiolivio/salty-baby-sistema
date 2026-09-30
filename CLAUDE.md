@@ -197,4 +197,5 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Acesso: as regras de quem entra onde ficam em `src/lib/permissoes.ts` (com testes). Toda página, layout e ação do servidor protegidos começa com `exigirAcesso(...)` de `src/lib/acesso.ts`.
 - Fotos: gravadas por `src/lib/fotos.ts` em `FOTOS_DIR` (na VPS, `~/saltybaby/fotos`, fora das versões) e servidas em `/fotos/...`.
 - Importação do Notion: a administradora envia o .zip do export em `/painel/importar`. As regras ficam em `src/lib/importacao/notion.ts` (com testes) e só rodam com o banco vazio. No site de teste (`IMPORTACAO_PODE_APAGAR=sim`) dá para apagar e importar de novo.
+- Fornecedoras: o código novo vem da tabela `sequencias` (chave `fornecedora`), reservado dentro da transação em `src/lib/fornecedoras/gravar.ts`. As regras do formulário ficam em `src/lib/fornecedoras/dados.ts` (com testes).
 - Segredos da publicação: `AUTH_SECRET` é criado na própria VPS (`~/saltybaby/segredos-do-servidor.env`). `CODIGO_PRIMEIRO_ACESSO` é um segredo do GitHub, usado só para criar a primeira administradora.
