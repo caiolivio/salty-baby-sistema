@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   codigoDoGrupo,
+  grupoMaisSugerido,
   gruposSugeridos,
   lerCodigoGrupo,
   lerNomeGrupo,
   lerPapelGrupo,
   linkDoPost,
   papeisSugeridos,
+  textoDaDivulgacao,
   textoDoPost,
 } from "./regras";
 
@@ -98,5 +100,52 @@ describe("post pronto", () => {
       "https://x/peca/sb-00001?g=menino",
     );
     expect(texto.split("\n")).toEqual(["✨ Livro", "💰 R$ 10,00", "Código SB-00001", "", "Para comprar, é só clicar: https://x/peca/sb-00001?g=menino"]);
+  });
+});
+
+describe("divulgação com várias peças", () => {
+  const lista = [
+    { id: "a", papel: "masculino", ativo: true },
+    { id: "b", papel: "feminino", ativo: true },
+    { id: "c", papel: "calcados", ativo: true },
+  ];
+
+  it("sugere o grupo indicado para mais peças", () => {
+    const pecas = [
+      { genero: "masculino", categorias: [] },
+      { genero: null, categorias: [] },
+      { genero: "masculino", categorias: ["Roupas"] },
+    ];
+    expect(grupoMaisSugerido(pecas, lista)?.id).toBe("a");
+    expect(grupoMaisSugerido([{ genero: null, categorias: ["Calçados"] }], lista)?.id).toBe("c");
+    expect(grupoMaisSugerido([], lista)).toBeUndefined();
+  });
+
+  it("monta título, texto e as peças numeradas com o link do grupo", () => {
+    expect(
+      textoDaDivulgacao({
+        titulo: " Destaques da semana para meninos RN ",
+        texto: "Chegaram hoje!",
+        pecas: [
+          { codigo: "F06-00001", nome: "Body", tamanho: "RN", preco: "R$ 25,00" },
+          { codigo: "SB-00002", nome: "Livro", tamanho: null, preco: "R$ 10,00" },
+        ],
+        origem: "https://teste.saltybaby.com.br/",
+        codigoGrupo: "menino",
+      }),
+    ).toBe(
+      "*Destaques da semana para meninos RN*\n\nChegaram hoje!\n\n1. Body · tam. RN · R$ 25,00\nhttps://teste.saltybaby.com.br/peca/f06-00001?g=menino\n\n2. Livro · R$ 10,00\nhttps://teste.saltybaby.com.br/peca/sb-00002?g=menino",
+    );
+  });
+
+  it("funciona sem título, sem texto e sem grupo", () => {
+    expect(
+      textoDaDivulgacao({
+        titulo: "",
+        texto: " ",
+        pecas: [{ codigo: "SB-00002", nome: "Livro", tamanho: null, preco: "R$ 10,00" }],
+        origem: "https://x",
+      }),
+    ).toBe("1. Livro · R$ 10,00\nhttps://x/peca/sb-00002");
   });
 });

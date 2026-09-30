@@ -108,3 +108,42 @@ export function textoDoPost(
     .filter((linha) => linha !== null)
     .join("\n");
 }
+
+/** Limite de peças numa divulgação (o WhatsApp manda no máximo 30 fotos de uma vez). */
+export const LIMITE_DIVULGACAO = 30;
+/** Cookie com as peças escolhidas para a divulgação no painel. */
+export const COOKIE_DIVULGACAO = "divulgacao_painel";
+
+/** Grupo sugerido para uma lista de peças: o que as regras indicam para mais peças. */
+export function grupoMaisSugerido<G extends { id: string; papel: string | null; ativo: boolean }>(
+  pecas: PecaParaGrupo[],
+  grupos: G[],
+): G | undefined {
+  const votos = new Map<string, number>();
+  for (const peca of pecas) for (const g of gruposSugeridos(peca, grupos)) votos.set(g.id, (votos.get(g.id) ?? 0) + 1);
+  let melhor: G | undefined;
+  for (const g of grupos) if ((votos.get(g.id) ?? 0) > (melhor ? votos.get(melhor.id)! : 0)) melhor = g;
+  return melhor;
+}
+
+/**
+ * Texto de uma divulgação com várias peças: título em negrito (asteriscos do
+ * WhatsApp), o texto livre e cada peça numerada com o link marcado pelo grupo.
+ */
+export function textoDaDivulgacao(dados: {
+  titulo: string;
+  texto: string;
+  pecas: { codigo: string; nome: string; tamanho: string | null; preco: string }[];
+  origem: string;
+  codigoGrupo?: string;
+}): string {
+  const origem = dados.origem.replace(/\/+$/, "");
+  const link = (codigo: string) =>
+    dados.codigoGrupo ? linkDoPost(origem, codigo, dados.codigoGrupo) : `${origem}/peca/${codigo.toLowerCase()}`;
+  const titulo = dados.titulo.trim().replace(/\*/g, "");
+  const texto = dados.texto.trim();
+  const itens = dados.pecas.map((p, i) =>
+    [`${i + 1}. ${[p.nome, p.tamanho && `tam. ${p.tamanho}`, p.preco].filter(Boolean).join(" · ")}`, link(p.codigo)].join("\n"),
+  );
+  return [titulo && `*${titulo}*`, texto, ...itens].filter(Boolean).join("\n\n");
+}

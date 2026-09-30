@@ -27,7 +27,7 @@ export async function novoGrupo(_estado: EstadoGrupo, dados: FormData): Promise<
     if (repetido(erro)) return { erro: `Já existe um grupo "${lido.nome}".` };
     throw erro;
   }
-  revalidatePath("/painel/grupos");
+  revalidatePath("/painel/marketing/grupos");
   return { aviso: `Grupo "${lido.nome}" incluído.` };
 }
 
@@ -46,6 +46,6 @@ export async function salvarGrupo(_estado: EstadoGrupo, dados: FormData): Promis
     if (repetido(erro)) return { erro: `Já existe um grupo "${lido.nome}".` };
     throw erro;
   }
-  revalidatePath("/painel/grupos");
+  revalidatePath("/painel/marketing/grupos");
   return { aviso: "Salvo." };
 }

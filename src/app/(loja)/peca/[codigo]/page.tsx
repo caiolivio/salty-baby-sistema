@@ -12,7 +12,14 @@ import { TAMANHOS } from "@/lib/tamanhos";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_GRUPO, lerCodigoGrupo, PARAMETRO_GRUPO } from "@/lib/grupos/regras";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
-import { enderecoDaPeca, linkWhatsapp, mensagemDaPeca, WHATSAPP_LOJA } from "@/lib/vitrine";
+import {
+  enderecoDaPeca,
+  linkCompartilharWhatsapp,
+  linkWhatsapp,
+  mensagemDaPeca,
+  mensagemParaAmiga,
+  WHATSAPP_LOJA,
+} from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
 import estilos from "../../loja.module.css";
 
@@ -89,6 +96,12 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
       },
       origemDaRequisicao(await headers()),
       grupo?.nome,
+    ),
+  );
+  const paraAmiga = linkCompartilharWhatsapp(
+    mensagemParaAmiga(
+      { codigo: peca.codigo, nome: peca.nome, tamanho: peca.tamanho, preco: formatarReais(peca.precoCentavos) },
+      origemDaRequisicao(await headers()),
     ),
   );
   const detalhes: [string, string | null | undefined][] = [
@@ -174,6 +187,9 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
               Tirar uma dúvida sobre esta peça no WhatsApp
             </a>
           )}
+          <a className={estilos.compartilhar} href={paraAmiga} target="_blank" rel="noopener noreferrer">
+            Compartilhar com alguém no WhatsApp
+          </a>
         </div>
       </article>
     </>

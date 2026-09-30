@@ -5,7 +5,9 @@ import {
   lerFiltros,
   linkDaVitrine,
   linkWhatsapp,
+  linkCompartilharWhatsapp,
   mensagemDaPeca,
+  mensagemParaAmiga,
   tamanhosDisponiveis,
   WHATSAPP_LOJA,
 } from "./vitrine";
@@ -101,5 +103,13 @@ describe("mensagemDaPeca", () => {
     expect(mensagemDaPeca({ codigo: "SB-00001", nome: "Livro", tamanho: null, preco: "R$ 5,00" }, "https://x", "Meninas")).toBe(
       "Olá! Tenho interesse nesta peça: SB-00001 · Livro · R$ 5,00\nhttps://x/peca/sb-00001\n(Vi no grupo Meninas)",
     );
+  });
+});
+
+describe("compartilhar com uma amiga", () => {
+  it("monta a mensagem e o link sem número", () => {
+    const mensagem = mensagemParaAmiga({ codigo: "F06-00001", nome: "Body", tamanho: "RN", preco: "R$ 25,00" }, "https://x/");
+    expect(mensagem).toBe("Vi isso aqui na Salty Baby e lembrei de você! 💛\nBody · tam. RN · R$ 25,00\nhttps://x/peca/f06-00001");
+    expect(linkCompartilharWhatsapp("Oi & tchau")).toBe("https://wa.me/?text=Oi%20%26%20tchau");
   });
 });

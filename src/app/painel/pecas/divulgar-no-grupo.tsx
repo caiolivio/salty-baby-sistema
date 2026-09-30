@@ -1,24 +1,8 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
+import { baixarArquivo, fotoEmJpeg, usePodeCompartilhar } from "@/componentes/compartilhar";
 import estilos from "../formulario.module.css";
-
-const nadaMuda = () => () => {};
-
-async function emJpeg(imagem: Blob): Promise<Blob> {
-  const bitmap = await createImageBitmap(imagem);
-  const tela = document.createElement("canvas");
-  tela.width = bitmap.width;
-  tela.height = bitmap.height;
-  const pincel = tela.getContext("2d");
-  if (!pincel) throw new Error("sem canvas");
-  pincel.fillStyle = "#fff";
-  pincel.fillRect(0, 0, tela.width, tela.height);
-  pincel.drawImage(bitmap, 0, 0);
-  return new Promise((resolve, reject) =>
-    tela.toBlob((b) => (b ? resolve(b) : reject(new Error("sem jpeg"))), "image/jpeg", 0.9),
-  );
-}
 
 export type PostDoGrupo = { id: string; nome: string; sugerido: boolean; texto: string };
 
@@ -44,31 +28,16 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
   useEffect(() => {
     if (!fotoUrl) return;
     let ativo = true;
-    fetch(fotoUrl)
-      .then((r) => (r.ok ? r.blob() : Promise.reject()))
-      .then(emJpeg)
+    fotoEmJpeg(fotoUrl, fotoNome)
       .then((jpeg) => {
-        if (ativo) setArquivo(new File([jpeg], fotoNome, { type: "image/jpeg" }));
+        if (ativo) setArquivo(jpeg);
       })
       .catch(() => {});
     return () => {
       ativo = false;
     };
   }, [fotoUrl, fotoNome]);
-  const [linkDaFoto, setLinkDaFoto] = useState<string | null>(null);
-  useEffect(() => {
-    if (!arquivo) return;
-    const url = URL.createObjectURL(arquivo);
-    queueMicrotask(() => setLinkDaFoto(url));
-    return () => URL.revokeObjectURL(url);
-  }, [arquivo]);
-
-  // Só o navegador sabe se compartilha (celular); no servidor o botão não aparece.
-  const podeCompartilhar = useSyncExternalStore(
-    nadaMuda,
-    () => typeof navigator.share === "function",
-    () => false,
-  );
+  const podeCompartilhar = usePodeCompartilhar();
   const vaiComFoto = !!arquivo && typeof navigator !== "undefined" && navigator.canShare?.({ files: [arquivo] }) === true;
 
   async function copiar() {
@@ -93,7 +62,7 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
     }
   }
 
-  if (posts.length === 0) return <p>Nenhum grupo em uso. Inclua os grupos em Grupos.</p>;
+  if (posts.length === 0) return <p>Nenhum grupo em uso. Inclua os grupos em WhatsApp Marketing.</p>;
 
   return (
     <div className={estilos.formulario}>
@@ -142,9 +111,13 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
           Copiar texto
         </button>
         {foto && (
-          <a className={estilos.botaoSecundario} href={linkDaFoto ?? foto.url} download={foto.nome}>
+          <button
+            type="button"
+            className={estilos.botaoSecundario}
+            onClick={() => (arquivo ? baixarArquivo(arquivo) : window.open(foto.url, "_blank"))}
+          >
             Baixar foto
-          </a>
+          </button>
         )}
       </div>
       {aviso && (

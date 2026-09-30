@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { PAPEIS_GRUPO } from "@/lib/grupos/regras";
-import estilos from "../formulario.module.css";
+import estilos from "../../formulario.module.css";
 import { novoGrupo, salvarGrupo } from "./acoes";
 
 function EscolherPapel({ papel }: { papel?: string | null }) {

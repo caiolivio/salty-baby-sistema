@@ -19,6 +19,7 @@ import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { apagarFotoDaPeca, duplicar, ordenarFoto, salvarPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
+import { incluirNaDivulgacao } from "../../marketing/acoes";
 import { venderPeca } from "../../vendas/nova/acoes";
 import { DivulgarNoGrupo } from "../divulgar-no-grupo";
 import { AdicionarFotos } from "../fotos-peca";
@@ -126,7 +127,16 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
       <section aria-labelledby="divulgar">
         <h2 id="divulgar">Divulgar no grupo</h2>
         {divulgavel ? (
-          <DivulgarNoGrupo posts={posts} foto={fotoDoPost} />
+          <>
+            <DivulgarNoGrupo posts={posts} foto={fotoDoPost} />
+            <form action={incluirNaDivulgacao} className={proprios.acoes}>
+              <input type="hidden" name="id" value={p.id} />
+              <input type="hidden" name="ir" value="sim" />
+              <button type="submit" className={proprios.botaoSecundario}>
+                Incluir numa divulgação com várias peças
+              </button>
+            </form>
+          </>
         ) : (
           <p>Para divulgar nos grupos, a peça precisa estar publicada e com estoque.</p>
         )}
