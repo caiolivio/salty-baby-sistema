@@ -66,11 +66,14 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
             <div key={p.id} className={estilos.etiqueta}>
               <div className={estilos.qr} dangerouslySetInnerHTML={{ __html: qrs[i] }} />
               <div className={estilos.texto}>
-                <span className={estilos.loja}>Salty Baby</span>
-                <strong className={estilos.codigo}>{p.codigo}</strong>
+                {/* eslint-disable-next-line @next/next/no-img-element -- impressão: a imagem precisa estar pronta, sem carregamento tardio */}
+                <img className={estilos.logo} src="/marca/logo-salty-baby-400px.png" alt="Salty Baby" />
                 <span className={estilos.nome}>{p.nome}</span>
-                {p.tamanho && <span className={estilos.tamanho}>Tam. {p.tamanho}</span>}
                 {p.precoCentavos > 0 && <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>}
+                <span className={estilos.codigo}>
+                  {p.codigo}
+                  {p.tamanho && ` · Tam. ${p.tamanho}`}
+                </span>
               </div>
             </div>
           ))}
