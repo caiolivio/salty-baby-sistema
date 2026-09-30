@@ -75,8 +75,8 @@
 
 .menu {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  overflow-x: auto;
   padding: 8px 16px;
   background: var(--fundo);
   border-bottom: 1px solid var(--borda);
@@ -93,6 +93,16 @@
 
 .menu a:hover {
   background: var(--fundo-suave);
+}
+
+/* Peças é o que mais se usa no dia a dia. */
+.menu a.destaque {
+  background: var(--petroleo);
+  color: #fff;
+}
+
+.menu a.destaque:hover {
+  background: var(--tinta);
 }
 
 .busca {
