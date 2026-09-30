@@ -1,0 +1,50 @@
+.pagina {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 16px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--fundo) 0%, var(--fundo-suave) 100%);
+}
+
+.logo {
+  width: min(280px, 70vw);
+  height: auto;
+}
+
+.titulo {
+  color: var(--petroleo);
+  font-size: 1.5rem;
+}
+
+.texto {
+  max-width: 32rem;
+}
+
+.situacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--fundo);
+  font-size: 0.9rem;
+}
+
+.ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ok {
+  background: var(--sucesso);
+}
+
+.falha {
+  background: var(--erro);
+}

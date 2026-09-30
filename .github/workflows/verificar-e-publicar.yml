@@ -1,0 +1,103 @@
+name: Verificar e publicar
+
+# Em todo pull request e em toda mudança na main: roda as verificações e,
+# se passarem, publica no site de teste (teste.saltybaby.com.br).
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  VPS_HOST: 93.127.212.199
+
+jobs:
+  verificar:
+    name: Verificar (lint, tipos, testes e build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Montar o pacote para a VPS
+        run: |
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          tar -czf app.tgz -C .next/standalone .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pacote
+          path: app.tgz
+          retention-days: 3
+
+  publicar-teste:
+    name: Publicar no teste.saltybaby.com.br
+    needs: verificar
+    # Pull requests vindos de fora do repositório não têm acesso aos segredos.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: publicar-teste
+      cancel-in-progress: false
+    env:
+      SSH_USUARIO: sbdeployteste
+      NOME_PROCESSO: saltybaby-teste
+      PORTA: 4100
+      DB_NOME: saltybabyteste
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/servidor
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pacote
+
+      - name: Preparar o acesso à VPS
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "DESTINO=$SSH_USUARIO@$VPS_HOST" >> "$GITHUB_ENV"
+
+      - name: Gravar as configurações no servidor
+        env:
+          DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
+          DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
+        run: |
+          {
+            echo "NODE_ENV=production"
+            echo "PORT=$PORTA"
+            echo "HOSTNAME=127.0.0.1"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_NOME=$DB_NOME"
+            printf 'DB_USUARIO=`%s`\n' "$DB_USUARIO"
+            printf 'DB_SENHA=`%s`\n' "$DB_SENHA"
+            echo "VERSAO=$GITHUB_SHA"
+          } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'
+
+      - name: Enviar e ligar a nova versão
+        run: |
+          scp app.tgz "$DESTINO:saltybaby/upload/app.tgz"
+          ssh "$DESTINO" bash -s -- "$NOME_PROCESSO" "$PORTA" "$GITHUB_SHA" < scripts/servidor/publicar.sh
