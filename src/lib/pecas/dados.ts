@@ -175,3 +175,15 @@ export function reaisNoCampo(centavos: number | null): string {
   if (centavos === null) return "";
   return `${Math.floor(centavos / 100)},${String(centavos % 100).padStart(2, "0")}`;
 }
+
+/**
+ * Nova ordem das fotos depois de mover uma delas para a posição `destino`
+ * (0 = foto em destaque). Posições fora da lista ficam na ponta.
+ */
+export function moverNaLista<T>(lista: readonly T[], item: T, destino: number): T[] {
+  const atual = lista.indexOf(item);
+  if (atual === -1) return [...lista];
+  const resto = lista.filter((_, i) => i !== atual);
+  const posicao = Math.max(0, Math.min(resto.length, destino));
+  return [...resto.slice(0, posicao), item, ...resto.slice(posicao)];
+}

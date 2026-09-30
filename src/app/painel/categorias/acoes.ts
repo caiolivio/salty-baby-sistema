@@ -44,3 +44,30 @@ export async function salvarCategoria(_estado: EstadoCategoria, dados: FormData)
   revalidatePath("/painel/categorias");
   return { aviso: "Salvo." };
 }
+
+export type CategoriaIncluida = { ok: true; id: string; nome: string } | { ok: false; erro: string };
+
+/**
+ * Inclui uma categoria sem sair do cadastro da peça. Se já existe uma com esse
+ * nome (mesmo com diferença de acento ou maiúscula), devolve a existente e a
+ * coloca de volta no cadastro, para ela ser marcada.
+ */
+export async function incluirCategoriaNoCadastro(nomeDigitado: string): Promise<CategoriaIncluida> {
+  await exigirAcesso("painel-administracao");
+  const lido = lerNomeCategoria(nomeDigitado);
+  if (!lido.ok) return lido;
+  const existente = await prisma.categoria.findFirst({ where: { nome: lido.nome } });
+  if (existente) {
+    if (!existente.ativa) await prisma.categoria.update({ where: { id: existente.id }, data: { ativa: true } });
+    return { ok: true, id: existente.id, nome: existente.nome };
+  }
+  const ultima = await prisma.categoria.aggregate({ _max: { ordem: true } });
+  try {
+    const criada = await prisma.categoria.create({ data: { nome: lido.nome, ordem: (ultima._max.ordem ?? 0) + 1 } });
+    revalidatePath("/painel/categorias");
+    return { ok: true, id: criada.id, nome: criada.nome };
+  } catch (erro) {
+    if (nomeRepetido(erro)) return { ok: false, erro: `Já existe uma categoria "${lido.nome}".` };
+    throw erro;
+  }
+}

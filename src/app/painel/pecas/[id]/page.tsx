@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { podeAcessar } from "@/lib/permissoes";
 import { formatarData } from "@/lib/datas";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { enderecoDaFoto } from "@/lib/fotos";
@@ -10,7 +11,7 @@ import { reaisNoCampo, situacaoEditavel } from "@/lib/pecas/dados";
 import { NOMES_SITUACAO } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
-import { apagarFotoDaPeca, duplicar, salvarPeca, tornarPrincipal } from "../acoes";
+import { apagarFotoDaPeca, duplicar, ordenarFoto, salvarPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
@@ -19,7 +20,7 @@ export const metadata: Metadata = { title: "Peça · Salty Baby" };
 
 export default async function Peca({ params, searchParams }: PageProps<"/painel/pecas/[id]">) {
   const { id } = await params;
-  await exigirAcesso("painel", `/painel/pecas/${id}`);
+  const usuario = await exigirAcesso("painel", `/painel/pecas/${id}`);
   const aviso = await searchParams;
 
   const peca = await prisma.peca.findUnique({
@@ -79,6 +80,9 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
 
       <section className={proprios.formulario} aria-label="Fotos">
         <strong>Fotos</strong>
+        {p.fotos.length > 1 && (
+          <span className={proprios.dica}>A primeira é a foto em destaque, que aparece na lista e no site. Use as setas para mudar a ordem.</span>
+        )}
         {p.fotos.length === 0 ? (
           <p>Esta peça ainda não tem foto.</p>
         ) : (
@@ -90,14 +94,32 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
                   <img src={enderecoDaFoto(foto.arquivo, true)} alt={`Foto ${i + 1}`} />
                 </a>
                 {i === 0 ? (
-                  <span className={proprios.principal}>Principal</span>
+                  <span className={proprios.principal}>★ Foto em destaque</span>
                 ) : (
-                  <form action={tornarPrincipal}>
+                  <form action={ordenarFoto}>
                     <input type="hidden" name="id" value={p.id} />
                     <input type="hidden" name="fotoId" value={foto.id} />
-                    <button type="submit">Usar como principal</button>
+                    <button type="submit" name="destino" value="0">
+                      Pôr em destaque
+                    </button>
                   </form>
                 )}
+                <form action={ordenarFoto} className={proprios.setas}>
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="fotoId" value={foto.id} />
+                  <button type="submit" name="destino" value={i - 1} disabled={i === 0} aria-label="Mover para antes">
+                    ←
+                  </button>
+                  <button
+                    type="submit"
+                    name="destino"
+                    value={i + 1}
+                    disabled={i === p.fotos.length - 1}
+                    aria-label="Mover para depois"
+                  >
+                    →
+                  </button>
+                </form>
                 <form action={apagarFotoDaPeca}>
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="fotoId" value={foto.id} />
@@ -115,6 +137,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         textoBotao="Salvar alterações"
         voltar="/painel/pecas"
         categorias={categorias}
+        podeIncluirCategoria={podeAcessar(usuario.perfis, "painel-administracao")}
         categoriasMarcadas={marcadas}
         fornecedoraFixa={{
           texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Salty (peça da loja)",

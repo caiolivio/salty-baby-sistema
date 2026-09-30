@@ -3,7 +3,7 @@ import type { Prisma, StatusPeca } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { chaveSequenciaPeca, codigoPeca, numeroSeguro, PREFIXO_LOJA } from "../codigos";
 import { apagarFoto, guardarFotoDePeca } from "../fotos";
-import type { DadosPeca } from "./dados";
+import { moverNaLista, type DadosPeca } from "./dados";
 
 type Transacao = Prisma.TransactionClient;
 
@@ -144,10 +144,13 @@ export async function removerFoto(pecaId: string, fotoId: string): Promise<void>
   await apagarFoto(foto.arquivo);
 }
 
-/** A foto escolhida passa a ser a primeira (a que aparece na lista e na vitrine). */
-export async function fotoPrincipal(pecaId: string, fotoId: string): Promise<void> {
+/** Muda a posição de uma foto (0 = foto em destaque, a que aparece na lista e na vitrine). */
+export async function moverFoto(pecaId: string, fotoId: string, destino: number): Promise<void> {
   const fotos = await prisma.fotoPeca.findMany({ where: { pecaId }, orderBy: { ordem: "asc" }, select: { id: true } });
-  if (!fotos.some((f) => f.id === fotoId)) return;
-  const nova = [fotoId, ...fotos.map((f) => f.id).filter((id) => id !== fotoId)];
+  const nova = moverNaLista(
+    fotos.map((f) => f.id),
+    fotoId,
+    destino,
+  );
   await prisma.$transaction(nova.map((id, ordem) => prisma.fotoPeca.update({ where: { id }, data: { ordem } })));
 }

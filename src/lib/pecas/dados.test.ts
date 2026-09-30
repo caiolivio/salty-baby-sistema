@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escolherCategorias, hojeEmSaoPaulo, lerFormularioPeca, reaisNoCampo, situacaoEditavel } from "./dados";
+import { escolherCategorias, hojeEmSaoPaulo, moverNaLista, lerFormularioPeca, reaisNoCampo, situacaoEditavel } from "./dados";
 
 const consignada = { consignada: true, repassePadrao: 4000, hoje: "2026-09-30" };
 const loja = { consignada: false, repassePadrao: 4000, hoje: "2026-09-30" };
@@ -93,5 +93,21 @@ describe("apoio", () => {
     expect(reaisNoCampo(4590)).toBe("45,90");
     expect(reaisNoCampo(1200)).toBe("12,00");
     expect(reaisNoCampo(null)).toBe("");
+  });
+});
+
+describe("moverNaLista (ordem das fotos)", () => {
+  const fotos = ["a", "b", "c", "d"];
+  it("coloca uma foto em destaque (primeira)", () => {
+    expect(moverNaLista(fotos, "c", 0)).toEqual(["c", "a", "b", "d"]);
+  });
+  it("move uma posição para frente ou para trás", () => {
+    expect(moverNaLista(fotos, "b", 2)).toEqual(["a", "c", "b", "d"]);
+    expect(moverNaLista(fotos, "b", 0)).toEqual(["b", "a", "c", "d"]);
+  });
+  it("não sai da lista nas pontas", () => {
+    expect(moverNaLista(fotos, "a", -1)).toEqual(fotos);
+    expect(moverNaLista(fotos, "d", 9)).toEqual(fotos);
+    expect(moverNaLista(fotos, "x", 0)).toEqual(fotos);
   });
 });

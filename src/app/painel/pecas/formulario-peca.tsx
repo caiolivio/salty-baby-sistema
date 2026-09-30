@@ -7,6 +7,7 @@ import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, SITUACOES_DO_CADASTRO } from "
 import { TAMANHOS } from "@/lib/tamanhos";
 import estilos from "../formulario.module.css";
 import type { EstadoPeca } from "./acoes";
+import { EscolherCategorias } from "./escolher-categorias";
 
 type Acao = (estado: EstadoPeca, dados: FormData) => Promise<EstadoPeca>;
 
@@ -44,6 +45,7 @@ export function FormularioPeca({
   fornecedoraFixa,
   categorias,
   categoriasMarcadas = [],
+  podeIncluirCategoria = false,
   situacaoFixa,
 }: {
   acao: Acao;
@@ -57,6 +59,8 @@ export function FormularioPeca({
   /** Categorias para marcar e as que já estão marcadas. */
   categorias: { id: string; nome: string }[];
   categoriasMarcadas?: string[];
+  /** Só a administradora cria categorias. */
+  podeIncluirCategoria?: boolean;
   /** Peça vendida: a situação só muda pelas vendas. */
   situacaoFixa?: string;
 }) {
@@ -161,18 +165,7 @@ export function FormularioPeca({
             <input name="medidas" maxLength={160} defaultValue={v("medidas")} placeholder="Ex.: comprimento 40 cm" />
           </label>
         </div>
-        <fieldset className={estilos.opcoes}>
-          <legend>Categorias</legend>
-          <span className={estilos.dica}>Marque uma ou mais.</span>
-          <div className={estilos.marcas}>
-            {categorias.map((c) => (
-              <label key={c.id} className={estilos.marca}>
-                <input type="checkbox" name="categorias" value={c.id} defaultChecked={marcadas.has(c.id)} />
-                {c.nome}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <EscolherCategorias categorias={categorias} marcadas={marcadas} podeIncluir={podeIncluirCategoria} />
         <label className={estilos.campo}>
           Descrição
           <textarea name="descricao" maxLength={2000} defaultValue={v("descricao")} />

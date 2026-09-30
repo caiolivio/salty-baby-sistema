@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { escolherCategorias, FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel } from "@/lib/pecas/dados";
-import { adicionarFotos, atualizarPeca, criarPeca, duplicarPeca, fotoPrincipal, LIMITE_FOTOS, removerFoto } from "@/lib/pecas/gravar";
+import { adicionarFotos, atualizarPeca, criarPeca, duplicarPeca, LIMITE_FOTOS, moverFoto, removerFoto } from "@/lib/pecas/gravar";
 
 export type EstadoPeca =
   | { erro?: string; aviso?: string; valores?: Record<string, string>; categorias?: string[] }
@@ -120,9 +120,12 @@ export async function apagarFotoDaPeca(dados: FormData): Promise<void> {
   revalidatePath(`/painel/pecas/${id}`);
 }
 
-export async function tornarPrincipal(dados: FormData): Promise<void> {
+/** Muda a ordem das fotos: destacar (primeira), para antes ou para depois. */
+export async function ordenarFoto(dados: FormData): Promise<void> {
   await exigirAcesso("painel");
   const id = String(dados.get("id") ?? "");
-  await fotoPrincipal(id, String(dados.get("fotoId") ?? ""));
+  const destino = Number(dados.get("destino"));
+  if (!Number.isInteger(destino)) return;
+  await moverFoto(id, String(dados.get("fotoId") ?? ""), destino);
   revalidatePath(`/painel/pecas/${id}`);
 }
