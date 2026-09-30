@@ -5,14 +5,15 @@ import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
+import { enderecoDaFoto } from "@/lib/fotos";
 import { podeAcessar } from "@/lib/permissoes";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
-import { minutosRestantes } from "@/lib/pedidos/regras";
+import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente, minutosRestantes } from "@/lib/pedidos/regras";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { cancelarPedido } from "../acoes";
-import { ConfirmarPagamento } from "./confirmar";
+import { DadosCliente, IncluirPeca, TirarPeca } from "./editar-pedido";
 
 export const metadata: Metadata = { title: "Pedido · Salty Baby" };
 
@@ -26,14 +27,46 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
   const pedido = await prisma.pedido.findUnique({
     where: { id },
     include: {
-      itens: { orderBy: { ordem: "asc" }, include: { peca: { select: { id: true, codigo: true, nome: true, tamanho: true, status: true } } } },
+      itens: {
+        orderBy: { ordem: "asc" },
+        include: {
+          peca: {
+            select: {
+              id: true,
+              codigo: true,
+              nome: true,
+              tamanho: true,
+              marca: true,
+              status: true,
+              fotos: { orderBy: { ordem: "asc" }, take: 1, select: { arquivo: true } },
+              fornecedora: { select: { id: true, codigo: true, nome: true } },
+            },
+          },
+        },
+      },
       venda: { include: { itens: true } },
+      cliente: { include: { _count: { select: { vendas: true } } } },
     },
   });
   if (!pedido) notFound();
   const administradora = podeAcessar(usuario.perfis, "painel-administracao");
   const aberto = pedido.status === "reservado" || pedido.status === "expirado";
   const itemVendido = (pecaId: string) => pedido.venda?.itens.find((i) => i.pecaId === pecaId);
+
+  const clientes = await prisma.cliente.findMany({
+    orderBy: { nome: "asc" },
+    select: { id: true, nome: true, telefone: true, cidade: true },
+  });
+  const opcoes = clientes.map((c) => {
+    const tel = lerTelefoneCliente(c.telefone);
+    return { id: c.id, nome: c.nome, tel, detalhe: tel ? formatarTelefone(tel) : (c.cidade ?? "") };
+  });
+  // Sugere a cliente do cadastro com o mesmo WhatsApp, ou com o mesmo nome.
+  const mesmoNome = (a: string) => a.trim().toLocaleLowerCase("pt-BR") === pedido.nomeCliente.trim().toLocaleLowerCase("pt-BR");
+  const porTelefone = pedido.telefoneCliente ? opcoes.filter((c) => c.tel === pedido.telefoneCliente) : [];
+  const porNome = opcoes.filter((c) => mesmoNome(c.nome));
+  const sugestao = porTelefone.length === 1 ? porTelefone[0] : porNome.length === 1 ? porNome[0] : undefined;
+  const cliente = pedido.cliente;
 
   return (
     <>
@@ -58,13 +91,75 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
       {pedido.status === "expirado" && (
         <p>A reserva venceu e as peças voltaram para a vitrine. Se a cliente pagou, ainda dá para confirmar enquanto as peças estiverem à venda.</p>
       )}
+      {aberto && (
+        <div className={proprios.acoes}>
+          {administradora && (
+            <Link href={`/painel/pedidos/${pedido.id}/confirmar`} className={proprios.botao}>
+              Confirmar pagamento
+            </Link>
+          )}
+          {pedido.status === "reservado" && (
+            <form action={cancelarPedido}>
+              <input type="hidden" name="id" value={pedido.id} />
+              <button type="submit" className={proprios.botaoSecundario}>
+                Cancelar e liberar peças
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
+      <h2>Cliente</h2>
+      <p>
+        <strong>{pedido.nomeCliente}</strong>
+        {pedido.telefoneCliente && (
+          <>
+            {" · WhatsApp "}
+            <a href={linkWhatsappCliente(pedido.telefoneCliente)} target="_blank" rel="noopener noreferrer">
+              {formatarTelefone(pedido.telefoneCliente)}
+            </a>
+          </>
+        )}
+      </p>
+      {cliente ? (
+        <p>
+          No cadastro: {cliente.nome}
+          {cliente.telefone && ` · ${formatarTelefone(lerTelefoneCliente(cliente.telefone) ?? cliente.telefone)}`}
+          {cliente.email && ` · ${cliente.email}`}
+          {administradora && cliente.cpf && ` · CPF ${cliente.cpf}`}
+          {[cliente.endereco, cliente.cidade, cliente.estado].some(Boolean) && (
+            <span className={estilos.antigo}>{[cliente.endereco, cliente.cep, cliente.cidade, cliente.estado].filter(Boolean).join(" · ")}</span>
+          )}
+          <span className={estilos.antigo}>
+            {cliente._count.vendas === 0 ? "Nenhuma compra anterior." : `${cliente._count.vendas} compra(s) registrada(s).`}
+          </span>
+        </p>
+      ) : (
+        <p className={estilos.antigo}>Ainda não está ligado a uma cliente do cadastro.</p>
+      )}
+      {pedido.observacao && <p>Observações: {pedido.observacao}</p>}
+      <details>
+        <summary>Editar dados da cliente</summary>
+        <DadosCliente
+          id={pedido.id}
+          nome={pedido.nomeCliente}
+          telefone={pedido.telefoneCliente ? formatarTelefone(pedido.telefoneCliente) : ""}
+          clienteId={pedido.clienteId ?? ""}
+          observacao={pedido.observacao ?? ""}
+          clientes={opcoes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
+          sugestao={sugestao && { id: sugestao.id, nome: sugestao.nome, detalhe: sugestao.detalhe }}
+        />
+      </details>
+
+      <h2>Peças</h2>
       <div className={estilos.tabelaCaixa}>
         <table className={estilos.tabela}>
           <thead>
             <tr>
+              <th aria-label="Foto" />
               <th>Código</th>
               <th>Peça</th>
+              <th>Fornecedora</th>
               <th className={estilos.numero}>Preço</th>
               {pedido.venda && administradora && (
                 <>
@@ -73,13 +168,25 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                   <th className={estilos.numero}>Lucro</th>
                 </>
               )}
+              {aberto && (
+                <th aria-label="Tirar" />
+              )}
             </tr>
           </thead>
           <tbody>
             {pedido.itens.map((i) => {
               const vendido = itemVendido(i.pecaId);
+              const foto = i.peca.fotos[0];
               return (
-                <tr key={i.pecaId}>
+                <tr key={i.pecaId} className={estilos.comFoto}>
+                  <td className={estilos.foto}>
+                    {foto ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio
+                      <img className={estilos.miniatura} src={enderecoDaFoto(foto.arquivo, true)} alt="" loading="lazy" />
+                    ) : (
+                      <span className={estilos.miniatura} />
+                    )}
+                  </td>
                   <td className={estilos.curta}>
                     <Link href={`/painel/pecas/${i.peca.id}`} className={estilos.codigo}>
                       {i.peca.codigo}
@@ -87,7 +194,25 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                   </td>
                   <td>
                     {i.peca.nome}
-                    {i.peca.tamanho && <span className={estilos.antigo}>Tam. {i.peca.tamanho}</span>}
+                    {(i.peca.tamanho || i.peca.marca) && (
+                      <span className={estilos.antigo}>
+                        {[i.peca.tamanho && `Tam. ${i.peca.tamanho}`, i.peca.marca].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </td>
+                  <td data-rotulo="Fornecedora">
+                    {i.peca.fornecedora ? (
+                      <>
+                        {administradora ? (
+                          <Link href={`/painel/fornecedoras/${i.peca.fornecedora.id}`}>{i.peca.fornecedora.codigo}</Link>
+                        ) : (
+                          i.peca.fornecedora.codigo
+                        )}{" "}
+                        {i.peca.fornecedora.nome}
+                      </>
+                    ) : (
+                      "Peça da loja"
+                    )}
                   </td>
                   <td className={estilos.numero} data-rotulo="Preço">
                     {formatarReais(i.precoCentavos)}
@@ -104,6 +229,11 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                         {formatarReais(vendido.lucroCentavos)}
                       </td>
                     </>
+                  )}
+                  {aberto && (
+                    <td>
+                      {pedido.itens.length > 1 && <TirarPeca id={pedido.id} pecaId={i.pecaId} codigo={i.peca.codigo} />}
+                    </td>
                   )}
                 </tr>
               );
@@ -123,17 +253,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
         )}
         {pedido.venda?.formaPagamento && ` · ${FORMAS_PAGAMENTO.find((f) => f.valor === pedido.venda?.formaPagamento)?.nome}`}
       </p>
-
-      {aberto && administradora && <ConfirmarPagamento id={pedido.id} />}
-      {aberto && !administradora && <p>Só a administradora pode confirmar o pagamento.</p>}
-      {pedido.status === "reservado" && (
-        <form action={cancelarPedido}>
-          <input type="hidden" name="id" value={pedido.id} />
-          <button type="submit" className={proprios.botaoSecundario}>
-            Cancelar e liberar peças
-          </button>
-        </form>
-      )}
+      {aberto && <IncluirPeca id={pedido.id} />}
     </>
   );
 }

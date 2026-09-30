@@ -67,6 +67,7 @@ export async function confirmarPagamento(pedidoId: string, dados: DadosConfirmac
         data: {
           data: data(hoje),
           canal: "site",
+          clienteId: pedido.clienteId,
           formaPagamento: dados.forma,
           subtotalCentavos: pedido.totalCentavos,
           descontoCentavos: dados.descontoCentavos,

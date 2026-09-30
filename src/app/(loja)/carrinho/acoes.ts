@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { fecharPedido, liberarReservasVencidas } from "@/lib/pedidos/gravar";
-import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
+import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
 
 // Ações públicas da loja (não pedem login). O carrinho fica num cookie da
 // própria cliente; o banco só é alterado ao fechar o pedido.
@@ -33,24 +33,23 @@ export async function tirar(dados: FormData) {
   await gravarCarrinho(tirarDoCarrinho(await carrinhoAtual(), String(dados.get("id") ?? "")));
 }
 
-export type EstadoFechar = { erro?: string; nome?: string } | undefined;
+export type EstadoFechar = { erro?: string; nome?: string; telefone?: string } | undefined;
 
 export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<EstadoFechar> {
+  const digitado = { nome: String(dados.get("nome") ?? ""), telefone: String(dados.get("telefone") ?? "") };
   const nome = lerNomeCliente(dados.get("nome"));
-  if (!nome)
-    return {
-      erro: "Escreva seu nome para a loja saber de quem é o pedido.",
-      nome: String(dados.get("nome") ?? ""),
-    };
+  if (!nome) return { erro: "Escreva seu nome para a loja saber de quem é o pedido.", ...digitado };
+  const telefone = lerTelefoneCliente(dados.get("telefone"));
+  if (!telefone) return { erro: "Escreva seu WhatsApp com DDD, por exemplo (12) 98105-3623.", ...digitado };
   const ids = await carrinhoAtual();
-  if (ids.length === 0) return { erro: "Seu carrinho está vazio.", nome };
+  if (ids.length === 0) return { erro: "Seu carrinho está vazio.", ...digitado };
 
   await liberarReservasVencidas();
-  const resultado = await fecharPedido(ids, nome);
+  const resultado = await fecharPedido(ids, { nome, telefone });
   if (!resultado.ok) {
     return {
       erro: "Algumas peças acabaram de sair e foram marcadas abaixo. Tire-as do carrinho e feche o pedido de novo.",
-      nome,
+      ...digitado,
     };
   }
   await gravarCarrinho([]);

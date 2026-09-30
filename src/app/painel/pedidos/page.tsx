@@ -54,7 +54,12 @@ export default async function Pedidos() {
                       {p.numero}
                     </Link>
                   </td>
-                  <td>{p.nomeCliente}</td>
+                  <td>
+                    <Link href={`/painel/pedidos/${p.id}`}>{p.nomeCliente}</Link>
+                    <Link href={`/painel/pedidos/${p.id}`} className={estilos.antigo}>
+                      Ver detalhes
+                    </Link>
+                  </td>
                   <td data-rotulo="Peças">
                     {p.itens.map((i) => (
                       <span key={i.pecaId} className={estilos.antigo}>
@@ -69,7 +74,7 @@ export default async function Pedidos() {
                   <td data-rotulo="Situação">
                     {NOMES[p.status]}
                     {(p.status === "reservado" || p.status === "expirado") && (
-                      <Link href={`/painel/pedidos/${p.id}`} className={estilos.antigo}>
+                      <Link href={`/painel/pedidos/${p.id}/confirmar`} className={estilos.antigo}>
                         Confirmar pagamento
                       </Link>
                     )}
