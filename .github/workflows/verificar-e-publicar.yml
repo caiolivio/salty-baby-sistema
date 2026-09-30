@@ -61,10 +61,17 @@ jobs:
       NOME_PROCESSO: saltybaby-teste
       PORTA: 4100
       DB_NOME: saltybabyteste
+      ENDERECO: https://teste.saltybaby.com.br
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          sparse-checkout: scripts/servidor
+          node-version: 22
+          cache: npm
+
+      # Só para ter o Prisma, que aplica as migrações do banco.
+      - run: npm ci
 
       - uses: actions/download-artifact@v4
         with:
@@ -80,10 +87,25 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           echo "DESTINO=$SSH_USUARIO@$VPS_HOST" >> "$GITHUB_ENV"
 
+      - name: Atualizar a estrutura do banco (migrações)
+        env:
+          DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
+          DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
+        run: |
+          limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+          codificar() { node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$1"; }
+          # O MySQL só aceita conexões de dentro da VPS: um túnel SSH leva a
+          # porta 3307 daqui até a 3306 de lá enquanto as migrações rodam.
+          ssh -f -N -o ExitOnForwardFailure=yes -L 3307:127.0.0.1:3306 "$DESTINO"
+          DATABASE_URL="mysql://$(codificar "$(limpar "$DB_USUARIO")"):$(codificar "$(limpar "$DB_SENHA")")@127.0.0.1:3307/$DB_NOME"
+          echo "::add-mask::$DATABASE_URL"
+          DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
+
       - name: Gravar as configurações no servidor
         env:
           DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
           DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
+          CODIGO_PRIMEIRO_ACESSO: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
         run: |
           # Remove espaços e quebras de linha que às vezes entram ao colar o segredo.
           limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
@@ -98,6 +120,8 @@ jobs:
             echo "DB_NOME=$DB_NOME"
             printf 'DB_USUARIO=`%s`\n' "$DB_USUARIO"
             printf 'DB_SENHA=`%s`\n' "$DB_SENHA"
+            echo "AUTH_URL=$ENDERECO"
+            printf 'CODIGO_PRIMEIRO_ACESSO=`%s`\n' "$(limpar "$CODIGO_PRIMEIRO_ACESSO")"
             echo "VERSAO=$GITHUB_SHA"
           } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'
 

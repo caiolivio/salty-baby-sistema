@@ -1,0 +1,44 @@
+// Estrutura do banco de dados. Cada mudança aqui vira uma migração em
+// prisma/migrations, aplicada automaticamente na publicação.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// Um usuário pode ter mais de um perfil (ex.: fornecedora que também compra).
+enum Perfil {
+  administradora
+  ajudante
+  cliente
+  fornecedora
+}
+
+model Usuario {
+  id             String          @id @default(cuid())
+  nome           String          @db.VarChar(120)
+  email          String          @unique @db.VarChar(191)
+  senhaHash      String          @map("senha_hash") @db.VarChar(100)
+  ativo          Boolean         @default(true)
+  ultimoAcessoEm DateTime?       @map("ultimo_acesso_em")
+  criadoEm       DateTime        @default(now()) @map("criado_em")
+  atualizadoEm   DateTime        @updatedAt @map("atualizado_em")
+  perfis         UsuarioPerfil[]
+
+  @@map("usuarios")
+}
+
+model UsuarioPerfil {
+  usuarioId String   @map("usuario_id")
+  perfil    Perfil
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, perfil])
+  @@index([perfil])
+  @@map("usuario_perfis")
+}

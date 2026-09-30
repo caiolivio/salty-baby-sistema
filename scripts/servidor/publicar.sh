@@ -35,13 +35,22 @@ if [ "$(versao_node)" -lt "$NODE_MAIOR" ]; then
 fi
 echo "Node $(node -v)"
 
-# 2. PM2 mantém o sistema rodando e o reinicia se cair.
+# 2. Chave que assina os logins. Criada uma vez, aqui mesmo na VPS, e nunca
+#    sai daqui. O .env é regravado a cada publicação, então ela é somada a ele.
+SEGREDOS="$BASE/segredos-do-servidor.env"
+if [ ! -s "$SEGREDOS" ]; then
+  echo "Criando a chave de login do servidor"
+  (umask 077 && printf 'AUTH_SECRET=`%s`\n' "$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')" > "$SEGREDOS")
+fi
+cat "$SEGREDOS" >> "$BASE/.env"
+
+# 3. PM2 mantém o sistema rodando e o reinicia se cair.
 if ! command -v pm2 >/dev/null; then
   echo "Instalando o PM2"
   npm install -g pm2 --prefix "$HOME/.local" --no-fund --no-audit >/dev/null
 fi
 
-# 3. Nova versão numa pasta própria; a pasta "atual" aponta para ela.
+# 4. Nova versão numa pasta própria; a pasta "atual" aponta para ela.
 DESTINO="$BASE/releases/$(date +%Y%m%d%H%M%S)-${VERSAO:0:7}"
 mkdir -p "$DESTINO"
 tar -xzf "$BASE/upload/app.tgz" -C "$DESTINO"
@@ -62,7 +71,7 @@ if command -v crontab >/dev/null; then
     || echo "Aviso: não foi possível agendar o religamento automático"
 fi
 
-# 4. Confere se o sistema respondeu.
+# 5. Confere se o sistema respondeu.
 for tentativa in $(seq 1 15); do
   if RESPOSTA="$(curl -s -m 5 -w ' %{http_code}' "http://127.0.0.1:$PORTA/api/saude")"; then
     CODIGO="${RESPOSTA##* }"

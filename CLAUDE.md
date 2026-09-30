@@ -193,3 +193,6 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 - Comandos: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 - Publicação: `.github/workflows/verificar-e-publicar.yml` publica no teste.saltybaby.com.br (porta 4100, usuário SSH `sbdeployteste`) em todo pull request e em toda mudança na `main`. O script que roda na VPS é `scripts/servidor/publicar.sh`. O app.saltybaby.com.br (porta 3100, usuário `sbdeployapp`) ainda não recebe publicação.
 - Não há acesso SSH à VPS a partir do Claude Code: para investigar a publicação, leia os registros da execução no GitHub Actions.
+- Banco: Prisma com o adaptador MariaDB (`src/lib/banco.ts`). Toda mudança de estrutura é uma migração em `prisma/migrations`, aplicada pela publicação. Migrações precisam funcionar com a versão anterior do sistema ainda no ar.
+- Acesso: as regras de quem entra onde ficam em `src/lib/permissoes.ts` (com testes). Toda página, layout e ação do servidor protegidos começa com `exigirAcesso(...)` de `src/lib/acesso.ts`.
+- Segredos da publicação: `AUTH_SECRET` é criado na própria VPS (`~/saltybaby/segredos-do-servidor.env`). `CODIGO_PRIMEIRO_ACESSO` é um segredo do GitHub, usado só para criar a primeira administradora.
