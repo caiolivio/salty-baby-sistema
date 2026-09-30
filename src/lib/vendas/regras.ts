@@ -100,6 +100,46 @@ export function lerConfirmacao(
   if (desconto < 0) {
     return { ok: false, erro: "O desconto precisa ser um valor em reais, como 5 ou 5,50." };
   }
-  if (desconto > totalCentavos) return { ok: false, erro: "O desconto não pode ser maior que o total do pedido." };
+  if (desconto > totalCentavos) return { ok: false, erro: "O desconto não pode ser maior que o total." };
   return { ok: true, dados: { forma, descontoCentavos: desconto, destino } };
+}
+
+// Venda direta no painel (WhatsApp, grupos, Instagram, loja e Bag).
+
+/** Canais de uma venda registrada direto no painel (o site usa o pedido). */
+export const CANAIS_DIRETOS = [
+  { valor: "whatsapp_privado", nome: "WhatsApp (conversa privada)" },
+  { valor: "grupo_whatsapp", nome: "Grupo de WhatsApp" },
+  { valor: "instagram", nome: "Instagram" },
+  { valor: "loja", nome: "Loja" },
+  { valor: "bag", nome: "Bag" },
+] as const;
+export type CanalDireto = (typeof CANAIS_DIRETOS)[number]["valor"];
+
+/** Grupos iniciais (CLAUDE.md, "Grupos de WhatsApp"). A lista editável vem na parte dos posts. */
+export const GRUPOS_WHATSAPP = ["Menino", "Meninas", "Liquida Salty", "Acessórios", "Calçados"] as const;
+
+export type DadosVendaDireta = DadosConfirmacao & { canal: CanalDireto; grupo: string | null; data: string };
+
+/**
+ * Lê o formulário da venda direta. A data vem do campo de data (aaaa-mm-dd),
+ * vazia vira hoje e não pode ser no futuro.
+ */
+export function lerVendaDireta(
+  valores: { canal?: unknown; grupo?: unknown; forma?: unknown; desconto?: unknown; destino?: unknown; data?: unknown },
+  totalCentavos: number,
+  hoje: string,
+): { ok: true; dados: DadosVendaDireta } | { ok: false; erro: string } {
+  const canal = CANAIS_DIRETOS.find((c) => c.valor === valores.canal)?.valor;
+  if (!canal) return { ok: false, erro: "Escolha o canal da venda." };
+  const grupo = canal === "grupo_whatsapp" ? GRUPOS_WHATSAPP.find((g) => g === valores.grupo) : null;
+  if (grupo === undefined) return { ok: false, erro: "Escolha o grupo de WhatsApp." };
+  const data = typeof valores.data === "string" && valores.data.trim() ? valores.data.trim() : hoje;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || Number.isNaN(Date.parse(`${data}T00:00:00Z`))) {
+    return { ok: false, erro: "A data da venda não é válida." };
+  }
+  if (data > hoje) return { ok: false, erro: "A data da venda não pode ser no futuro." };
+  const lido = lerConfirmacao(valores, totalCentavos);
+  if (!lido.ok) return lido;
+  return { ok: true, dados: { ...lido.dados, canal, grupo, data } };
 }
