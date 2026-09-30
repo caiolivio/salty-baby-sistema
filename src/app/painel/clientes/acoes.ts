@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { lerFormularioCliente } from "@/lib/clientes/dados";
+import { lerCrianca, lerFormularioCliente } from "@/lib/clientes/dados";
+import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente } from "@/lib/pedidos/regras";
 import { podeAcessar } from "@/lib/permissoes";
 
@@ -48,4 +50,32 @@ export async function salvarCliente(_estado: EstadoCliente, dados: FormData): Pr
 
   await prisma.cliente.update({ where: { id }, data: lido.dados });
   redirect(`/painel/clientes/${id}?salva=1`);
+}
+
+export type EstadoCrianca = { erro?: string; ok?: string; valores?: Record<string, string> } | undefined;
+
+/** Inclui ou altera uma criança da cliente (sem id, inclui). */
+export async function gravarCrianca(_estado: EstadoCrianca, dados: FormData): Promise<EstadoCrianca> {
+  await exigirAcesso("painel");
+  const valores = valoresDigitados(dados);
+  const lido = lerCrianca(valores, hojeEmSaoPaulo());
+  if (!lido.ok) return { erro: lido.erro, valores };
+  const clienteId = valores.clienteId ?? "";
+  if (valores.id) {
+    const r = await prisma.crianca.updateMany({ where: { id: valores.id, clienteId }, data: lido.dados });
+    if (r.count === 0) return { erro: "Esta criança não existe mais.", valores };
+  } else {
+    const existe = await prisma.cliente.findUnique({ where: { id: clienteId }, select: { id: true } });
+    if (!existe) return { erro: "Esta cliente não existe mais.", valores };
+    await prisma.crianca.create({ data: { ...lido.dados, clienteId } });
+  }
+  revalidatePath(`/painel/clientes/${clienteId}`);
+  return { ok: valores.id ? "Dados da criança salvos." : `${lido.dados.nome} foi incluída.` };
+}
+
+export async function removerCrianca(dados: FormData): Promise<void> {
+  await exigirAcesso("painel");
+  const clienteId = String(dados.get("clienteId") ?? "");
+  await prisma.crianca.deleteMany({ where: { id: String(dados.get("id") ?? ""), clienteId } });
+  revalidatePath(`/painel/clientes/${clienteId}`);
 }

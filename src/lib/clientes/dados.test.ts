@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatarCpf, lerFormularioCliente } from "./dados";
+import { formatarCpf, lerCrianca, lerFormularioCliente } from "./dados";
 
 describe("cadastro de clientes", () => {
   it("guarda o WhatsApp e o CPF só com os números", () => {
@@ -29,5 +29,25 @@ describe("cadastro de clientes", () => {
 
   it("formata o CPF", () => {
     expect(formatarCpf("12345678901")).toBe("123.456.789-01");
+  });
+});
+
+describe("dados da criança", () => {
+  const hoje = "2026-09-30";
+  it("lê nome, nascimento e sexo", () => {
+    expect(lerCrianca({ nome: " Maria  Clara ", nascimento: "2025-03-10", sexo: "feminino" }, hoje)).toEqual({
+      ok: true,
+      dados: { nome: "Maria Clara", nascimento: new Date("2025-03-10T00:00:00Z"), sexo: "feminino" },
+    });
+    expect(lerCrianca({ nome: "Theo", nascimento: "", sexo: "" }, hoje)).toEqual({
+      ok: true,
+      dados: { nome: "Theo", nascimento: null, sexo: null },
+    });
+  });
+
+  it("recusa sem nome, data no futuro ou muito antiga", () => {
+    expect(lerCrianca({ nome: "" }, hoje)).toEqual({ ok: false, erro: "Escreva o nome da criança." });
+    expect(lerCrianca({ nome: "Theo", nascimento: "2026-10-01" }, hoje)).toMatchObject({ ok: false });
+    expect(lerCrianca({ nome: "Theo", nascimento: "1990-01-01" }, hoje)).toEqual({ ok: false, erro: "Confira o ano de nascimento." });
   });
 });

@@ -162,24 +162,40 @@ model FotoPeca {
 }
 
 model Cliente {
-  id           String   @id @default(cuid())
-  nome         String   @db.VarChar(160)
-  telefone     String?  @db.VarChar(40)
-  email        String?  @db.VarChar(191)
+  id           String    @id @default(cuid())
+  nome         String    @db.VarChar(160)
+  telefone     String?   @db.VarChar(40)
+  email        String?   @db.VarChar(191)
   /// Só a administradora vê.
-  cpf          String?  @db.VarChar(20)
-  endereco     String?  @db.VarChar(255)
-  cep          String?  @db.VarChar(15)
-  cidade       String?  @db.VarChar(100)
-  estado       String?  @db.VarChar(60)
-  pais         String?  @db.VarChar(60)
-  observacao   String?  @db.Text
-  criadoEm     DateTime @default(now()) @map("criado_em")
-  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  cpf          String?   @db.VarChar(20)
+  endereco     String?   @db.VarChar(255)
+  cep          String?   @db.VarChar(15)
+  cidade       String?   @db.VarChar(100)
+  estado       String?   @db.VarChar(60)
+  pais         String?   @db.VarChar(60)
+  observacao   String?   @db.Text
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
   vendas       Venda[]
   pedidos      Pedido[]
+  criancas     Crianca[]
 
   @@map("clientes")
+}
+
+/// Filhos (ou outras crianças) da cliente, para marketing e pós-venda.
+model Crianca {
+  id         String    @id @default(cuid())
+  clienteId  String    @map("cliente_id")
+  nome       String    @db.VarChar(80)
+  nascimento DateTime? @db.Date
+  /// feminino (menina) ou masculino (menino).
+  sexo       Genero?
+  criadoEm   DateTime  @default(now()) @map("criado_em")
+  cliente    Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@map("criancas")
 }
 
 enum CanalVenda {

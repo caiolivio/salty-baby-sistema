@@ -1,0 +1,86 @@
+.resumoCliente {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.grafico {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.grafico figcaption {
+  font-weight: 700;
+  color: var(--tinta);
+  margin-bottom: 8px;
+}
+
+.grafico {
+  overflow-x: auto;
+  /* Começa mostrando os meses mais recentes (à direita). */
+  direction: rtl;
+}
+
+.grafico > * {
+  direction: ltr;
+}
+
+/* No celular o gráfico rola para o lado em vez de ficar ilegível. */
+.grafico svg {
+  min-width: 520px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.eixo {
+  stroke: var(--borda);
+  stroke-width: 1;
+}
+
+.barra {
+  fill: var(--petroleo);
+}
+
+.coluna:hover .barra {
+  fill: var(--turquesa);
+}
+
+.valor {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--tinta);
+}
+
+.mes {
+  font-size: 11px;
+  fill: #4a5a64;
+}
+
+.criancas {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lista {
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+
+.crianca {
+  padding: 12px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.crianca h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--petroleo);
+}

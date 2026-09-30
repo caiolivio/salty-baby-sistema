@@ -82,3 +82,27 @@ export function formatarCpf(cpf: string): string {
   const d = numeros(cpf);
   return d.length === 11 ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}` : cpf;
 }
+
+export type DadosCrianca = { nome: string; nascimento: Date | null; sexo: "feminino" | "masculino" | null };
+
+/** Lê o formulário de uma criança. A data vem do campo de data (aaaa-mm-dd) e é opcional. */
+export function lerCrianca(
+  valores: { nome?: unknown; nascimento?: unknown; sexo?: unknown },
+  hoje: string,
+): { ok: true; dados: DadosCrianca } | { ok: false; erro: string } {
+  const nome = typeof valores.nome === "string" ? valores.nome.trim().replace(/\s+/g, " ") : "";
+  if (!nome) return { ok: false, erro: "Escreva o nome da criança." };
+  if (nome.length > 80) return { ok: false, erro: "Use no máximo 80 caracteres no nome." };
+  const texto = typeof valores.nascimento === "string" ? valores.nascimento.trim() : "";
+  let nascimento: Date | null = null;
+  if (texto) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(texto) || Number.isNaN(Date.parse(`${texto}T00:00:00Z`))) {
+      return { ok: false, erro: "A data de nascimento não é válida." };
+    }
+    if (texto > hoje) return { ok: false, erro: "A data de nascimento não pode ser no futuro." };
+    if (Number(texto.slice(0, 4)) < Number(hoje.slice(0, 4)) - 25) return { ok: false, erro: "Confira o ano de nascimento." };
+    nascimento = new Date(`${texto}T00:00:00Z`);
+  }
+  const sexo = valores.sexo === "feminino" || valores.sexo === "masculino" ? valores.sexo : null;
+  return { ok: true, dados: { nome, nascimento, sexo } };
+}
