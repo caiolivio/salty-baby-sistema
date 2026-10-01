@@ -1,0 +1,78 @@
+.propostas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+}
+
+.proposta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+
+.proposta img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--fundo-suave);
+}
+
+.proposta p {
+  margin: 0;
+}
+
+.selo {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+  color: var(--petroleo);
+}
+
+.recusada {
+  opacity: 0.6;
+}
+
+.dados {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0 0 16px;
+}
+
+.dados dt {
+  font-weight: 700;
+}
+
+.dados dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.filtroEtapas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filtroEtapas a {
+  padding: 6px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.filtroEtapas a[aria-current="page"] {
+  background: var(--petroleo);
+  border-color: var(--petroleo);
+  color: #fff;
+}

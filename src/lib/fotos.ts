@@ -16,7 +16,21 @@ export function pastaDeFotos(): string {
 
 /** Reduz a foto e grava. Devolve o nome base usado no banco (sem extensão). */
 export async function guardarFotoDePeca(pecaId: string, conteudo: Buffer): Promise<string> {
-  const base = `pecas/${pecaId}/${randomUUID()}`;
+  return guardarFotoEm(`pecas/${pecaId}`, conteudo);
+}
+
+/** Foto de uma peça proposta por quem quer ser fornecedora. */
+export async function guardarFotoDeProposta(conteudo: Buffer): Promise<string> {
+  return guardarFotoEm(`propostas/${new Date().toISOString().slice(0, 7)}`, conteudo);
+}
+
+/** Lê uma foto já guardada (o tamanho grande), para copiar para outra peça. */
+export async function lerFotoGuardada(base: string): Promise<Buffer | null> {
+  return lerArquivoDeFoto([`${base}.webp`]);
+}
+
+async function guardarFotoEm(pasta: string, conteudo: Buffer): Promise<string> {
+  const base = `${pasta}/${randomUUID()}`;
   const destino = path.join(pastaDeFotos(), base);
   await mkdir(path.dirname(destino), { recursive: true });
   const imagem = sharp(conteudo, { failOn: "error" }).rotate(); // respeita a orientação do celular

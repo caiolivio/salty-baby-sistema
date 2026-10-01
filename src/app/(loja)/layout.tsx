@@ -19,7 +19,7 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
         <nav className={estilos.atalhos} aria-label="Sua conta">
           {usuario ? (
             <Link href={destinoInicial(usuario.perfis)} className={estilos.linkConta}>
-              {destinoInicial(usuario.perfis) === "/minha-conta" ? "Minha conta" : "Painel"}
+              {{ "/minha-conta": "Minha conta", "/fornecedora": "Minha área" }[destinoInicial(usuario.perfis)] ?? "Painel"}
             </Link>
           ) : (
             <Link href="/entrar" className={estilos.linkConta}>
@@ -35,7 +35,10 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
       <main className={estilos.conteudo}>{children}</main>
       <footer className={estilos.rodape}>
         <p>Salty Baby · Moda Sustentável · Brechó infantil em Caraguatatuba-SP</p>
-        <Link href="/entrar">Área da loja</Link>
+        <nav className={estilos.linksRodape} aria-label="Links do rodapé">
+          <Link href="/seja-fornecedora">Seja uma fornecedora</Link>
+          <Link href="/entrar">Área da loja</Link>
+        </nav>
       </footer>
     </div>
   );

@@ -1,0 +1,81 @@
+.passos {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 8px 0 20px;
+  padding: 0;
+  counter-reset: passo;
+}
+
+.passos li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+/* Linha que liga um passo ao próximo */
+.passos li + li::before {
+  content: "";
+  position: absolute;
+  top: 19px;
+  right: calc(50% + 22px);
+  width: calc(100% - 44px);
+  height: 3px;
+  border-radius: 3px;
+  background: var(--borda);
+}
+
+.passos li.feito + li::before {
+  background: var(--turquesa);
+}
+
+.numero {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid var(--borda);
+  background: var(--fundo);
+  color: #5b6b74;
+}
+
+.feito .numero {
+  border-color: var(--turquesa);
+  background: var(--turquesa);
+  color: #fff;
+}
+
+.atual .numero {
+  border-color: var(--petroleo);
+  background: var(--petroleo);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(50, 175, 181, 0.25);
+}
+
+.nome {
+  color: #4a5a64;
+}
+
+.atual .nome,
+.feito .nome {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

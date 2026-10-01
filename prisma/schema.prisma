@@ -31,6 +31,9 @@ model Usuario {
   /// Ficha de cliente ligada a esta conta (quem tem o perfil cliente).
   cliente        Cliente?
   linksDeSenha   LinkDeSenha[]
+  /// Ficha de fornecedora ligada a esta conta (quem tem o perfil fornecedora).
+  fornecedora    Fornecedora?
+  candidatura    Candidatura?
 
   @@map("usuarios")
 }
@@ -56,27 +59,37 @@ model Sequencia {
 }
 
 model Fornecedora {
-  id                      String   @id @default(cuid())
-  numero                  Int      @unique
+  id                      String         @id @default(cuid())
+  numero                  Int            @unique
   /// "F" + número com pelo menos 2 dígitos (F01, F48, F100). Nunca faz parte do nome.
-  codigo                  String   @unique @db.VarChar(10)
-  nome                    String   @db.VarChar(160)
-  telefone                String?  @db.VarChar(40)
-  email                   String?  @db.VarChar(191)
+  codigo                  String         @unique @db.VarChar(10)
+  nome                    String         @db.VarChar(160)
+  telefone                String?        @db.VarChar(40)
+  email                   String?        @db.VarChar(191)
   /// CPF ou CNPJ: só a administradora vê.
-  documento               String?  @db.VarChar(30)
-  pix                     String?  @db.VarChar(191)
-  endereco                String?  @db.VarChar(255)
-  cep                     String?  @db.VarChar(15)
-  cidade                  String?  @db.VarChar(100)
-  estado                  String?  @db.VarChar(60)
-  pais                    String?  @db.VarChar(60)
+  documento               String?        @db.VarChar(30)
+  pix                     String?        @db.VarChar(191)
+  endereco                String?        @db.VarChar(255)
+  cep                     String?        @db.VarChar(15)
+  cidade                  String?        @db.VarChar(100)
+  estado                  String?        @db.VarChar(60)
+  pais                    String?        @db.VarChar(60)
   /// Pontos-base: 4000 = 40%.
-  percentualRepassePadrao Int      @default(4000) @map("percentual_repasse_padrao")
-  ativa                   Boolean  @default(true)
-  criadoEm                DateTime @default(now()) @map("criado_em")
-  atualizadoEm            DateTime @updatedAt @map("atualizado_em")
+  percentualRepassePadrao Int            @default(4000) @map("percentual_repasse_padrao")
+  ativa                   Boolean        @default(true)
+  /// Conta de acesso à área da fornecedora.
+  usuarioId               String?        @unique @map("usuario_id")
+  /// Quando aceitou o acordo de consignação, e qual versão do texto.
+  termosAceitosEm         DateTime?      @map("termos_aceitos_em")
+  termosVersao            String?        @map("termos_versao") @db.VarChar(20)
+  /// Quando viu o "Parabéns" (passo 3) e entrou na área de verdade.
+  boasVindasEm            DateTime?      @map("boas_vindas_em")
+  criadoEm                DateTime       @default(now()) @map("criado_em")
+  atualizadoEm            DateTime       @updatedAt @map("atualizado_em")
+  usuario                 Usuario?       @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   pecas                   Peca[]
+  candidatura             Candidatura?
+  propostas               PecaProposta[]
 
   @@map("fornecedoras")
 }
@@ -175,6 +188,7 @@ model Peca {
   itensVendidos     ItemVenda[]
   itensPedido       ItemPedido[]
   favoritos         Favorito[]
+  proposta          PecaProposta?
 
   @@index([codigoAntigo])
   @@index([status])
@@ -196,23 +210,23 @@ model FotoPeca {
 }
 
 model Cliente {
-  id           String    @id @default(cuid())
-  nome         String    @db.VarChar(160)
-  telefone     String?   @db.VarChar(40)
-  email        String?   @db.VarChar(191)
+  id           String     @id @default(cuid())
+  nome         String     @db.VarChar(160)
+  telefone     String?    @db.VarChar(40)
+  email        String?    @db.VarChar(191)
   /// Só a administradora vê.
-  cpf          String?   @db.VarChar(20)
-  endereco     String?   @db.VarChar(255)
-  cep          String?   @db.VarChar(15)
-  cidade       String?   @db.VarChar(100)
-  estado       String?   @db.VarChar(60)
-  pais         String?   @db.VarChar(60)
-  observacao   String?   @db.Text
+  cpf          String?    @db.VarChar(20)
+  endereco     String?    @db.VarChar(255)
+  cep          String?    @db.VarChar(15)
+  cidade       String?    @db.VarChar(100)
+  estado       String?    @db.VarChar(60)
+  pais         String?    @db.VarChar(60)
+  observacao   String?    @db.Text
   /// Conta de acesso ao site (área do cliente), criada pela cliente ou pela loja.
-  usuarioId    String?   @unique @map("usuario_id")
-  criadoEm     DateTime  @default(now()) @map("criado_em")
-  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
-  usuario      Usuario?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuarioId    String?    @unique @map("usuario_id")
+  criadoEm     DateTime   @default(now()) @map("criado_em")
+  atualizadoEm DateTime   @updatedAt @map("atualizado_em")
+  usuario      Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   vendas       Venda[]
   pedidos      Pedido[]
   criancas     Crianca[]
@@ -332,13 +346,14 @@ model ItemVenda {
 
 /// Lista de categorias que a administradora mantém no painel. Uma peça pode ter várias.
 model Categoria {
-  id       String          @id @default(cuid())
-  nome     String          @unique @db.VarChar(60)
-  ordem    Int             @default(0)
+  id        String          @id @default(cuid())
+  nome      String          @unique @db.VarChar(60)
+  ordem     Int             @default(0)
   /// Categoria desativada some do cadastro, mas continua nas peças que já a têm.
-  ativa    Boolean         @default(true)
-  criadoEm DateTime        @default(now()) @map("criado_em")
-  pecas    PecaCategoria[]
+  ativa     Boolean         @default(true)
+  criadoEm  DateTime        @default(now()) @map("criado_em")
+  pecas     PecaCategoria[]
+  propostas PecaProposta[]
 
   @@map("categorias")
 }
@@ -405,4 +420,79 @@ model ItemPedido {
   @@id([pedidoId, pecaId])
   @@index([pecaId])
   @@map("itens_pedido")
+}
+
+/// Etapas de quem quer ser fornecedora (página "Seja uma fornecedora").
+enum EtapaCandidatura {
+  /// Passo 1 enviado: aguardando a curadoria.
+  enviada
+  /// Curadoria aprovou: a pessoa tem acesso e faz o passo 2 na área dela.
+  aprovada
+  /// Passo 2 feito (peças e acordo): a Salty entra em contato para efetivar.
+  acordo_aceito
+  /// Passo 3: virou fornecedora (tem código F..).
+  efetivada
+  recusada
+}
+
+model Candidatura {
+  id             String           @id @default(cuid())
+  nome           String           @db.VarChar(160)
+  email          String           @db.VarChar(191)
+  telefone       String           @db.VarChar(40)
+  endereco       String           @db.VarChar(255)
+  cep            String?          @db.VarChar(15)
+  cidade         String?          @db.VarChar(100)
+  estado         String?          @db.VarChar(60)
+  etapa          EtapaCandidatura @default(enviada)
+  /// Anotação da curadoria (só o painel vê).
+  observacao     String?          @db.Text
+  acordoAceitoEm DateTime?        @map("acordo_aceito_em")
+  acordoVersao   String?          @map("acordo_versao") @db.VarChar(20)
+  usuarioId      String?          @unique @map("usuario_id")
+  fornecedoraId  String?          @unique @map("fornecedora_id")
+  criadoEm       DateTime         @default(now()) @map("criado_em")
+  atualizadoEm   DateTime         @updatedAt @map("atualizado_em")
+  usuario        Usuario?         @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  fornecedora    Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: SetNull)
+  pecas          PecaProposta[]
+
+  @@index([etapa])
+  @@map("candidaturas")
+}
+
+enum SituacaoProposta {
+  proposta
+  recusada
+  /// A Salty recebeu a peça e cadastrou no estoque.
+  recebida
+}
+
+/// Peça oferecida pela candidata ou fornecedora, antes de virar estoque. O
+/// preço final é sempre a Salty que define, ao cadastrar a peça.
+model PecaProposta {
+  id            String           @id @default(cuid())
+  candidaturaId String?          @map("candidatura_id")
+  fornecedoraId String?          @map("fornecedora_id")
+  descricao     String           @db.Text
+  /// Nome base da foto na pasta de fotos (como nas peças).
+  foto          String           @db.VarChar(191)
+  nome          String?          @db.VarChar(160)
+  tamanho       String?          @db.VarChar(20)
+  marca         String?          @db.VarChar(80)
+  genero        Genero?
+  conservacao   Conservacao?
+  categoriaId   String?          @map("categoria_id")
+  situacao      SituacaoProposta @default(proposta)
+  /// Peça do estoque criada quando a Salty recebeu esta.
+  pecaId        String?          @unique @map("peca_id")
+  criadoEm      DateTime         @default(now()) @map("criado_em")
+  candidatura   Candidatura?     @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+  fornecedora   Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: Cascade)
+  categoria     Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  peca          Peca?            @relation(fields: [pecaId], references: [id], onDelete: SetNull)
+
+  @@index([candidaturaId])
+  @@index([fornecedoraId])
+  @@map("pecas_propostas")
 }
