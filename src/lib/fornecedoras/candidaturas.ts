@@ -153,10 +153,15 @@ export async function situacaoNaArea(usuarioId: string) {
       email: true,
       telefone: true,
       endereco: true,
+      cep: true,
+      cidade: true,
+      estado: true,
+      pix: true,
       termosAceitosEm: true,
       termosVersao: true,
       boasVindasEm: true,
       ativa: true,
+      candidatura: { select: { id: true } },
     },
   });
   if (fornecedora) return { tipo: "fornecedora" as const, fornecedora };

@@ -1,101 +1,53 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GraficoBarras } from "@/componentes/grafico-barras";
 import { Passos } from "@/componentes/passos";
 import { exigirAcesso } from "@/lib/acesso";
-import { prisma } from "@/lib/banco";
-import { formatarData } from "@/lib/datas";
-import { ACORDO, TITULO_ACORDO } from "@/lib/fornecedoras/acordo";
+import { lerPeriodo } from "@/lib/clientes/perfil";
+import { formatarDia } from "@/lib/datas";
+import { formatarReais } from "@/lib/dinheiro";
+import { dadosDaFornecedora } from "@/lib/fornecedoras/area";
 import { PASSOS, situacaoDosPassos } from "@/lib/fornecedoras/candidatura";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
-import { enderecoDaFoto } from "@/lib/fotos";
+import { etapaDaFornecedora, PASSOS_PRIMEIRO_ACESSO } from "@/lib/fornecedoras/conta";
+import { calcularSaldos, vendasNoPeriodo } from "@/lib/fornecedoras/saldos";
+import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
+import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../loja.module.css";
-import { aceitar, concluirBoasVindas, tirar } from "./acoes";
-import { FormularioProposta } from "./formulario-proposta";
+import { aceitar, concluirBoasVindas } from "./acoes";
+import { ComoFuncionaAArea, TextoDoAcordo } from "./acordo-texto";
+import { EscolherPeriodo } from "./escolher-periodo";
+import { FormularioDados } from "./formulario-dados";
+import { EnviarPecas } from "./propostas";
 
 export const metadata: Metadata = { title: "Área da fornecedora · Salty Baby", robots: { index: false } };
 
-function TextoDoAcordo() {
+function AceiteDoAcordo({ falta, texto }: { falta: boolean; texto: string }) {
   return (
-    <div className={estilos.acordo}>
-      <strong>{TITULO_ACORDO}</strong>
-      {ACORDO.map((s) => (
-        <div key={s.titulo}>
-          <h3>{s.titulo}</h3>
-          <p>{s.texto}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-async function MinhasPropostas({ dono }: { dono: { candidaturaId: string } | { fornecedoraId: string } }) {
-  const propostas = await prisma.pecaProposta.findMany({
-    where: dono,
-    orderBy: { criadoEm: "desc" },
-    select: { id: true, nome: true, descricao: true, foto: true, situacao: true, criadoEm: true, peca: { select: { codigo: true } } },
-  });
-  if (propostas.length === 0) return <p>Você ainda não enviou peças.</p>;
-  return (
-    <ul className={estilos.minhasPropostas}>
-      {propostas.map((p) => (
-        <li key={p.id}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio */}
-          <img src={enderecoDaFoto(p.foto, true)} alt={p.nome ?? "Foto da peça"} />
-          <strong>{p.nome ?? p.descricao}</strong>
-          <span>Enviada em {formatarData(p.criadoEm)}</span>
-          <span className={estilos.seloProposta}>
-            {p.situacao === "proposta"
-              ? "Em avaliação"
-              : p.situacao === "recebida"
-                ? `Recebida${p.peca ? ` · ${p.peca.codigo}` : ""}`
-                : "Não aceita"}
-          </span>
-          {p.situacao === "proposta" && (
-            <form action={tirar}>
-              <input type="hidden" name="id" value={p.id} />
-              <button type="submit" className={estilos.linkTirar}>
-                Tirar
-              </button>
-            </form>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-async function EnviarPecas({
-  dono,
-  titulo,
-}: {
-  dono: { candidaturaId: string } | { fornecedoraId: string };
-  titulo: string;
-}) {
-  const categorias = await prisma.categoria.findMany({
-    where: { ativa: true },
-    orderBy: { nome: "asc" },
-    select: { id: true, nome: true },
-  });
-  return (
-    <>
-      <section className={estilos.secaoArea} aria-labelledby="enviar">
-        <h2 id="enviar">{titulo}</h2>
-        <p>
-          Mande uma foto e os detalhes de cada peça. A Salty avalia e, quando receber a peça, define o preço e coloca à venda.
+    <section className={estilos.secaoArea} aria-labelledby="regras">
+      <h2 id="regras">Regras da consignação</h2>
+      <TextoDoAcordo />
+      {falta && (
+        <p className={estilos.erro} role="alert">
+          Para continuar, marque que leu e está de acordo.
         </p>
-        <FormularioProposta categorias={categorias} />
-      </section>
-      <section className={estilos.secaoArea} aria-labelledby="enviadas">
-        <h2 id="enviadas">Peças que você enviou</h2>
-        <MinhasPropostas dono={dono} />
-      </section>
-    </>
+      )}
+      <form action={aceitar} className={estilos.formConta}>
+        <label className={estilos.marcarLinha}>
+          <input type="checkbox" name="de_acordo" value="sim" required />
+          <span>Li e estou de acordo com as regras da consignação da Salty Baby.</span>
+        </label>
+        <button type="submit" className={estilos.botaoWhats}>
+          {texto}
+        </button>
+      </form>
+    </section>
   );
 }
 
 export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fornecedora">) {
   const usuario = await exigirAcesso("area-fornecedora", "/fornecedora");
-  const aviso = await searchParams;
+  const parametros = await searchParams;
   const situacao = await situacaoNaArea(usuario.id);
 
   if (situacao.tipo === "sem-cadastro") {
@@ -150,48 +102,85 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
-        <section className={estilos.secaoArea} aria-labelledby="regras">
-          <h2 id="regras">Regras da consignação</h2>
-          <TextoDoAcordo />
-          {aviso.faltaAceite && (
-            <p className={estilos.erro} role="alert">
-              Para continuar, marque que leu e está de acordo.
-            </p>
-          )}
-          <form action={aceitar} className={estilos.formConta}>
-            <label className={estilos.marcarLinha}>
-              <input type="checkbox" name="de_acordo" value="sim" required />
-              <span>Li e estou de acordo com as regras da consignação da Salty Baby.</span>
-            </label>
-            <button type="submit" className={estilos.botaoWhats}>
-              Aceitar e concluir o passo 2
-            </button>
-          </form>
-        </section>
+        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e concluir o passo 2" />
       </>
     );
   }
 
   const { fornecedora } = situacao;
-  const dono = { fornecedoraId: fornecedora.id };
-  if (!fornecedora.boasVindasEm) {
-    // Passo 3: acabou de virar parceira.
+  const etapa = etapaDaFornecedora(fornecedora);
+  // Quem veio pelo "Seja uma fornecedora" segue os 4 passos da inscrição; quem
+  // já era parceira (importada) segue os 3 passos do primeiro acesso.
+  const veioDaInscricao = Boolean(fornecedora.candidatura);
+
+  if (etapa === "dados") {
     return (
       <>
-        <Passos nomes={PASSOS} situacoes={situacaoDosPassos(3, true)} />
+        <h1 className={estilos.tituloPagina}>Termine o seu cadastro</h1>
+        <Passos nomes={PASSOS_PRIMEIRO_ACESSO} situacoes={["atual", "pendente", "pendente"]} />
+        <section className={estilos.explicacao}>
+          <p>
+            Para liberar a sua área, complete os seus dados. <strong>Nome, e-mail e endereço são obrigatórios.</strong>
+          </p>
+        </section>
+        <FormularioDados
+          textoBotao="Salvar e continuar"
+          iniciais={{
+            nome: fornecedora.nome,
+            email: fornecedora.email ?? "",
+            telefone: fornecedora.telefone ? formatarTelefone(fornecedora.telefone) : "",
+            endereco: fornecedora.endereco ?? "",
+            cep: fornecedora.cep ?? "",
+            cidade: fornecedora.cidade ?? "",
+            estado: fornecedora.estado ?? "",
+            pix: fornecedora.pix ?? "",
+          }}
+        />
+      </>
+    );
+  }
+
+  if (etapa === "acordo") {
+    return (
+      <>
+        <h1 className={estilos.tituloPagina}>Leia e aceite o acordo</h1>
+        <Passos nomes={PASSOS_PRIMEIRO_ACESSO} situacoes={["feito", "atual", "pendente"]} />
+        <section className={estilos.explicacao}>
+          <p>Seus dados foram salvos. Falta só ler e aceitar as regras da consignação para liberar a sua área.</p>
+        </section>
+        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e continuar" />
+      </>
+    );
+  }
+
+  if (etapa === "parabens") {
+    return (
+      <>
+        {veioDaInscricao ? (
+          <Passos nomes={PASSOS} situacoes={situacaoDosPassos(3, true)} />
+        ) : (
+          <Passos nomes={PASSOS_PRIMEIRO_ACESSO} situacoes={["feito", "feito", "feito"]} />
+        )}
         <section className={estilos.parabens}>
-          <h1>Parabéns, você agora é parceira da Salty Baby! 🎉</h1>
+          <h1>
+            {veioDaInscricao ? "Parabéns, você agora é parceira da Salty Baby! 🎉" : "Parabéns, cadastro finalizado! 🎉"}
+          </h1>
           <p>
             Seu código de fornecedora é <strong>{fornecedora.codigo}</strong>. Ele aparece no código de cada peça sua.
           </p>
         </section>
         <section className={estilos.secaoArea}>
+          <h2>O que tem na sua área</h2>
+          <ComoFuncionaAArea />
           <p>
             Quanto mais peças, mais chances de venda! Sempre que tiver roupas, calçados ou brinquedos que não usa mais, mande
-            as fotos pela sua área.
+            as fotos em <strong>Enviar peças</strong>.
           </p>
           <details>
-            <summary>Ver o acordo que você aceitou{fornecedora.termosAceitosEm && ` em ${formatarData(fornecedora.termosAceitosEm)}`}</summary>
+            <summary>
+              Ver o acordo que você aceitou
+              {fornecedora.termosAceitosEm && ` em ${formatarDia(fornecedora.termosAceitosEm)}`}
+            </summary>
             <TextoDoAcordo />
           </details>
           <form action={concluirBoasVindas}>
@@ -204,20 +193,103 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
     );
   }
 
+  // Área liberada: resumo com saldos e gráficos.
+  const hoje = hojeEmSaoPaulo();
+  const periodo = lerPeriodo(
+    { periodo: parametros.periodo ?? "mensal", mes: parametros.mes, de: parametros.de, ate: parametros.ate },
+    hoje,
+  );
+  const { pecas, itens } = await dadosDaFornecedora(fornecedora.id);
+  const saldos = calcularSaldos(pecas, itens);
+  const noPeriodo = vendasNoPeriodo(itens, periodo);
+  const contagem = {
+    aVenda: pecas.filter((p) => p.status === "publicada" || p.status === "reservada").length,
+    emCadastro: pecas.filter((p) => p.status === "rascunho").length,
+    vendidas: pecas.filter((p) => ["vendida", "na_sacolinha", "enviada", "retirada"].includes(p.status)).length,
+    devolucao: pecas.filter((p) => p.status === "devolucao_pedida").length,
+  };
+
   return (
     <>
-      <h1 className={estilos.tituloPagina}>
-        Minha área de fornecedora · {fornecedora.codigo}
-      </h1>
-      <Passos nomes={PASSOS} situacoes={situacaoDosPassos(4, true)} />
-      <EnviarPecas dono={dono} titulo="Enviar novas peças" />
-      <details className={estilos.secaoArea}>
-        <summary>Acordo de consignação</summary>
-        <TextoDoAcordo />
-      </details>
-      <p>
-        <Link href="/">Ver a vitrine da Salty</Link>
-      </p>
+      <h1 className={estilos.tituloPagina}>Resumo</h1>
+      <section className={estilos.secaoArea} aria-labelledby="saldos">
+        <h2 id="saldos">Seus saldos</h2>
+        <div className={estilos.saldos}>
+          <div className={`${estilos.saldo} ${estilos.saldoDestaque}`}>
+            <span>Vendidas · total a receber</span>
+            <strong>{formatarReais(saldos.aReceberCentavos)}</strong>
+            <span>Repasse das peças vendidas que ainda não foi pago.</span>
+          </div>
+          <div className={estilos.saldo}>
+            <span>À venda</span>
+            <strong>{formatarReais(saldos.aVendaCentavos)}</strong>
+            <span>
+              Quanto você recebe se as {saldos.pecasAVenda} peça(s) à venda forem vendidas pelo preço de hoje.
+            </span>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Acumulado</span>
+            <strong>{formatarReais(saldos.acumuladoCentavos)}</strong>
+            <span>Tudo o que você já ganhou ({formatarReais(saldos.recebidoCentavos)} já pago).</span>
+          </div>
+        </div>
+      </section>
+
+      <section className={estilos.secaoArea} aria-labelledby="vendas-periodo">
+        <h2 id="vendas-periodo">Vendas · {periodo.rotulo}</h2>
+        <EscolherPeriodo periodo={periodo} hoje={hoje} />
+        <div className={estilos.saldos}>
+          <div className={estilos.saldo}>
+            <span>Peças vendidas</span>
+            <strong>{noPeriodo.pecas}</strong>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Valor das vendas</span>
+            <strong>{formatarReais(noPeriodo.vendidoCentavos)}</strong>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Para você (repasse)</span>
+            <strong>{formatarReais(noPeriodo.repasseCentavos)}</strong>
+          </div>
+        </div>
+        <GraficoBarras
+          titulo="Quanto você ganhou com as vendas"
+          formato="reais"
+          barras={noPeriodo.barras.map((b) => ({ chave: b.chave, rotulo: b.rotulo, valor: b.repasseCentavos }))}
+        />
+        <GraficoBarras
+          titulo="Peças vendidas"
+          formato="pecas"
+          barras={noPeriodo.barras.map((b) => ({ chave: b.chave, rotulo: b.rotulo, valor: b.pecas }))}
+        />
+      </section>
+
+      <section className={estilos.secaoArea} aria-labelledby="pecas">
+        <h2 id="pecas">Suas peças</h2>
+        <div className={estilos.saldos}>
+          <div className={estilos.saldo}>
+            <span>À venda</span>
+            <strong>{contagem.aVenda}</strong>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Em cadastro na Salty</span>
+            <strong>{contagem.emCadastro}</strong>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Vendidas</span>
+            <strong>{contagem.vendidas}</strong>
+          </div>
+          {contagem.devolucao > 0 && (
+            <div className={estilos.saldo}>
+              <span>Devolução pedida</span>
+              <strong>{contagem.devolucao}</strong>
+            </div>
+          )}
+        </div>
+        <p>
+          <Link href="/fornecedora/pecas">Ver todas as peças</Link> · <Link href="/fornecedora/vendas">Ver todas as vendas</Link>
+        </p>
+      </section>
     </>
   );
 }

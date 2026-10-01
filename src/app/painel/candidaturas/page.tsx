@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { EtapaCandidatura } from "@/generated/prisma/client";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { formatarData } from "@/lib/datas";
+import { formatarDia } from "@/lib/datas";
 import { NOMES_ETAPA } from "@/lib/fornecedoras/candidatura";
 import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../painel.module.css";
@@ -86,7 +86,7 @@ export default async function Candidaturas({ searchParams }: PageProps<"/painel/
                     {c.fornecedora && ` · ${c.fornecedora.codigo}`}
                   </td>
                   <td className={estilos.numero}>{c._count.pecas}</td>
-                  <td>{formatarData(c.criadoEm)}</td>
+                  <td>{formatarDia(c.criadoEm)}</td>
                 </tr>
               ))}
             </tbody>

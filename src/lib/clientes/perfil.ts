@@ -143,7 +143,7 @@ export function marcasPreferidas(marcas: (string | null)[], limite = 5): { marca
 const NOMES_MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 const CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
-export type TipoPeriodo = "anual" | "mensal" | "periodo";
+export type TipoPeriodo = "semanal" | "anual" | "mensal" | "periodo";
 
 export type Periodo = {
   tipo: TipoPeriodo;
@@ -168,6 +168,10 @@ const brasileira = (t: string) => `${t.slice(8, 10)}/${t.slice(5, 7)}/${t.slice(
  */
 export function lerPeriodo(valores: { periodo?: unknown; mes?: unknown; de?: unknown; ate?: unknown }, hoje: string): Periodo {
   const mesAtual = hoje.slice(0, 7);
+  if (valores.periodo === "semanal") {
+    const de = texto(new Date(data(hoje).getTime() - 6 * DIA));
+    return { tipo: "semanal", de, ate: hoje, mes: mesAtual, por: "dia", rotulo: "últimos 7 dias" };
+  }
   if (valores.periodo === "mensal") {
     const mes = typeof valores.mes === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(valores.mes) && valores.mes <= mesAtual ? valores.mes : mesAtual;
     const [ano, m] = mes.split("-").map(Number);

@@ -36,6 +36,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
         <Link href="/painel/marketing">WhatsApp Marketing</Link>
         <Link href="/painel/fornecedoras">Fornecedoras</Link>
         {administradora && <Link href="/painel/candidaturas">Seja fornecedora</Link>}
+        <Link href="/painel/devolucoes">Devoluções</Link>
         <Link href="/painel/pedidos">Pedidos</Link>
         <Link href="/painel/clientes">Clientes</Link>
         {administradora && <Link href="/painel/vendas">Vendas</Link>}
