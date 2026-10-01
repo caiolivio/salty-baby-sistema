@@ -151,6 +151,8 @@ model Peca {
   tamanho           String?         @db.VarChar(20)
   genero            Genero?
   conservacao       Conservacao?
+  /// Nota da peça, de 5 a 10, escolhida pela administradora. Vai no post dos grupos.
+  nota              Int?            @db.TinyInt
   variacao          String?         @db.VarChar(80)
   marca             String?         @db.VarChar(80)
   cor               String?         @db.VarChar(80)

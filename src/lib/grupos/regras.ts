@@ -78,35 +78,48 @@ export function linkDoPost(origem: string, codigoPeca: string, codigoGrupo: stri
   return `${origem.replace(/\/+$/, "")}/peca/${codigoPeca.toLowerCase()}?${PARAMETRO_GRUPO}=${encodeURIComponent(codigoGrupo)}`;
 }
 
-/** Texto pronto para colar no grupo, com o link marcado. */
-export function textoDoPost(
-  peca: {
-    codigo: string;
-    nome: string;
-    tamanho: string | null;
-    marca: string | null;
-    conservacao: string | null;
-    medidas: string | null;
-    preco: string;
-  },
-  link: string,
-): string {
-  const detalhes = [
-    peca.tamanho && `Tam. ${peca.tamanho}`,
-    peca.marca,
-    peca.conservacao,
-    peca.medidas && `Medidas: ${peca.medidas}`,
-  ].filter(Boolean);
+/** Dados de uma peça para o post, já formatados para mostrar. */
+export type PecaDoPost = {
+  codigo: string;
+  nome: string;
+  /** Descrição do cadastro; não é obrigatória. */
+  descricao: string | null;
+  categorias: string[];
+  tamanho: string | null;
+  preco: string;
+  marca: string | null;
+  nota: number | null;
+};
+
+/**
+ * Texto de uma peça, uma informação por linha, na ordem pedida pelo Caio:
+ * nome (em negrito, com asteriscos do WhatsApp), texto, categoria, tamanho,
+ * preço, marca e nota. Por último o link da peça, marcado pelo grupo.
+ */
+export function textoDoPost(peca: PecaDoPost, link: string): string {
   return [
-    `✨ ${peca.nome}`,
-    detalhes.length > 0 ? detalhes.join(" · ") : null,
-    `💰 ${peca.preco}`,
-    `Código ${peca.codigo}`,
-    "",
-    `Para comprar, é só clicar: ${link}`,
+    `*${peca.nome.replace(/\*/g, "")}*`,
+    peca.descricao?.trim() || null,
+    peca.categorias.length > 0 ? `Categoria: ${peca.categorias.join(", ")}` : null,
+    peca.tamanho && `Tamanho: ${peca.tamanho}`,
+    `Preço: ${peca.preco}`,
+    peca.marca && `Marca: ${peca.marca}`,
+    peca.nota !== null && `Nota: ${peca.nota}`,
+    `Para comprar: ${link}`,
   ]
-    .filter((linha) => linha !== null)
+    .filter(Boolean)
     .join("\n");
+}
+
+/** Link da peça no site, com a marca do grupo quando há grupo. */
+export function linkDaPeca(origem: string, codigoPeca: string, codigoGrupo?: string): string {
+  return codigoGrupo ? linkDoPost(origem, codigoPeca, codigoGrupo) : `${origem.replace(/\/+$/, "")}/peca/${codigoPeca.toLowerCase()}`;
+}
+
+/** Abertura de uma divulgação: título em negrito e o texto livre. */
+export function aberturaDaDivulgacao(titulo: string, texto: string): string {
+  const limpo = titulo.trim().replace(/\*/g, "");
+  return [limpo && `*${limpo}*`, texto.trim()].filter(Boolean).join("\n\n");
 }
 
 /** Limite de peças numa divulgação (o WhatsApp manda no máximo 30 fotos de uma vez). */
@@ -127,23 +140,16 @@ export function grupoMaisSugerido<G extends { id: string; papel: string | null; 
 }
 
 /**
- * Texto de uma divulgação com várias peças: título em negrito (asteriscos do
- * WhatsApp), o texto livre e cada peça numerada com o link marcado pelo grupo.
+ * Texto de uma divulgação com várias peças: a abertura (título e texto) e,
+ * separada por uma linha em branco, cada peça no formato do post de uma peça.
  */
 export function textoDaDivulgacao(dados: {
   titulo: string;
   texto: string;
-  pecas: { codigo: string; nome: string; tamanho: string | null; preco: string }[];
+  pecas: PecaDoPost[];
   origem: string;
   codigoGrupo?: string;
 }): string {
-  const origem = dados.origem.replace(/\/+$/, "");
-  const link = (codigo: string) =>
-    dados.codigoGrupo ? linkDoPost(origem, codigo, dados.codigoGrupo) : `${origem}/peca/${codigo.toLowerCase()}`;
-  const titulo = dados.titulo.trim().replace(/\*/g, "");
-  const texto = dados.texto.trim();
-  const itens = dados.pecas.map((p, i) =>
-    [`${i + 1}. ${[p.nome, p.tamanho && `tam. ${p.tamanho}`, p.preco].filter(Boolean).join(" · ")}`, link(p.codigo)].join("\n"),
-  );
-  return [titulo && `*${titulo}*`, texto, ...itens].filter(Boolean).join("\n\n");
+  const itens = dados.pecas.map((p) => textoDoPost(p, linkDaPeca(dados.origem, p.codigo, dados.codigoGrupo)));
+  return [aberturaDaDivulgacao(dados.titulo, dados.texto), ...itens].filter(Boolean).join("\n\n");
 }

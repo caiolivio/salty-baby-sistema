@@ -68,6 +68,9 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
     genero: true,
     precoCentavos: true,
     status: true,
+    descricao: true,
+    marca: true,
+    nota: true,
     fotos: { orderBy: { ordem: "asc" as const }, take: 1, select: { arquivo: true } },
     categorias: { select: { categoria: { select: { nome: true } } } },
   };
@@ -141,8 +144,12 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
           pecas={lista.map((p) => ({
             codigo: p.codigo,
             nome: p.nome,
+            descricao: p.descricao,
+            categorias: p.categorias.map((c) => c.categoria.nome),
             tamanho: nomeDoTamanho(p.tamanho),
             preco: formatarReais(p.precoCentavos),
+            marca: p.marca,
+            nota: p.nota,
             foto: p.fotos[0] ? enderecoDaFoto(p.fotos[0].arquivo) : null,
           }))}
           origem={origemDaRequisicao(await headers())}

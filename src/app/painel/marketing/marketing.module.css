@@ -123,3 +123,48 @@
   color: var(--petroleo);
   cursor: pointer;
 }
+
+/* Envio peça por peça: foto ao lado do texto dela, como fica no WhatsApp. */
+.porPeca {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 8px 0 0;
+  padding-left: 24px;
+}
+
+.porPeca li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pecaDoPost {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.pecaDoPost img,
+.pecaDoPost .semFoto {
+  width: 120px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.pecaDoPost .previa {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .pecaDoPost {
+    grid-template-columns: 88px 1fr;
+  }
+
+  .pecaDoPost img,
+  .pecaDoPost .semFoto {
+    width: 88px;
+  }
+}

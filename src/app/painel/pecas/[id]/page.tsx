@@ -11,8 +11,8 @@ import { formatarReais } from "@/lib/dinheiro";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
-import { gruposSugeridos, linkDoPost, textoDoPost } from "@/lib/grupos/regras";
-import { CONSERVACOES, reaisNoCampo, situacaoEditavel } from "@/lib/pecas/dados";
+import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
+import { reaisNoCampo, situacaoEditavel } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { NOMES_SITUACAO } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
@@ -51,14 +51,15 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const grupos = divulgavel ? await listarGruposEmUso() : [];
   const sugeridos = gruposSugeridos({ genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome) }, grupos);
   const origem = origemDaRequisicao(await headers());
-  const dadosDoPost = {
+  const dadosDoPost: PecaDoPost = {
     codigo: p.codigo,
     nome: p.nome,
+    descricao: p.descricao,
+    categorias: p.categorias.map((c) => c.categoria.nome),
     tamanho: TAMANHOS.find((t) => t.valor === p.tamanho)?.nome ?? p.tamanho,
-    marca: p.marca,
-    conservacao: CONSERVACOES.find((c) => c.valor === p.conservacao)?.nome ?? null,
-    medidas: p.medidas,
     preco: formatarReais(p.precoCentavos),
+    marca: p.marca,
+    nota: p.nota,
   };
   const posts = grupos.map((g) => ({
     id: g.id,
@@ -214,6 +215,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           tamanho: p.tamanho ?? "",
           genero: p.genero ?? "",
           conservacao: p.conservacao ?? "",
+          nota: p.nota === null ? "" : String(p.nota),
           variacao: p.variacao ?? "",
           marca: p.marca ?? "",
           cor: p.cor ?? "",
