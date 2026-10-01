@@ -1,0 +1,57 @@
+.desafio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rotulo {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.linha img {
+  border-radius: 10px;
+  border: 1px solid var(--borda);
+  max-width: 100%;
+  height: auto;
+}
+
+.trocar {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border: 1px solid var(--petroleo);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--petroleo);
+  cursor: pointer;
+}
+
+.resposta {
+  font: inherit;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+  max-width: 220px;
+}
+
+.armadilha {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

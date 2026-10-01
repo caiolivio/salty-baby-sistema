@@ -1,0 +1,29 @@
+.caixa {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.caixa input {
+  padding-right: 96px !important;
+}
+
+.mostrar {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--petroleo);
+  cursor: pointer;
+}
+
+.mostrar:focus-visible {
+  outline: 2px solid var(--turquesa);
+}

@@ -3,19 +3,35 @@
 import { signIn } from "@/auth";
 import { lerCadastro } from "@/lib/clientes/conta";
 import { criarContaDeCliente } from "@/lib/clientes/contas";
+import { conferirEnvioHumano, novoDesafio, type Desafio } from "@/lib/desafio/servidor";
 import { enderecoDeVoltaSeguro } from "@/lib/permissoes";
 import { linkWhatsapp, WHATSAPP_LOJA } from "@/lib/vitrine";
 
 export type EstadoCadastro =
-  | { erro: string; ajuda?: { texto: string; link: string }; nome?: string; email?: string; telefone?: string }
+  | {
+      erro: string;
+      ajuda?: { texto: string; link: string };
+      nome?: string;
+      email?: string;
+      telefone?: string;
+      /** Imagem nova do desafio contra robôs (a anterior já foi usada). */
+      desafio?: Desafio;
+    }
   | undefined;
 
 // Cadastro público: qualquer pessoa pode criar a própria conta de cliente.
 export async function cadastrar(_estado: EstadoCadastro, dados: FormData): Promise<EstadoCadastro> {
   const valores = Object.fromEntries(dados.entries());
-  const digitado = { nome: String(valores.nome ?? ""), email: String(valores.email ?? ""), telefone: String(valores.telefone ?? "") };
+  const digitado = {
+    nome: String(valores.nome ?? ""),
+    email: String(valores.email ?? ""),
+    telefone: String(valores.telefone ?? ""),
+    desafio: await novoDesafio(),
+  };
   const lido = lerCadastro(valores);
   if (!lido.ok) return { erro: lido.erro, ...digitado };
+  const robo = await conferirEnvioHumano(dados);
+  if (robo) return { erro: robo, ...digitado };
 
   const resultado = await criarContaDeCliente(lido.dados);
   if (!resultado.ok) {

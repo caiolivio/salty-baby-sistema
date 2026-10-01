@@ -1,5 +1,6 @@
 "use client";
 
+import { CampoSenha } from "@/componentes/campo-senha";
 import { useActionState } from "react";
 import estilos from "@/componentes/formulario.module.css";
 import { SENHA_MINIMO } from "@/lib/senha";
@@ -17,7 +18,7 @@ export function FormularioPrimeiroAcesso() {
       )}
       <label className={estilos.campo}>
         Código de primeiro acesso
-        <input name="codigo" type="password" autoComplete="off" required />
+        <CampoSenha name="codigo" autoComplete="off" required />
       </label>
       <label className={estilos.campo}>
         Seu nome
@@ -29,12 +30,12 @@ export function FormularioPrimeiroAcesso() {
       </label>
       <label className={estilos.campo}>
         Senha
-        <input name="senha" type="password" autoComplete="new-password" minLength={SENHA_MINIMO} required />
+        <CampoSenha name="senha" autoComplete="new-password" minLength={SENHA_MINIMO} required />
         <span className={estilos.dica}>Pelo menos {SENHA_MINIMO} caracteres, com letras e números.</span>
       </label>
       <label className={estilos.campo}>
         Repita a senha
-        <input name="confirmacao" type="password" autoComplete="new-password" required />
+        <CampoSenha name="confirmacao" autoComplete="new-password" required />
       </label>
       <button className={estilos.botao} type="submit" disabled={enviando}>
         {enviando ? "Criando…" : "Criar administradora e entrar"}

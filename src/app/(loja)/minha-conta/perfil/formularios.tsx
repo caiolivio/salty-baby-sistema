@@ -1,5 +1,6 @@
 "use client";
 
+import { CampoSenha } from "@/componentes/campo-senha";
 import { useActionState } from "react";
 import estilos from "../../loja.module.css";
 import { mudarSenha, salvarPerfil, type EstadoPerfil } from "../acoes";
@@ -51,15 +52,15 @@ export function FormularioSenha() {
       <Aviso estado={estado} />
       <label>
         Senha atual
-        <input name="atual" type="password" autoComplete="current-password" required maxLength={72} />
+        <CampoSenha name="atual" autoComplete="current-password" required maxLength={72} />
       </label>
       <label>
         Nova senha
-        <input name="senha" type="password" autoComplete="new-password" required minLength={8} maxLength={72} />
+        <CampoSenha name="senha" autoComplete="new-password" required minLength={8} maxLength={72} />
       </label>
       <label>
         Repita a nova senha
-        <input name="confirmacao" type="password" autoComplete="new-password" required minLength={8} maxLength={72} />
+        <CampoSenha name="confirmacao" autoComplete="new-password" required minLength={8} maxLength={72} />
       </label>
       <button type="submit" className={estilos.botaoWhats} disabled={enviando}>
         {enviando ? "Trocando…" : "Trocar senha"}

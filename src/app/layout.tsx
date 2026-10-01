@@ -13,7 +13,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Crédito do desenvolvimento, em todas as páginas do sistema (fica de fora na impressão). */}
+        <footer className="creditos">
+          Desenvolvido por:{" "}
+          <a href="http://people9.com.br/" target="_blank" rel="noopener">
+            People9 Comunicação
+          </a>
+        </footer>
+      </body>
     </html>
   );
 }
