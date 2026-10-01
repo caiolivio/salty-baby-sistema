@@ -60,6 +60,16 @@ describe("lerFormularioPeca", () => {
     expect(lerFormularioPeca({ nome: "Body", tamanho: "XG" }, consignada)).toEqual({ ok: false, erro: "Escolha um tamanho da lista." });
   });
 
+  it("aceita nota de 5 a 10 ou sem nota", () => {
+    const nove = lerFormularioPeca({ nome: "Body", nota: "9" }, consignada);
+    expect(nove.ok && nove.dados.nota).toBe(9);
+    const sem = lerFormularioPeca({ nome: "Body", nota: "" }, consignada);
+    expect(sem.ok && sem.dados.nota).toBeNull();
+    for (const nota of ["4", "11", "7,5", "dez"]) {
+      expect(lerFormularioPeca({ nome: "Body", nota }, consignada)).toEqual({ ok: false, erro: "A nota vai de 5 a 10." });
+    }
+  });
+
   it("confere a quantidade e o repasse", () => {
     expect(lerFormularioPeca({ nome: "Body", quantidade: "2,5" }, consignada).ok).toBe(false);
     const dois = lerFormularioPeca({ nome: "Body", quantidade: "2" }, consignada);

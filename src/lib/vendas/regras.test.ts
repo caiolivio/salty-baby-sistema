@@ -68,32 +68,36 @@ describe("lerConfirmacao", () => {
 
 describe("venda direta no painel", () => {
   const hoje = "2026-09-30";
+  const grupos = [
+    { id: "g1", nome: "Menino" },
+    { id: "g2", nome: "Meninas" },
+  ];
   it("lê canal, grupo, data e pagamento", () => {
     expect(
-      lerVendaDireta({ canal: "grupo_whatsapp", grupo: "Meninas", forma: "pix", desconto: "2", data: "2026-09-29" }, 3000, hoje),
+      lerVendaDireta({ canal: "grupo_whatsapp", grupo: "g2", forma: "pix", desconto: "2", data: "2026-09-29" }, 3000, hoje, grupos),
     ).toEqual({
       ok: true,
-      dados: { canal: "grupo_whatsapp", grupo: "Meninas", forma: "pix", descontoCentavos: 200, destino: "vendida", data: "2026-09-29" },
+      dados: { canal: "grupo_whatsapp", grupo: "Meninas", grupoId: "g2", forma: "pix", descontoCentavos: 200, destino: "vendida", data: "2026-09-29" },
     });
   });
 
   it("usa hoje sem data e ignora o grupo em outro canal", () => {
-    const r = lerVendaDireta({ canal: "loja", grupo: "Meninas", forma: "dinheiro", data: "" }, 3000, hoje);
-    expect(r.ok && r.dados).toMatchObject({ canal: "loja", grupo: null, data: hoje });
+    const r = lerVendaDireta({ canal: "loja", grupo: "g2", forma: "dinheiro", data: "" }, 3000, hoje, grupos);
+    expect(r.ok && r.dados).toMatchObject({ canal: "loja", grupo: null, grupoId: null, data: hoje });
   });
 
   it("recusa canal vazio, grupo faltando, data no futuro e site", () => {
-    expect(lerVendaDireta({ forma: "pix" }, 3000, hoje)).toEqual({ ok: false, erro: "Escolha o canal da venda." });
-    expect(lerVendaDireta({ canal: "site", forma: "pix" }, 3000, hoje)).toEqual({ ok: false, erro: "Escolha o canal da venda." });
-    expect(lerVendaDireta({ canal: "grupo_whatsapp", grupo: "Outro", forma: "pix" }, 3000, hoje)).toEqual({
+    expect(lerVendaDireta({ forma: "pix" }, 3000, hoje, grupos)).toEqual({ ok: false, erro: "Escolha o canal da venda." });
+    expect(lerVendaDireta({ canal: "site", forma: "pix" }, 3000, hoje, grupos)).toEqual({ ok: false, erro: "Escolha o canal da venda." });
+    expect(lerVendaDireta({ canal: "grupo_whatsapp", grupo: "Outro", forma: "pix" }, 3000, hoje, grupos)).toEqual({
       ok: false,
       erro: "Escolha o grupo de WhatsApp.",
     });
-    expect(lerVendaDireta({ canal: "loja", forma: "pix", data: "2026-10-01" }, 3000, hoje)).toEqual({
+    expect(lerVendaDireta({ canal: "loja", forma: "pix", data: "2026-10-01" }, 3000, hoje, grupos)).toEqual({
       ok: false,
       erro: "A data da venda não pode ser no futuro.",
     });
-    expect(lerVendaDireta({ canal: "loja", forma: "pix", data: "30/09/2026" }, 3000, hoje)).toEqual({
+    expect(lerVendaDireta({ canal: "loja", forma: "pix", data: "30/09/2026" }, 3000, hoje, grupos)).toEqual({
       ok: false,
       erro: "A data da venda não é válida.",
     });

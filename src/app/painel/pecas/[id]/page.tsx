@@ -1,19 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { podeAcessar } from "@/lib/permissoes";
 import { formatarData } from "@/lib/datas";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
+import { formatarReais } from "@/lib/dinheiro";
+import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
+import { listarGruposEmUso } from "@/lib/grupos/opcoes";
+import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
 import { reaisNoCampo, situacaoEditavel } from "@/lib/pecas/dados";
+import { TAMANHOS } from "@/lib/tamanhos";
 import { NOMES_SITUACAO } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { apagarFotoDaPeca, duplicar, ordenarFoto, salvarPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
+import { incluirNaDivulgacao } from "../../marketing/acoes";
 import { venderPeca } from "../../vendas/nova/acoes";
+import { DivulgarNoGrupo } from "../divulgar-no-grupo";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
 
@@ -29,7 +37,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
     include: {
       fornecedora: { select: { codigo: true, nome: true } },
       fotos: { orderBy: { ordem: "asc" } },
-      categorias: { select: { categoriaId: true } },
+      categorias: { select: { categoriaId: true, categoria: { select: { nome: true } } } },
     },
   });
   if (!peca) notFound();
@@ -37,6 +45,31 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
   const situacao = NOMES_SITUACAO[p.status] ?? p.status;
+
+  // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
+  const divulgavel = p.status === "publicada" && p.quantidade > 0;
+  const grupos = divulgavel ? await listarGruposEmUso() : [];
+  const sugeridos = gruposSugeridos({ genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome) }, grupos);
+  const origem = origemDaRequisicao(await headers());
+  const dadosDoPost: PecaDoPost = {
+    codigo: p.codigo,
+    nome: p.nome,
+    descricao: p.descricao,
+    categorias: p.categorias.map((c) => c.categoria.nome),
+    tamanho: TAMANHOS.find((t) => t.valor === p.tamanho)?.nome ?? p.tamanho,
+    preco: formatarReais(p.precoCentavos),
+    marca: p.marca,
+    nota: p.nota,
+  };
+  const posts = grupos.map((g) => ({
+    id: g.id,
+    nome: g.nome,
+    sugerido: sugeridos.includes(g),
+    texto: textoDoPost(dadosDoPost, linkDoPost(origem, p.codigo, g.codigo)),
+  }));
+  const fotoDoPost = p.fotos[0]
+    ? { url: enderecoDaFoto(p.fotos[0].arquivo), nome: `${p.codigo}.jpg` }
+    : null;
 
   return (
     <>
@@ -91,6 +124,24 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         {situacao} · entrada em {formatarData(p.dataEntrada)}
         {p.codigoAntigo && ` · código antigo ${p.codigoAntigo}`}
       </p>
+
+      <section aria-labelledby="divulgar">
+        <h2 id="divulgar">Divulgar no grupo</h2>
+        {divulgavel ? (
+          <>
+            <DivulgarNoGrupo posts={posts} foto={fotoDoPost} />
+            <form action={incluirNaDivulgacao} className={proprios.acoes}>
+              <input type="hidden" name="id" value={p.id} />
+              <input type="hidden" name="ir" value="sim" />
+              <button type="submit" className={proprios.botaoSecundario}>
+                Incluir numa divulgação com várias peças
+              </button>
+            </form>
+          </>
+        ) : (
+          <p>Para divulgar nos grupos, a peça precisa estar publicada e com estoque.</p>
+        )}
+      </section>
 
       <section className={proprios.formulario} aria-label="Fotos">
         <strong>Fotos</strong>
@@ -164,6 +215,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           tamanho: p.tamanho ?? "",
           genero: p.genero ?? "",
           conservacao: p.conservacao ?? "",
+          nota: p.nota === null ? "" : String(p.nota),
           variacao: p.variacao ?? "",
           marca: p.marca ?? "",
           cor: p.cor ?? "",

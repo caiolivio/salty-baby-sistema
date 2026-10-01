@@ -116,23 +116,27 @@ export const CANAIS_DIRETOS = [
 ] as const;
 export type CanalDireto = (typeof CANAIS_DIRETOS)[number]["valor"];
 
-/** Grupos iniciais (CLAUDE.md, "Grupos de WhatsApp"). A lista editável vem na parte dos posts. */
-export const GRUPOS_WHATSAPP = ["Menino", "Meninas", "Liquida Salty", "Acessórios", "Calçados"] as const;
-
-export type DadosVendaDireta = DadosConfirmacao & { canal: CanalDireto; grupo: string | null; data: string };
+export type DadosVendaDireta = DadosConfirmacao & {
+  canal: CanalDireto;
+  /** Nome do grupo no dia da venda e o grupo do cadastro (tabela grupos_whatsapp). */
+  grupo: string | null;
+  grupoId: string | null;
+  data: string;
+};
 
 /**
- * Lê o formulário da venda direta. A data vem do campo de data (aaaa-mm-dd),
+ * Lê o formulário da venda direta. O grupo vem pelo id, entre os grupos em uso. A data vem do campo de data (aaaa-mm-dd),
  * vazia vira hoje e não pode ser no futuro.
  */
 export function lerVendaDireta(
   valores: { canal?: unknown; grupo?: unknown; forma?: unknown; desconto?: unknown; destino?: unknown; data?: unknown },
   totalCentavos: number,
   hoje: string,
+  grupos: { id: string; nome: string }[],
 ): { ok: true; dados: DadosVendaDireta } | { ok: false; erro: string } {
   const canal = CANAIS_DIRETOS.find((c) => c.valor === valores.canal)?.valor;
   if (!canal) return { ok: false, erro: "Escolha o canal da venda." };
-  const grupo = canal === "grupo_whatsapp" ? GRUPOS_WHATSAPP.find((g) => g === valores.grupo) : null;
+  const grupo = canal === "grupo_whatsapp" ? grupos.find((g) => g.id === valores.grupo) : null;
   if (grupo === undefined) return { ok: false, erro: "Escolha o grupo de WhatsApp." };
   const data = typeof valores.data === "string" && valores.data.trim() ? valores.data.trim() : hoje;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || Number.isNaN(Date.parse(`${data}T00:00:00Z`))) {
@@ -141,5 +145,5 @@ export function lerVendaDireta(
   if (data > hoje) return { ok: false, erro: "A data da venda não pode ser no futuro." };
   const lido = lerConfirmacao(valores, totalCentavos);
   if (!lido.ok) return lido;
-  return { ok: true, dados: { ...lido.dados, canal, grupo, data } };
+  return { ok: true, dados: { ...lido.dados, canal, grupo: grupo?.nome ?? null, grupoId: grupo?.id ?? null, data } };
 }

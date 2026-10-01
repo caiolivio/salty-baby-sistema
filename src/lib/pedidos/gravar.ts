@@ -48,6 +48,7 @@ export type ResultadoFechar = { ok: true; id: string } | { ok: false; indisponiv
 export async function fecharPedido(
   pecaIds: string[],
   cliente: { nome: string; telefone: string },
+  grupoId: string | null = null,
   agora = new Date(),
 ): Promise<ResultadoFechar> {
   try {
@@ -82,6 +83,7 @@ export async function fecharPedido(
           numero,
           nomeCliente: cliente.nome,
           telefoneCliente: cliente.telefone,
+          grupoId,
           reservadoAte: fimDaReserva(agora),
           totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos, 0),
           itens: {

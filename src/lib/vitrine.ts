@@ -74,7 +74,23 @@ export function linkWhatsapp(numero: string | undefined, mensagem: string): stri
 export function mensagemDaPeca(
   peca: { codigo: string; nome: string; tamanho: string | null; preco: string },
   origem: string,
+  grupo?: string,
 ): string {
   const partes = [peca.codigo, peca.nome, peca.tamanho && `tam. ${peca.tamanho}`, peca.preco].filter(Boolean).join(" · ");
-  return `Olá! Tenho interesse nesta peça: ${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
+  const vi = grupo ? `\n(Vi no grupo ${grupo})` : "";
+  return `Olá! Tenho interesse nesta peça: ${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}${vi}`;
+}
+
+/** Link do WhatsApp sem número: a cliente escolhe para quem mandar. */
+export function linkCompartilharWhatsapp(mensagem: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+}
+
+/** Mensagem para a cliente mandar a peça a uma amiga pelo WhatsApp. */
+export function mensagemParaAmiga(
+  peca: { codigo: string; nome: string; tamanho: string | null; preco: string },
+  origem: string,
+): string {
+  const partes = [peca.nome, peca.tamanho && `tam. ${peca.tamanho}`, peca.preco].filter(Boolean).join(" · ");
+  return `Vi isso aqui na Salty Baby e lembrei de você! 💛\n${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
 }

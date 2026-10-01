@@ -102,6 +102,7 @@ export async function duplicarPeca(id: string, hoje: string): Promise<{ id: stri
         tamanho: original.tamanho,
         genero: original.genero,
         conservacao: original.conservacao,
+        nota: original.nota,
         variacao: original.variacao,
         marca: original.marca,
         cor: original.cor,

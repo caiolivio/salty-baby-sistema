@@ -11,6 +11,10 @@ export const GENEROS = [
   { valor: "unissex", nome: "Unissex" },
 ] as const;
 
+/** Nota da peça: de 5 a 10. */
+export const NOTA_MINIMA = 5;
+export const NOTA_MAXIMA = 10;
+
 export const CONSERVACOES = [
   { valor: "nova_com_etiqueta", nome: "Nova com etiqueta" },
   { valor: "seminova", nome: "Seminova" },
@@ -79,6 +83,10 @@ const campos = z.object({
   tamanho: opcao(TAMANHOS, "Escolha um tamanho da lista."),
   genero: opcao(GENEROS, "Escolha o gênero."),
   conservacao: opcao(CONSERVACOES, "Escolha a conservação."),
+  nota: z
+    .string()
+    .transform((t) => (t.trim() === "" ? null : Number(t)))
+    .refine((n) => n === null || (Number.isInteger(n) && n >= NOTA_MINIMA && n <= NOTA_MAXIMA), "A nota vai de 5 a 10."),
   variacao: texto(80),
   marca: texto(80),
   cor: texto(80),
@@ -103,6 +111,8 @@ export type DadosPeca = {
   tamanho: string | null;
   genero: (typeof GENEROS)[number]["valor"] | null;
   conservacao: (typeof CONSERVACOES)[number]["valor"] | null;
+  /** De 5 a 10; vazia nas peças sem nota (como as importadas). */
+  nota: number | null;
   variacao: string | null;
   marca: string | null;
   cor: string | null;

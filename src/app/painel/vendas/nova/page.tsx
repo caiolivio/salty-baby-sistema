@@ -3,6 +3,7 @@ import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
+import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
@@ -21,7 +22,7 @@ export default async function NovaVenda() {
   await exigirAcesso("painel-administracao", "/painel/vendas/nova");
   await liberarReservasVencidas();
   const ids = await pecasDaVenda();
-  const [encontradas, clientes] = await Promise.all([
+  const [encontradas, clientes, grupos] = await Promise.all([
     prisma.peca.findMany({
       where: { id: { in: ids } },
       select: {
@@ -38,6 +39,7 @@ export default async function NovaVenda() {
       },
     }),
     listarOpcoesDeClientes(),
+    listarGruposEmUso(),
   ]);
   const pecas = ids.flatMap((id) => encontradas.filter((p) => p.id === id));
   const total = pecas.reduce((s, p) => s + p.precoCentavos, 0);
@@ -116,7 +118,9 @@ export default async function NovaVenda() {
         Total: <strong>{formatarReais(total)}</strong> ({pecas.length} {pecas.length === 1 ? "peça" : "peças"})
       </p>
 
-      <FormularioVenda hoje={hojeEmSaoPaulo()} clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))} vazia={pecas.length === 0} />
+      <FormularioVenda hoje={hojeEmSaoPaulo()} clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
+        grupos={grupos.map(({ id, nome }) => ({ id, nome }))}
+        vazia={pecas.length === 0} />
     </>
   );
 }

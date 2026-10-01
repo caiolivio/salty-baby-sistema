@@ -7,6 +7,7 @@ import { prisma } from "@/lib/banco";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { incluirNoCarrinho, lerCodigoPeca, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
 import { type ClienteDaVenda, registrarVendaDireta } from "@/lib/vendas/gravar";
+import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { lerVendaDireta } from "@/lib/vendas/regras";
 import { gravarPecas, pecasDaVenda } from "./pecas-da-venda";
 
@@ -68,7 +69,7 @@ export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): P
   const precos = await prisma.peca.findMany({ where: { id: { in: ids } }, select: { precoCentavos: true } });
   const total = precos.reduce((s, p) => s + p.precoCentavos, 0);
   const hoje = hojeEmSaoPaulo();
-  const lido = lerVendaDireta(valores, total, hoje);
+  const lido = lerVendaDireta(valores, total, hoje, await listarGruposEmUso());
   if (!lido.ok) return { erro: lido.erro, valores };
 
   let cliente: ClienteDaVenda = null;

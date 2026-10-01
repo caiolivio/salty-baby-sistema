@@ -4,11 +4,13 @@ import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { reduzirFotosDoFormulario } from "@/componentes/reduzir-foto";
 import { FotosNovas, type FotoNova } from "./fotos-novas";
-import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, SITUACOES_DO_CADASTRO } from "@/lib/pecas/dados";
+import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, NOTA_MAXIMA, NOTA_MINIMA, SITUACOES_DO_CADASTRO } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
 import estilos from "../formulario.module.css";
 import type { EstadoPeca } from "./acoes";
 import { EscolherCategorias } from "./escolher-categorias";
+
+const NOTAS = Array.from({ length: NOTA_MAXIMA - NOTA_MINIMA + 1 }, (_, i) => String(NOTA_MINIMA + i));
 
 type Acao = (estado: EstadoPeca, dados: FormData) => Promise<EstadoPeca>;
 
@@ -22,6 +24,7 @@ export type ValoresPeca = Partial<
     | "tamanho"
     | "genero"
     | "conservacao"
+    | "nota"
     | "variacao"
     | "marca"
     | "cor"
@@ -147,6 +150,17 @@ export function FormularioPeca({
               {CONSERVACOES.map((c) => (
                 <option key={c.valor} value={c.valor}>
                   {c.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={estilos.campo}>
+            Nota
+            <select name="nota" defaultValue={v("nota") ?? ""}>
+              <option value="">Sem nota</option>
+              {NOTAS.map((n) => (
+                <option key={n} value={n}>
+                  {n}
                 </option>
               ))}
             </select>

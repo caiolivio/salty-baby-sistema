@@ -413,3 +413,22 @@
 .acoesPedido {
   margin: 8px 0 20px;
 }
+
+/* Compartilhar a peça com uma amiga (WhatsApp sem número: a cliente escolhe o contato). */
+.compartilhar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid var(--petroleo);
+  border-radius: 999px;
+  color: var(--petroleo);
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+
+.compartilhar::before {
+  content: "↗";
+}

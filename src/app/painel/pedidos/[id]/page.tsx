@@ -47,6 +47,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
       },
       venda: { include: { itens: true } },
       cliente: { include: { _count: { select: { vendas: true } } } },
+      grupo: { select: { nome: true } },
     },
   });
   if (!pedido) notFound();
@@ -81,6 +82,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
           ` até ${formatarHora(pedido.reservadoAte)} (faltam ${minutosRestantes(pedido.reservadoAte, new Date())} min)`}
         {" · feito em "}
         {formatarDataHora(pedido.criadoEm)}
+        {pedido.grupo && ` · veio pelo post do grupo ${pedido.grupo.nome}`}
       </p>
       {pedido.status === "expirado" && (
         <p>A reserva venceu e as peças voltaram para a vitrine. Se a cliente pagou, ainda dá para confirmar enquanto as peças estiverem à venda.</p>
