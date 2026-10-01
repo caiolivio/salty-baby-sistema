@@ -6,8 +6,10 @@ import { prisma } from "@/lib/banco";
 import { formatarDia } from "@/lib/datas";
 import { NOMES_ETAPA } from "@/lib/fornecedoras/candidatura";
 import { formatarTelefone } from "@/lib/pedidos/regras";
+import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import visual from "./candidaturas.module.css";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Seja fornecedora · Salty Baby" };
 
@@ -42,7 +44,10 @@ export default async function Candidaturas({ searchParams }: PageProps<"/painel/
 
   return (
     <>
-      <h1 className={estilos.titulo}>Seja fornecedora</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Seja fornecedora</h1>
+        <BotoesExportar tabela="candidaturas" />
+      </div>
       <p>
         Inscrições feitas na página <Link href="/seja-fornecedora">Seja uma fornecedora</Link> do site. Aprove o passo 1 para
         ela receber o acesso, e efetive a parceria depois que ela aceitar o acordo.

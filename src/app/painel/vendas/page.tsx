@@ -7,6 +7,7 @@ import { formatarReais } from "@/lib/dinheiro";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Vendas · Salty Baby" };
 
@@ -47,9 +48,12 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Vendas</h1>
-        <Link href="/painel/vendas/nova" className={proprios.botao}>
-          + Nova venda
-        </Link>
+        <span className={proprios.exportar}>
+          <BotoesExportar tabela="vendas" />
+          <Link href="/painel/vendas/nova" className={proprios.botao}>
+            + Nova venda
+          </Link>
+        </span>
       </div>
       {aviso.registrada && (
         <p className={proprios.aviso} role="status">

@@ -328,3 +328,10 @@ label.botaoSecundario:focus-within {
   font-size: 0.85rem;
   overflow-wrap: anywhere;
 }
+
+.exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

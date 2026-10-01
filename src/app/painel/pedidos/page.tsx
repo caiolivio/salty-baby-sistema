@@ -9,6 +9,7 @@ import { minutosRestantes } from "@/lib/pedidos/regras";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { cancelarPedido } from "./acoes";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Pedidos · Salty Baby" };
 
@@ -26,7 +27,10 @@ export default async function Pedidos() {
 
   return (
     <>
-      <h1 className={estilos.titulo}>Pedidos do site</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Pedidos do site</h1>
+        <BotoesExportar tabela="pedidos" />
+      </div>
       <p>
         Quando a cliente fecha o pedido no site, as peças ficam reservadas por 15 minutos e ela manda a mensagem no WhatsApp. Se
         a reserva vencer, as peças voltam sozinhas para a vitrine.

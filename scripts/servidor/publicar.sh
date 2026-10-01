@@ -42,11 +42,19 @@ if [ ! -s "$SEGREDOS" ]; then
   echo "Criando a chave de login do servidor"
   (umask 077 && printf 'AUTH_SECRET=`%s`\n' "$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')" > "$SEGREDOS")
 fi
+# Chave que o agendamento diário usa para pedir a cópia de segurança ao sistema.
+if ! grep -q '^BACKUP_CHAVE=' "$SEGREDOS"; then
+  (umask 077 && printf 'BACKUP_CHAVE=`%s`\n' "$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')" >> "$SEGREDOS")
+fi
 cat "$SEGREDOS" >> "$BASE/.env"
 
 # Fotos das peças: numa pasta fixa, fora das versões, para não se perderem a cada publicação.
 mkdir -p "$BASE/fotos"
 echo "FOTOS_DIR=$BASE/fotos" >> "$BASE/.env"
+
+# Cópias de segurança do banco: também fora das versões, só este usuário lê.
+mkdir -p "$BASE/backups" && chmod 700 "$BASE/backups"
+echo "BACKUP_DIR=$BASE/backups" >> "$BASE/.env"
 
 # 3. PM2 mantém o sistema rodando e o reinicia se cair.
 if ! command -v pm2 >/dev/null; then
@@ -68,11 +76,15 @@ else
 fi
 pm2 save >/dev/null
 
-# Religa o sistema sozinho se a VPS reiniciar.
+# Agendamentos: religar o sistema se a VPS reiniciar e fazer a cópia de
+# segurança todo dia às 6h do relógio do servidor (3h em Brasília, se ele
+# estiver em UTC). A chave vai num arquivo, para não aparecer no crontab.
+(umask 077 && sed -n 's/^BACKUP_CHAVE=`\(.*\)`$/x-chave-backup: \1/p' "$SEGREDOS" > "$BASE/.cabecalho-backup")
 if command -v crontab >/dev/null; then
-  LINHA="@reboot PATH=$HOME/.local/node/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin pm2 resurrect"
-  (crontab -l 2>/dev/null | grep -v 'pm2 resurrect' || true; echo "$LINHA") | crontab - \
-    || echo "Aviso: não foi possível agendar o religamento automático"
+  RELIGAR="@reboot PATH=$HOME/.local/node/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin pm2 resurrect"
+  BACKUP="0 6 * * * curl -sS -m 3500 -X POST -H @$BASE/.cabecalho-backup http://127.0.0.1:$PORTA/api/backup >> $BASE/backups/registro.log 2>&1"
+  (crontab -l 2>/dev/null | grep -v -e 'pm2 resurrect' -e '/api/backup' || true; echo "$RELIGAR"; echo "$BACKUP") | crontab - \
+    || echo "Aviso: não foi possível agendar o religamento e a cópia de segurança"
 fi
 
 # 5. Confere se o sistema respondeu.

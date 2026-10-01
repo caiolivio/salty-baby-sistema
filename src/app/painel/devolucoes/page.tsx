@@ -9,6 +9,7 @@ import { nomeDoStatus } from "@/lib/situacoes";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { cancelar, marcarDevolvidas } from "./acoes";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Devoluções · Salty Baby" };
 
@@ -40,7 +41,10 @@ export default async function Devolucoes({ searchParams }: PageProps<"/painel/de
 
   return (
     <>
-      <h1 className={estilos.titulo}>Devoluções</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Devoluções</h1>
+        <BotoesExportar tabela="devolucoes" />
+      </div>
       <p>
         Peças que as fornecedoras pediram de volta pela área delas. Elas já saíram da vitrine. Quando entregar, marque como
         devolvida.

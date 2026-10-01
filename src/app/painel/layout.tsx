@@ -40,6 +40,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
         <Link href="/painel/pedidos">Pedidos</Link>
         <Link href="/painel/clientes">Clientes</Link>
         {administradora && <Link href="/painel/vendas">Vendas</Link>}
+        {administradora && <Link href="/painel/backup">Backup</Link>}
         {administradora && <Link href="/painel/importar">Importar do Notion</Link>}
       </nav>
       <main className={estilos.conteudo}>{children}</main>

@@ -542,3 +542,48 @@ model ConviteFornecedora {
   @@index([fornecedoraId])
   @@map("convites_fornecedora")
 }
+
+/// Ligação com o Google Drive onde vão as cópias de segurança. Há uma só (id 1).
+/// A autorização do Google fica cifrada com a chave do servidor (AUTH_SECRET).
+model GoogleDrive {
+  id                 Int      @id
+  email              String?  @db.VarChar(191)
+  autorizacaoCifrada String   @map("autorizacao_cifrada") @db.Text
+  pastaId            String?  @map("pasta_id") @db.VarChar(191)
+  pastaFotosId       String?  @map("pasta_fotos_id") @db.VarChar(191)
+  conectadoEm        DateTime @default(now()) @map("conectado_em")
+
+  @@map("google_drive")
+}
+
+enum SituacaoBackup {
+  rodando
+  ok
+  erro
+}
+
+/// Cada cópia de segurança feita (pelo agendamento diário ou pelo botão do painel).
+model Backup {
+  id            String         @id @default(cuid())
+  situacao      SituacaoBackup @default(rodando)
+  origem        String         @db.VarChar(20)
+  arquivo       String?        @db.VarChar(191)
+  tamanho       Int?
+  noDrive       Boolean        @default(false) @map("no_drive")
+  fotosEnviadas Int            @default(0) @map("fotos_enviadas")
+  mensagem      String?        @db.Text
+  iniciadoEm    DateTime       @default(now()) @map("iniciado_em")
+  terminadoEm   DateTime?      @map("terminado_em")
+
+  @@index([iniciadoEm])
+  @@map("backups")
+}
+
+/// Fotos já copiadas para o Google Drive: só as novas são enviadas a cada dia.
+model BackupFoto {
+  caminho   String   @id @db.VarChar(191)
+  driveId   String   @map("drive_id") @db.VarChar(191)
+  enviadaEm DateTime @default(now()) @map("enviada_em")
+
+  @@map("backup_fotos")
+}

@@ -9,6 +9,7 @@ import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente } from "@/lib
 import { podeAcessar } from "@/lib/permissoes";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Clientes · Salty Baby" };
 
@@ -56,9 +57,12 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Clientes</h1>
-        <Link href="/painel/clientes/nova" className={proprios.botao}>
-          + Nova cliente
-        </Link>
+        <span className={proprios.exportar}>
+          <BotoesExportar tabela="clientes" />
+          <Link href="/painel/clientes/nova" className={proprios.botao}>
+            + Nova cliente
+          </Link>
+        </span>
       </div>
       <form className={estilos.busca} role="search">
         <input name="q" defaultValue={busca} placeholder="Nome, WhatsApp, e-mail ou cidade" aria-label="Buscar clientes" />

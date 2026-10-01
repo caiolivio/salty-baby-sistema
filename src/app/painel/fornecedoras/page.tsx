@@ -6,6 +6,7 @@ import { prisma } from "@/lib/banco";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../painel.module.css";
 import proprios from "../formulario.module.css";
+import { BotoesExportar } from "../exportar/botoes";
 
 export const metadata: Metadata = { title: "Fornecedoras · Salty Baby" };
 
@@ -34,11 +35,14 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Fornecedoras</h1>
-        {administradora && (
-          <Link href="/painel/fornecedoras/nova" className={proprios.botao}>
-            + Nova fornecedora
-          </Link>
-        )}
+        <span className={proprios.exportar}>
+          <BotoesExportar tabela="fornecedoras" />
+          {administradora && (
+            <Link href="/painel/fornecedoras/nova" className={proprios.botao}>
+              + Nova fornecedora
+            </Link>
+          )}
+        </span>
       </div>
       <form className={estilos.busca} role="search">
         <input name="q" defaultValue={busca} placeholder="Código (ex.: F06), nome ou cidade" aria-label="Buscar fornecedoras" />
