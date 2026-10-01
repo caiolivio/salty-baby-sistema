@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { escolherCategorias, hojeEmSaoPaulo, moverNaLista, lerFormularioPeca, reaisNoCampo, situacaoEditavel } from "./dados";
+import { escolherCategorias, hojeEmSaoPaulo, moverNaLista, lerFormularioPeca, reaisNoCampo, situacaoEditavel, statusNoFormulario } from "./dados";
+import { nomeDoStatus } from "../situacoes";
 
 const consignada = { consignada: true, repassePadrao: 4000, hoje: "2026-09-30" };
 const loja = { consignada: false, repassePadrao: 4000, hoje: "2026-09-30" };
@@ -39,11 +40,26 @@ describe("lerFormularioPeca", () => {
     expect(lerFormularioPeca({ nome: "Body", status: "publicada", precoCentavos: "20" }, consignada).ok).toBe(true);
   });
 
-  it("não deixa escolher uma situação de venda no cadastro", () => {
+  it("não deixa escolher um status de venda no cadastro", () => {
     expect(lerFormularioPeca({ nome: "Body", status: "vendida", precoCentavos: "20" }, consignada)).toEqual({
       ok: false,
-      erro: "Escolha a situação.",
+      erro: "Escolha o status.",
     });
+  });
+
+  it("\"Não listado\" fica à venda, mas fora da vitrine, e também precisa de preço", () => {
+    const r = lerFormularioPeca({ nome: "Body", status: "nao_listada", precoCentavos: "20" }, consignada);
+    expect(r.ok && [r.dados.status, r.dados.naoListada]).toEqual(["publicada", true]);
+    const publicada = lerFormularioPeca({ nome: "Body", status: "publicada", precoCentavos: "20" }, consignada);
+    expect(publicada.ok && publicada.dados.naoListada).toBe(false);
+    expect(lerFormularioPeca({ nome: "Body", status: "nao_listada" }, consignada)).toEqual({
+      ok: false,
+      erro: "Para colocar à venda, escreva o preço.",
+    });
+    expect(statusNoFormulario("publicada", true)).toBe("nao_listada");
+    expect(statusNoFormulario("vendida", true)).toBe("vendida");
+    expect(nomeDoStatus("publicada", true)).toBe("Não listado");
+    expect(nomeDoStatus("publicada")).toBe("À venda");
   });
 
   it("peça consignada tem repasse e não tem custo; peça da loja tem custo e não tem repasse", () => {

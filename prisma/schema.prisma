@@ -164,6 +164,8 @@ model Peca {
   medidas           String?         @db.VarChar(160)
   descricao         String?         @db.Text
   status            StatusPeca      @default(rascunho)
+  /// "Não listado": à venda só para quem tem o link (não aparece na vitrine). Vale com status publicada.
+  naoListada        Boolean         @default(false) @map("nao_listada")
   dataEntrada       DateTime        @map("data_entrada") @db.Date
   criadoEm          DateTime        @default(now()) @map("criado_em")
   atualizadoEm      DateTime        @updatedAt @map("atualizado_em")

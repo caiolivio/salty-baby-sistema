@@ -168,3 +168,13 @@
     width: 88px;
   }
 }
+
+.naoListada {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff4e0;
+  color: #6b4500;
+  font-size: 0.75rem;
+  font-weight: 700;
+}

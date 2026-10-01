@@ -5,7 +5,7 @@ import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
-import { NOMES_SITUACAO } from "@/lib/situacoes";
+import { nomeDoStatus } from "@/lib/situacoes";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { ImprimirEtiquetas } from "./imprimir-etiquetas";
 import proprios from "../formulario.module.css";
@@ -85,7 +85,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
               <th>Fornecedora</th>
               <th>Tamanho</th>
               <th className={estilos.numero}>Preço</th>
-              <th>Situação</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -128,8 +128,8 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                 <td className={estilos.numero} data-rotulo="Preço">
                   {formatarReais(p.precoCentavos)}
                 </td>
-                <td className={estilos.curta} data-rotulo="Situação">
-                  {NOMES_SITUACAO[p.status] ?? p.status}
+                <td className={estilos.curta} data-rotulo="Status">
+                  {nomeDoStatus(p.status, p.naoListada)}
                   {p.quantidade > 1 && ` (${p.quantidade})`}
                 </td>
               </tr>

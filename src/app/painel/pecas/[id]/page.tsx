@@ -12,9 +12,9 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
-import { reaisNoCampo, situacaoEditavel } from "@/lib/pecas/dados";
+import { reaisNoCampo, situacaoEditavel, statusNoFormulario } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { NOMES_SITUACAO } from "@/lib/situacoes";
+import { nomeDoStatus } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { apagarFotoDaPeca, duplicar, ordenarFoto, salvarPeca } from "../acoes";
@@ -45,7 +45,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const marcadas = peca.categorias.map((c) => c.categoriaId);
   const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
-  const situacao = NOMES_SITUACAO[p.status] ?? p.status;
+  const situacao = nomeDoStatus(p.status, p.naoListada);
 
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
   const divulgavel = p.status === "publicada" && p.quantidade > 0;
@@ -122,7 +122,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         </p>
       )}
       <p>
-        {situacao} · entrada em {formatarData(p.dataEntrada)}
+        Status: <strong>{situacao}</strong> · entrada em {formatarData(p.dataEntrada)}
         {p.codigoAntigo && ` · código antigo ${p.codigoAntigo}`}
       </p>
       {p.favoritos.length > 0 && (
@@ -237,7 +237,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           custoCentavos: reaisNoCampo(p.custoCentavos),
           percentualRepasse: p.percentualRepasse === null ? "" : mostrarPercentual(p.percentualRepasse),
           quantidade: String(p.quantidade),
-          status: p.status,
+          status: statusNoFormulario(p.status, p.naoListada),
           dataEntrada: p.dataEntrada.toISOString().slice(0, 10),
         }}
       />

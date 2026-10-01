@@ -68,6 +68,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
     genero: true,
     precoCentavos: true,
     status: true,
+    naoListada: true,
     descricao: true,
     marca: true,
     nota: true,
@@ -122,6 +123,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
                     <Link href={`/painel/pecas/${p.id}`}>{p.codigo}</Link> {p.nome}
                     {p.tamanho && ` · ${p.tamanho}`} · {formatarReais(p.precoCentavos)}
                     {p.status !== "publicada" && <strong> · saiu da vitrine</strong>}
+                    {p.status === "publicada" && p.naoListada && " · não listado (só pelo link)"}
                   </span>
                   <form action={tirarDaDivulgacao}>
                     <input type="hidden" name="id" value={p.id} />
@@ -203,6 +205,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
         <p>
           {total} peça(s) à venda{buscou ? " com estes filtros" : ""}
           {total > RESULTADOS && `, mostrando as ${RESULTADOS} mais novas`}. Peça sem gênero aparece para menina e menino.
+          As peças &quot;Não listado&quot; também aparecem aqui: não estão na vitrine, mas quem recebe o link pode comprar.
         </p>
         {encontradas.length > 0 && (
           <form action={incluirNaDivulgacao}>
@@ -215,6 +218,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
                   ) : (
                     <span className={marketing.semFoto}>Sem foto</span>
                   )}
+                  {p.naoListada && <span className={marketing.naoListada}>Não listado</span>}
                   {naLista.has(p.id) ? (
                     <span className={marketing.naLista}>✓ Na lista · {p.codigo}</span>
                   ) : (

@@ -42,7 +42,7 @@ export default async function Pedidos() {
                 <th>Cliente</th>
                 <th>Peças</th>
                 <th className={estilos.numero}>Total</th>
-                <th>Situação</th>
+                <th>Status</th>
                 <th>Feito em</th>
               </tr>
             </thead>
@@ -71,7 +71,7 @@ export default async function Pedidos() {
                   <td className={estilos.numero} data-rotulo="Total">
                     {formatarReais(p.totalCentavos)}
                   </td>
-                  <td data-rotulo="Situação">
+                  <td data-rotulo="Status">
                     {NOMES[p.status]}
                     {(p.status === "reservado" || p.status === "expirado") && (
                       <Link href={`/painel/pedidos/${p.id}/confirmar`} className={estilos.antigo}>

@@ -220,7 +220,7 @@ export function FormularioPeca({
             <input name="quantidade" type="number" min={0} max={999} step={1} defaultValue={v("quantidade") ?? "1"} />
           </label>
           <label className={estilos.campo}>
-            Situação
+            Status
             {situacaoFixa ? (
               <span className={estilos.fixo}>{situacaoFixa} (muda pelas vendas)</span>
             ) : (

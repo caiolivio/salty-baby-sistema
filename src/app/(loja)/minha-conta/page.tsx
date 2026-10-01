@@ -35,7 +35,7 @@ export default async function MinhaConta() {
     }),
     prisma.crianca.findMany({ where: { clienteId: ficha.id, nascimento: { not: null } }, select: { nascimento: true } }),
     prisma.peca.findMany({
-      where: { status: "publicada", quantidade: { gt: 0 } },
+      where: { status: "publicada", naoListada: false, quantidade: { gt: 0 } },
       select: { ...SELECAO_CARTAO, marca: true, dataEntrada: true, categorias: doHistorico.categorias },
     }),
     prisma.pedido.findMany({

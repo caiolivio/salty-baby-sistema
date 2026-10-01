@@ -23,6 +23,8 @@ export const metadata: Metadata = {
 /** Só aparece na vitrine a peça à venda e com estoque. */
 const A_VENDA: Prisma.PecaWhereInput = {
   status: "publicada",
+  // "Não listado" está à venda, mas só para quem tem o link.
+  naoListada: false,
   quantidade: { gt: 0 },
 };
 

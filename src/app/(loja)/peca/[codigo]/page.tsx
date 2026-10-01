@@ -38,6 +38,7 @@ const buscarPeca = cache(async (codigo: string) =>
       codigo: true,
       nome: true,
       status: true,
+      naoListada: true,
       quantidade: true,
       tamanho: true,
       conservacao: true,
@@ -64,6 +65,8 @@ export async function generateMetadata({ params }: PageProps<"/peca/[codigo]">):
       [peca.tamanho && `Tamanho ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ") || "Brechó infantil Salty Baby",
     // Imagem que aparece quando o link é compartilhado no WhatsApp.
     metadataBase: new URL(origemDaRequisicao(await headers())),
+    // Peça "Não listado": abre pelo link, mas não aparece no Google.
+    ...(peca.naoListada && { robots: { index: false } }),
     openGraph: {
       title: titulo,
       images: foto ? [enderecoDaFoto(foto.arquivo)] : undefined,

@@ -76,6 +76,7 @@ Este arquivo contém as regras de negócio já decididas. Siga-as sempre. Se um 
 
 ### Ciclo de vida da peça
 - Caminho normal: `rascunho → publicada → reservada → vendida → na_sacolinha → enviada` (ou `retirada`).
+- Na tela o campo se chama **Status**. "Rascunho" não aparece para ninguém. **"Não listado"** é uma peça à venda que não aparece na vitrine: quem tem o link vê e compra, e ela aparece no WhatsApp Marketing (no banco: `publicada` com `pecas.nao_listada`).
 - Saídas alternativas: `devolvida`, `doada` e `baixa` (avaria ou perda).
 
 ### Pedido, reserva e pagamento

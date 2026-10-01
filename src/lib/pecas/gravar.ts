@@ -110,6 +110,7 @@ export async function duplicarPeca(id: string, hoje: string): Promise<{ id: stri
         medidas: original.medidas,
         descricao: original.descricao,
         status: "rascunho",
+        naoListada: false,
         dataEntrada: data(hoje),
       },
       select: { id: true },
