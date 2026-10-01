@@ -432,3 +432,212 @@
 .compartilhar::before {
   content: "↗";
 }
+
+/* Conta da cliente no topo: "Entrar" ou "Minha conta" à esquerda, carrinho à direita. */
+
+.atalhos {
+  display: contents;
+}
+
+.linkConta {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+/* Estrela de favorito */
+
+.comEstrela {
+  position: relative;
+}
+
+.estrela {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.estrela button,
+.estrelaGrande button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--petroleo);
+  border: 0;
+  cursor: pointer;
+}
+
+.estrela button {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 4px rgba(19, 33, 43, 0.18);
+}
+
+.estrelaGrande button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+}
+
+.estrela svg,
+.estrelaGrande svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--petroleo);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.estrela button[aria-pressed="true"] svg,
+.estrelaGrande button[aria-pressed="true"] svg {
+  fill: #f2b705;
+  stroke: #b98a00;
+}
+
+.precoEEstrela {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Textos longos (aviso de privacidade) */
+
+.texto {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  line-height: 1.55;
+}
+
+.texto h2 {
+  color: var(--petroleo);
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+.texto ul {
+  padding-left: 20px;
+}
+
+/* Área do cliente */
+
+.abas {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+  padding-bottom: 2px;
+}
+
+.abas a {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+  color: var(--petroleo);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.abas a[aria-current="page"] {
+  background: var(--petroleo);
+  color: #fff;
+}
+
+.secao {
+  margin-bottom: 28px;
+}
+
+.secao h2 {
+  color: var(--petroleo);
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.secao > p {
+  margin-bottom: 12px;
+}
+
+.carrossel {
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(150px, 180px);
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+}
+
+.carrossel > li {
+  scroll-snap-align: start;
+}
+
+.compra {
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.compra header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.formConta {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formConta label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.formConta input {
+  font: inherit;
+  font-weight: 400;
+  padding: 11px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+}
+
+.ok {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e6f6ef;
+}
+
+.sair {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--petroleo);
+  text-decoration: underline;
+  cursor: pointer;
+}

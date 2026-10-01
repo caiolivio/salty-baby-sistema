@@ -22,6 +22,7 @@ import { podeAcessar } from "@/lib/permissoes";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
+import { AcessoAoSite } from "../acesso-ao-site";
 import { salvarCliente } from "../acoes";
 import visual from "../cliente.module.css";
 import { FormularioCrianca } from "../criancas";
@@ -52,6 +53,11 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
       },
       pedidos: { where: { status: { not: "pago" } }, orderBy: { numero: "desc" }, take: 20 },
       criancas: { orderBy: [{ nascimento: "asc" }, { criadoEm: "asc" }] },
+      usuario: { select: { email: true, ultimoAcessoEm: true, ativo: true } },
+      favoritos: {
+        orderBy: { criadoEm: "desc" },
+        select: { peca: { select: { id: true, codigo: true, nome: true, status: true } } },
+      },
     },
   });
   if (!cliente) notFound();
@@ -119,6 +125,34 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           observacao: c.observacao ?? "",
         }}
       />
+
+      <h2 id="acesso">Acesso ao site</h2>
+      {c.usuario ? (
+        <p>
+          Tem conta com o e-mail <strong>{c.usuario.email}</strong>
+          {c.usuario.ultimoAcessoEm ? `, último acesso em ${formatarDataHora(c.usuario.ultimoAcessoEm)}` : ", ainda não entrou"}.
+          {!c.usuario.ativo && " A conta está desativada."}
+        </p>
+      ) : (
+        <p>Esta cliente ainda não tem conta no site.</p>
+      )}
+      {administradora ? (
+        <AcessoAoSite clienteId={c.id} email={c.usuario?.email ?? c.email ?? ""} temConta={Boolean(c.usuario)} />
+      ) : (
+        !c.usuario && <p className={proprios.dica}>Só a administradora cria o acesso.</p>
+      )}
+      {c.favoritos.length > 0 && (
+        <p>
+          Favoritos ({c.favoritos.length}):{" "}
+          {c.favoritos.map((f, i) => (
+            <span key={f.peca.id}>
+              {i > 0 && ", "}
+              <Link href={`/painel/pecas/${f.peca.id}`}>{f.peca.codigo}</Link>
+              {f.peca.status !== "publicada" && " (saiu)"}
+            </span>
+          ))}
+        </p>
+      )}
 
       <h2 id="resumo">Resumo · {periodo.rotulo}</h2>
       <EscolherPeriodo periodo={periodo} hoje={hoje} />

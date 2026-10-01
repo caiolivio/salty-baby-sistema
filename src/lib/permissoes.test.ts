@@ -37,7 +37,8 @@ describe("destinoInicial", () => {
     expect(destinoInicial(["administradora"])).toBe("/painel");
     expect(destinoInicial(["ajudante"])).toBe("/painel");
     expect(destinoInicial(["fornecedora"])).toBe("/fornecedora");
-    expect(destinoInicial(["cliente"])).toBe("/");
+    expect(destinoInicial(["cliente"])).toBe("/minha-conta");
+    expect(destinoInicial([])).toBe("/");
     expect(destinoInicial(["cliente", "administradora"])).toBe("/painel");
   });
 });

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { usuarioAtual } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { clienteDoUsuario } from "@/lib/clientes/contas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
-import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
+import { COOKIE_CARRINHO, formatarTelefone, lerCarrinho } from "@/lib/pedidos/regras";
 import { enderecoDaPeca } from "@/lib/vitrine";
 import estilos from "../loja.module.css";
 import { tirar } from "./acoes";
@@ -33,6 +35,9 @@ export default async function Carrinho() {
   const disponivel = (p: (typeof pecas)[number]) => p.status === "publicada" && p.quantidade > 0;
   const total = pecas.filter(disponivel).reduce((soma, p) => soma + p.precoCentavos, 0);
   const todasDisponiveis = pecas.length > 0 && pecas.every(disponivel);
+  // Cliente logada: nome e WhatsApp já vêm preenchidos, e o pedido fica na conta dela.
+  const usuario = await usuarioAtual();
+  const ficha = usuario ? await clienteDoUsuario(usuario.id) : null;
 
   return (
     <>
@@ -83,7 +88,18 @@ export default async function Carrinho() {
             Total: <strong>{formatarReais(total)}</strong>
           </p>
           {todasDisponiveis ? (
-            <FecharPedido />
+            <>
+              <FecharPedido
+                nome={ficha?.nome}
+                telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
+              />
+              {!usuario && (
+                <p className={estilos.dica}>
+                  <Link href="/entrar?voltar=/carrinho">Entre na sua conta</Link> ou{" "}
+                  <Link href="/cadastro?voltar=/carrinho">crie uma</Link> para o pedido ficar guardado nas suas compras.
+                </p>
+              )}
+            </>
           ) : (
             <p className={estilos.aviso}>Tire do carrinho as peças que não estão mais disponíveis para fechar o pedido.</p>
           )}

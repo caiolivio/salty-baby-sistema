@@ -21,7 +21,9 @@ import {
   WHATSAPP_LOJA,
 } from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
+import { Estrela } from "../../estrela";
 import estilos from "../../loja.module.css";
+import { quemVeALoja } from "../../quem-ve";
 
 // Só peças à venda ou reservadas aparecem para o público. Nada de fornecedora,
 // custo ou repasse sai desta página.
@@ -74,6 +76,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   const peca = await buscarPeca((await params).codigo);
   if (!peca) notFound();
   const disponivel = peca.status === "publicada" && peca.quantidade > 0;
+  const quem = await quemVeALoja([peca.id]);
   const biscoitos = await cookies();
   const noCarrinho = lerCarrinho(biscoitos.get(COOKIE_CARRINHO)?.value).includes(peca.id);
   // Grupo do link do post (?g=...) ou guardado de uma visita anterior.
@@ -152,7 +155,18 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
         </div>
         <div className={estilos.info}>
           <h1>{peca.nome}</h1>
-          <strong className={estilos.precoGrande}>{formatarReais(peca.precoCentavos)}</strong>
+          <div className={estilos.precoEEstrela}>
+            <strong className={estilos.precoGrande}>{formatarReais(peca.precoCentavos)}</strong>
+            {quem.estrela && (
+              <Estrela
+                pecaId={peca.id}
+                favorita={quem.favoritas.has(peca.id)}
+                voltar={enderecoDaPeca(peca.codigo)}
+                nome={peca.nome}
+                grande
+              />
+            )}
+          </div>
           {!disponivel && <p className={estilos.reservada}>Esta peça está reservada para outra cliente no momento.</p>}
           <dl className={estilos.detalhes}>
             {detalhes

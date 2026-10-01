@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import estilos from "../loja.module.css";
 import { fechar } from "./acoes";
 
-export function FecharPedido() {
+export function FecharPedido({ nome, telefone }: { nome?: string; telefone?: string }) {
   const [estado, acao, enviando] = useActionState(fechar, undefined);
   return (
     <form action={acao} className={estilos.fechar} key={JSON.stringify(estado ?? null)}>
@@ -15,11 +15,11 @@ export function FecharPedido() {
       )}
       <label>
         Seu nome
-        <input name="nome" defaultValue={estado?.nome} autoComplete="name" maxLength={120} required />
+        <input name="nome" defaultValue={estado?.nome ?? nome} autoComplete="name" maxLength={120} required />
       </label>
       <label>
         Seu WhatsApp (com DDD)
-        <input name="telefone" type="tel" defaultValue={estado?.telefone} autoComplete="tel" inputMode="tel" maxLength={20} required />
+        <input name="telefone" type="tel" defaultValue={estado?.telefone ?? telefone} autoComplete="tel" inputMode="tel" maxLength={20} required />
       </label>
       <button type="submit" className={estilos.botaoWhats} disabled={enviando}>
         {enviando ? "Reservando…" : "Fechar pedido e enviar no WhatsApp"}

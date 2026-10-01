@@ -28,6 +28,7 @@ export function podeAcessar(perfis: readonly Perfil[], area: Area): boolean {
 export function destinoInicial(perfis: readonly Perfil[]): string {
   if (podeAcessar(perfis, "painel")) return "/painel";
   if (podeAcessar(perfis, "area-fornecedora")) return "/fornecedora";
+  if (podeAcessar(perfis, "area-cliente")) return "/minha-conta";
   return "/";
 }
 

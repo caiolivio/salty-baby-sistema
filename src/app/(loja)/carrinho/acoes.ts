@@ -2,7 +2,10 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { usuarioAtual } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { fichaDaCliente } from "@/lib/clientes/contas";
+import { podeAcessar } from "@/lib/permissoes";
 import { COOKIE_GRUPO, lerCodigoGrupo } from "@/lib/grupos/regras";
 import { fecharPedido, liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
@@ -50,7 +53,9 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   // Grupo de WhatsApp de onde a cliente veio (guardado pelo link do post).
   const guardado = lerCodigoGrupo((await cookies()).get(COOKIE_GRUPO)?.value);
   const grupo = guardado ? await prisma.grupoWhatsapp.findUnique({ where: { codigo: guardado }, select: { id: true } }) : null;
-  const resultado = await fecharPedido(ids, { nome, telefone }, grupo?.id ?? null);
+  const usuario = await usuarioAtual();
+  const ficha = usuario && podeAcessar(usuario.perfis, "area-cliente") ? await fichaDaCliente(usuario) : null;
+  const resultado = await fecharPedido(ids, { nome, telefone, clienteId: ficha?.id }, grupo?.id ?? null);
   if (!resultado.ok) {
     return {
       erro: "Algumas peças acabaram de sair e foram marcadas abaixo. Tire-as do carrinho e feche o pedido de novo.",

@@ -1,13 +1,19 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { mensagemDoLink } from "@/lib/clientes/conta";
+import { criarAcessoPelaLoja } from "@/lib/clientes/contas";
 import { lerCrianca, lerFormularioCliente } from "@/lib/clientes/dados";
+import { origemDaRequisicao } from "@/lib/etiquetas";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
-import { lerTelefoneCliente } from "@/lib/pedidos/regras";
+import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { podeAcessar } from "@/lib/permissoes";
+import { normalizarEmail } from "@/lib/senha";
 
 export type EstadoCliente = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -78,4 +84,32 @@ export async function removerCrianca(dados: FormData): Promise<void> {
   const clienteId = String(dados.get("clienteId") ?? "");
   await prisma.crianca.deleteMany({ where: { id: String(dados.get("id") ?? ""), clienteId } });
   revalidatePath(`/painel/clientes/${clienteId}`);
+}
+
+export type EstadoAcesso = { erro?: string; link?: string; whatsapp?: string; novaConta?: boolean } | undefined;
+
+/**
+ * Cria o acesso da cliente ao site (ou um link novo, para quem esqueceu a
+ * senha). O link de criar senha aparece uma vez só, para mandar no WhatsApp.
+ */
+export async function liberarAcesso(_estado: EstadoAcesso, dados: FormData): Promise<EstadoAcesso> {
+  const id = String(dados.get("id") ?? "");
+  await exigirAcesso("painel-administracao", `/painel/clientes/${id}`);
+  const email = normalizarEmail(String(dados.get("email") ?? ""));
+  if (!z.email().safeParse(email).success) return { erro: "Confira o e-mail da cliente." };
+
+  const r = await criarAcessoPelaLoja(id, email);
+  if (!r.ok) {
+    return {
+      erro: r.motivo === "sem-cliente" ? "Esta cliente não existe mais." : "Este e-mail já é a conta de outra cliente.",
+    };
+  }
+  const cliente = await prisma.cliente.findUniqueOrThrow({ where: { id }, select: { nome: true, telefone: true } });
+  const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
+  const tel = lerTelefoneCliente(cliente.telefone);
+  const whatsapp = tel
+    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta))}`
+    : undefined;
+  refresh();
+  return { link, whatsapp, novaConta: r.novaConta };
 }

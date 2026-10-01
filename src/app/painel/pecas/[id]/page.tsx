@@ -38,6 +38,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
       fornecedora: { select: { codigo: true, nome: true } },
       fotos: { orderBy: { ordem: "asc" } },
       categorias: { select: { categoriaId: true, categoria: { select: { nome: true } } } },
+      favoritos: { orderBy: { criadoEm: "desc" }, select: { cliente: { select: { id: true, nome: true } } } },
     },
   });
   if (!peca) notFound();
@@ -124,6 +125,17 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         {situacao} · entrada em {formatarData(p.dataEntrada)}
         {p.codigoAntigo && ` · código antigo ${p.codigoAntigo}`}
       </p>
+      {p.favoritos.length > 0 && (
+        <p>
+          ★ Favoritada por{" "}
+          {p.favoritos.map((f, i) => (
+            <span key={f.cliente.id}>
+              {i > 0 && (i === p.favoritos.length - 1 ? " e " : ", ")}
+              <Link href={`/painel/clientes/${f.cliente.id}`}>{f.cliente.nome}</Link>
+            </span>
+          ))}
+        </p>
+      )}
 
       <section aria-labelledby="divulgar">
         <h2 id="divulgar">Divulgar no grupo</h2>
