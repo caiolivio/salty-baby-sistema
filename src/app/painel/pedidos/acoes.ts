@@ -92,7 +92,7 @@ export async function salvarCliente(_anterior: EstadoCliente, dados: FormData): 
   const nome = lerNomeCliente(digitado.nome);
   if (!nome) return { erro: "Escreva o nome da cliente.", ...digitado };
   const telefone = digitado.telefone.trim() ? lerTelefoneCliente(digitado.telefone) : null;
-  if (telefone === undefined) return { erro: "O WhatsApp precisa ter DDD, por exemplo (12) 98105-3623.", ...digitado };
+  if (telefone === undefined) return { erro: "O WhatsApp precisa ter DDD, por exemplo (11) 98765-4321.", ...digitado };
   const observacao = digitado.observacao.trim().slice(0, 2000) || null;
 
   let clienteId: string | null = null;

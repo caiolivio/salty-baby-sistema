@@ -52,6 +52,7 @@ export function FormularioPeca({
   podeIncluirCategoria = false,
   opcoesDeStatus = SITUACOES_DO_CADASTRO,
   avisoDoStatus,
+  opcaoDaLoja = "Peça da própria loja",
 }: {
   acao: Acao;
   iniciais: ValoresPeca;
@@ -70,6 +71,8 @@ export function FormularioPeca({
   opcoesDeStatus?: readonly { valor: string; nome: string }[];
   /** O que a troca de status faz, quando mexe em pedido, devolução ou venda. */
   avisoDoStatus?: string | null;
+  /** Texto da opção "peça da loja" na lista de fornecedoras (nome e prefixo da loja). */
+  opcaoDaLoja?: string;
 }) {
   const [estado, despachar, enviando] = useActionState(acao, undefined);
   const [preparando, setPreparando] = useState(false);
@@ -111,7 +114,7 @@ export function FormularioPeca({
             ) : (
               <select name="fornecedoraId" required value={fornecedoraId} onChange={(e) => setFornecedoraId(e.target.value)}>
                 <option value="">Escolha…</option>
-                <option value={FORNECEDORA_LOJA}>Salty (peça da loja, código SB)</option>
+                <option value={FORNECEDORA_LOJA}>{opcaoDaLoja}</option>
                 {fornecedoras?.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.codigo} · {f.nome}

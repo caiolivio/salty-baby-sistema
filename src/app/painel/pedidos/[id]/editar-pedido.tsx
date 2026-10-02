@@ -99,7 +99,7 @@ export function DadosCliente({
           </label>
           <label className={estilos.campo}>
             WhatsApp
-            <input name="telefone" type="tel" inputMode="tel" defaultValue={valores.telefone} maxLength={20} placeholder="(12) 98105-3623" />
+            <input name="telefone" type="tel" inputMode="tel" defaultValue={valores.telefone} maxLength={20} placeholder="(11) 98765-4321" />
           </label>
           <label className={estilos.campo}>
             Cliente do cadastro

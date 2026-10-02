@@ -10,7 +10,7 @@ import { BotoesExportar } from "../exportar/botoes";
 import { desconectarDrive, fazerCopiaAgora } from "./acoes";
 import { AtualizarSozinho } from "./atualizar-sozinho";
 
-export const metadata: Metadata = { title: "Backup · Salty Baby" };
+export const metadata: Metadata = { title: "Backup" };
 
 const ERROS: Record<string, string> = {
   "sem-chave": "Falta configurar a chave de acesso do Google no sistema (passo do Caio no Google Cloud).",
@@ -90,7 +90,7 @@ export default async function Backup({ searchParams }: PageProps<"/painel/backup
           </>
         ) : (
           <>
-            <p>Conecte a conta Google da Salty para guardar uma cópia fora do servidor.</p>
+            <p>Conecte a conta Google da loja para guardar uma cópia fora do servidor.</p>
             <a href="/api/google/conectar" className={proprios.botao}>
               Conectar Google Drive
             </a>

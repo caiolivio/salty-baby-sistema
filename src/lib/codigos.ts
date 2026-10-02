@@ -1,5 +1,6 @@
 // Formatos de código (CLAUDE.md, "Códigos").
 
+/** Prefixo das peças da Salty na importação do Notion. No cadastro vale o das configurações da loja. */
 export const PREFIXO_LOJA = "SB";
 
 /** F01 … F99, F100 … */

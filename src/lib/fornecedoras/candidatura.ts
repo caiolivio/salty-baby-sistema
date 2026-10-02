@@ -28,7 +28,7 @@ const camposInscricao = z.object({
   telefone: z.string().transform((t, ctx) => {
     const lido = lerTelefoneCliente(t);
     if (!lido) {
-      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (12) 98105-3623." });
+      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (11) 98765-4321." });
       return z.NEVER;
     }
     return lido;
@@ -145,10 +145,10 @@ export const NOMES_ETAPA: Record<string, string> = {
 };
 
 /** Mensagem que a loja manda no WhatsApp quando aprova o passo 1. */
-export function mensagemDeAprovacao(nome: string, link: string, novaConta: boolean): string {
+export function mensagemDeAprovacao(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby"): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
-    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da Salty Baby 💛`,
+    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
     "Suas peças foram aprovadas na curadoria! Agora falta o passo 2: mostrar mais peças, com os detalhes, e ler e aceitar as regras da consignação.",
     novaConta
       ? "Toque no link para criar sua senha e entrar na sua área de fornecedora (o link vale por 7 dias):"

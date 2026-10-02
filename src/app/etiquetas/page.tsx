@@ -8,8 +8,9 @@ import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaEtiqueta, FORMATOS, lerFormato, lerIds, origemDaRequisicao } from "@/lib/etiquetas";
 import { BotaoImprimir } from "./imprimir";
 import estilos from "./etiquetas.module.css";
+import { imagensDaLoja, lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Etiquetas · Salty Baby" };
+export const metadata: Metadata = { title: "Etiquetas" };
 
 // Fica fora do /painel para imprimir sem o menu, mas pede o mesmo acesso.
 export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas">) {
@@ -19,6 +20,8 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
   const voltar = typeof parametros.voltar === "string" && parametros.voltar.startsWith("/painel") ? parametros.voltar : "/painel/pecas";
   await exigirAcesso("painel", `/etiquetas?${new URLSearchParams({ ids: ids.join(","), formato })}`);
 
+  const loja = await lerLoja();
+  const { logo } = imagensDaLoja(loja);
   const encontradas = await prisma.peca.findMany({
     where: { id: { in: ids } },
     select: { id: true, codigo: true, nome: true, tamanho: true, precoCentavos: true },
@@ -67,7 +70,7 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
               <div className={estilos.qr} dangerouslySetInnerHTML={{ __html: qrs[i] }} />
               <div className={estilos.texto}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- impressão: a imagem precisa estar pronta, sem carregamento tardio */}
-                <img className={estilos.logo} src="/marca/logo-salty-baby-400px.png" alt="Salty Baby" />
+                <img className={estilos.logo} src={logo} alt={loja.nome} />
                 <span className={estilos.nome}>{p.nome}</span>
                 {p.precoCentavos > 0 && <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>}
                 <span className={estilos.codigo}>

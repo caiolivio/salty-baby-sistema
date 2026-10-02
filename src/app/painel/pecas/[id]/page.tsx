@@ -27,8 +27,9 @@ import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
 import { ExcluirPeca } from "../excluir-peca";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Peça · Salty Baby" };
+export const metadata: Metadata = { title: "Peça" };
 
 export default async function Peca({ params, searchParams }: PageProps<"/painel/pecas/[id]">) {
   const { id } = await params;
@@ -50,6 +51,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const p = peca;
   const situacao = nomeDoStatus(p.status, p.naoListada);
   const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const loja = await lerLoja();
   const naoExclui = administradora ? await motivoParaNaoExcluirPeca(prisma, p.id) : null;
 
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
@@ -227,7 +229,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         podeIncluirCategoria={podeAcessar(usuario.perfis, "painel-administracao")}
         categoriasMarcadas={marcadas}
         fornecedoraFixa={{
-          texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Salty (peça da loja)",
+          texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : `${loja.nomeCurto} (peça da loja)`,
           consignada: p.tipo === "consignada",
         }}
         opcoesDeStatus={opcoesDeStatus(p.status)}

@@ -54,7 +54,7 @@ export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<Es
   const erro = (mensagem: string): EstadoPeca => ({ erro: mensagem, valores, categorias });
 
   const escolhida = valores.fornecedoraId ?? "";
-  if (!escolhida) return erro("Escolha a fornecedora (ou Salty, se a peça é da loja).");
+  if (!escolhida) return erro("Escolha a fornecedora (ou a própria loja, se a peça é da loja).");
   const fornecedora =
     escolhida === FORNECEDORA_LOJA
       ? null

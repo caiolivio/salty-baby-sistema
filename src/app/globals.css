@@ -1,12 +1,12 @@
-/* Cores da marca (CLAUDE.md, "Identidade visual"). O turquesa é só para
-   destaques e ícones: não tem contraste suficiente para texto sobre branco. */
+/* Cores da marca. Estas são as da Salty; as de verdade vêm das configurações
+   da loja (layout raiz). O destaque é só para ícones: não serve para texto. */
 :root {
   --turquesa: #32afb5;
   --petroleo: #13506e;
   --tinta: #13212b;
   --fundo: #ffffff;
-  --fundo-suave: #f2f8f8;
-  --borda: #d7e6e7;
+  --fundo-suave: color-mix(in srgb, var(--turquesa) 6%, #ffffff);
+  --borda: color-mix(in srgb, var(--turquesa) 18%, #e6e6e6);
   --sucesso: #1f7a4d;
   --erro: #b3261e;
 }

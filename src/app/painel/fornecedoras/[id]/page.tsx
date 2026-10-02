@@ -13,7 +13,7 @@ import { formatarDataHora } from "@/lib/datas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 
-export const metadata: Metadata = { title: "Fornecedora · Salty Baby" };
+export const metadata: Metadata = { title: "Fornecedora" };
 
 const VENDIDAS = ["vendida", "na_sacolinha", "enviada", "retirada"] as const;
 

@@ -160,7 +160,7 @@ export function ImportadorNotion({ somenteFotos = false }: { somenteFotos?: bool
             <strong>{reais(r.repasseEmAbertoCentavos)}</strong>
           </li>
           <li>
-            Lucro da Salty nessas vendas, já descontado o repasse: <strong>{reais(r.lucroCentavos)}</strong>
+            Lucro da loja nessas vendas, já descontado o repasse: <strong>{reais(r.lucroCentavos)}</strong>
           </li>
           <li>
             <strong>{r.clientes}</strong> clientes
