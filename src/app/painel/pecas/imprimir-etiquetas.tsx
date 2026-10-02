@@ -14,7 +14,7 @@ export function ImprimirEtiquetas({ voltar }: { voltar: string }) {
   }
 
   return (
-    <form id="etiquetas" action="/etiquetas" className={estilos.acoes}>
+    <form id="etiquetas" action="/etiquetas" className={estilos.acoes} data-consulta>
       <input type="hidden" name="voltar" value={voltar} />
       <button type="button" className={estilos.botaoSecundario} onClick={marcarTodas}>
         Marcar todas desta página

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAlterar, podeVer } from "@/lib/permissoes";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
@@ -16,8 +16,9 @@ export const metadata: Metadata = { title: "Clientes" };
 const POR_PAGINA = 100;
 
 export default async function Clientes({ searchParams }: PageProps<"/painel/clientes">) {
-  const usuario = await exigirAcesso("painel", "/painel/clientes");
-  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const usuario = await exigirPagina("clientes", "ver", "/painel/clientes");
+  // Quanto cada cliente gastou: para quem também vê Vendas.
+  const verGasto = podeVer(usuario.acesso, "vendas");
   const parametros = await searchParams;
   const busca = typeof parametros.q === "string" ? parametros.q.trim() : "";
   const pagina = Math.max(1, Number(parametros.pagina) || 1);
@@ -59,9 +60,11 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
         <h1 className={estilos.titulo}>Clientes</h1>
         <span className={proprios.exportar}>
           <BotoesExportar tabela="clientes" />
-          <Link href="/painel/clientes/nova" className={proprios.botao}>
-            + Nova cliente
-          </Link>
+          {podeAlterar(usuario.acesso, "clientes") && (
+            <Link href="/painel/clientes/nova" className={proprios.botao}>
+              + Nova cliente
+            </Link>
+          )}
         </span>
       </div>
       <form className={estilos.busca} role="search">
@@ -79,7 +82,7 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
               <th>WhatsApp</th>
               <th>Cidade</th>
               <th className={estilos.numero}>Compras</th>
-              {administradora && <th className={estilos.numero}>Total</th>}
+              {verGasto && <th className={estilos.numero}>Total</th>}
               <th>Última compra</th>
             </tr>
           </thead>
@@ -105,7 +108,7 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
                   <td className={estilos.numero} data-rotulo="Compras">
                     {dela?._count ?? 0}
                   </td>
-                  {administradora && (
+                  {verGasto && (
                     <td className={estilos.numero} data-rotulo="Total">
                       {formatarReais(dela?._sum.totalCentavos ?? 0)}
                     </td>

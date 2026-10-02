@@ -40,7 +40,7 @@ export default async function Configuracoes() {
         imagens={{ ...imagens, logoPropria: Boolean(loja.logo), iconePropria: Boolean(loja.icone) }}
         prefixoFixo={await prefixoEmUso(loja.prefixoLoja)}
       />
-      <HistoricoDoRegistro tabela="loja" registroId="1" administradora />
+      <HistoricoDoRegistro tabela="loja" registroId="1" verRestritos />
     </>
   );
 }

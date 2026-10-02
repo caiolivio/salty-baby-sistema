@@ -3,10 +3,13 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import type { TabelaDoHistorico } from "./regras";
 
-/** Alterações de um registro, mais novas primeiro. Quem não é administradora não vê as restritas. */
-export async function historicoDoRegistro(tabela: TabelaDoHistorico, registroId: string, administradora: boolean, limite = 100) {
+/**
+ * Alterações de um registro, mais novas primeiro. As restritas (custo, % repasse)
+ * só para quem pode ver custo, repasse e lucro.
+ */
+export async function historicoDoRegistro(tabela: TabelaDoHistorico, registroId: string, verRestritos: boolean, limite = 100) {
   return prisma.alteracao.findMany({
-    where: { tabela, registroId, ...(administradora ? {} : { restrito: false }) },
+    where: { tabela, registroId, ...(verRestritos ? {} : { restrito: false }) },
     orderBy: [{ criadoEm: "desc" }, { id: "asc" }],
     take: limite,
   });
@@ -35,8 +38,8 @@ export function filtroDoHistorico(f: FiltroDoHistorico): Prisma.AlteracaoWhereIn
   };
 }
 
-export async function buscarHistorico(f: FiltroDoHistorico, pagina: number, porPagina = 100) {
-  const where = filtroDoHistorico(f);
+export async function buscarHistorico(f: FiltroDoHistorico, pagina: number, verRestritos: boolean, porPagina = 100) {
+  const where = { ...filtroDoHistorico(f), ...(verRestritos ? {} : { restrito: false }) };
   const [total, linhas] = await Promise.all([
     prisma.alteracao.count({ where }),
     prisma.alteracao.findMany({

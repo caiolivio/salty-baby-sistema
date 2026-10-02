@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { formatarData } from "@/lib/datas";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { formatarReais } from "@/lib/dinheiro";
@@ -33,7 +33,7 @@ export const metadata: Metadata = { title: "Peça" };
 
 export default async function Peca({ params, searchParams }: PageProps<"/painel/pecas/[id]">) {
   const { id } = await params;
-  const usuario = await exigirAcesso("painel", `/painel/pecas/${id}`);
+  const usuario = await exigirPagina("pecas", "ver", `/painel/pecas/${id}`);
   const aviso = await searchParams;
 
   const peca = await prisma.peca.findUnique({
@@ -50,9 +50,11 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
   const situacao = nomeDoStatus(p.status, p.naoListada);
-  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const { acesso } = usuario;
+  const valores = temExtra(acesso, "valores");
+  const podeExcluir = temExtra(acesso, "excluir_peca");
   const loja = await lerLoja();
-  const naoExclui = administradora ? await motivoParaNaoExcluirPeca(prisma, p.id) : null;
+  const naoExclui = podeExcluir ? await motivoParaNaoExcluirPeca(prisma, p.id) : null;
 
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
   const divulgavel = p.status === "publicada" && p.quantidade > 0;
@@ -89,7 +91,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           {p.codigo} · {p.nome}
         </h1>
         <div className={proprios.acoes}>
-          {podeAcessar(usuario.perfis, "painel-administracao") && p.status === "publicada" && p.quantidade > 0 && (
+          {podeAlterar(acesso, "vendas") && p.status === "publicada" && p.quantidade > 0 && (
             <form action={venderPeca}>
               <input type="hidden" name="id" value={p.id} />
               <button type="submit" className={proprios.botao}>
@@ -226,7 +228,8 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         textoBotao="Salvar alterações"
         voltar="/painel/pecas"
         categorias={categorias}
-        podeIncluirCategoria={podeAcessar(usuario.perfis, "painel-administracao")}
+        podeIncluirCategoria={podeAlterar(acesso, "categorias")}
+        mostrarValores={valores}
         categoriasMarcadas={marcadas}
         fornecedoraFixa={{
           texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : `${loja.nomeCurto} (peça da loja)`,
@@ -247,14 +250,14 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           medidas: p.medidas ?? "",
           descricao: p.descricao ?? "",
           precoCentavos: p.precoCentavos ? reaisNoCampo(p.precoCentavos) : "",
-          custoCentavos: reaisNoCampo(p.custoCentavos),
-          percentualRepasse: p.percentualRepasse === null ? "" : mostrarPercentual(p.percentualRepasse),
+          custoCentavos: valores ? reaisNoCampo(p.custoCentavos) : "",
+          percentualRepasse: valores && p.percentualRepasse !== null ? mostrarPercentual(p.percentualRepasse) : "",
           quantidade: String(p.quantidade),
           status: statusNoFormulario(p.status, p.naoListada),
           dataEntrada: p.dataEntrada.toISOString().slice(0, 10),
         }}
       />
-      {administradora && (
+      {podeExcluir && (
         <section className={proprios.zonaPerigo} aria-labelledby="excluir">
           <strong id="excluir">Excluir peça</strong>
           {naoExclui ? (
@@ -269,7 +272,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           )}
         </section>
       )}
-      <HistoricoDoRegistro tabela="peca" registroId={p.id} administradora={administradora} />
+      <HistoricoDoRegistro tabela="peca" registroId={p.id} verRestritos={valores} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { incluirNoCarrinho, lerCodigoPeca, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
@@ -31,7 +31,7 @@ async function acharPeca(texto: string) {
 }
 
 export async function incluirNaVenda(_anterior: EstadoIncluir, dados: FormData): Promise<EstadoIncluir> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("vendas", "alterar");
   const texto = String(dados.get("codigo") ?? "").trim();
   const achado = await acharPeca(texto);
   if (!achado.peca) return { erro: achado.erro, codigo: texto };
@@ -44,14 +44,14 @@ export async function incluirNaVenda(_anterior: EstadoIncluir, dados: FormData):
 
 /** Botão "Vender esta peça" na página da peça. */
 export async function venderPeca(dados: FormData): Promise<void> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("vendas", "alterar");
   const id = String(dados.get("id") ?? "");
   await gravarPecas(incluirNoCarrinho(await pecasDaVenda(), id));
   redirect("/painel/vendas/nova");
 }
 
 export async function tirarDaVenda(dados: FormData): Promise<void> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("vendas", "alterar");
   await gravarPecas(tirarDoCarrinho(await pecasDaVenda(), String(dados.get("id") ?? "")));
   revalidatePath("/painel/vendas/nova");
 }
@@ -63,7 +63,7 @@ export type EstadoVenda =
 const CAMPOS = ["canal", "grupo", "forma", "desconto", "destino", "data", "clienteId", "novaNome", "novaTelefone"] as const;
 
 export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): Promise<EstadoVenda> {
-  const usuario = await exigirAcesso("painel-administracao");
+  const usuario = await exigirPagina("vendas", "alterar");
   const valores = Object.fromEntries(CAMPOS.map((c) => [c, String(dados.get(c) ?? "")]));
   const ids = await pecasDaVenda();
   if (ids.length === 0) return { erro: "Inclua pelo menos uma peça na venda.", valores };

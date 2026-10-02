@@ -1,17 +1,21 @@
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { gerarCsv, gerarXlsx, nomeDoArquivo } from "@/lib/exportacao/planilha";
 import { TABELAS } from "@/lib/exportacao/tabelas";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeVer, temExtra } from "@/lib/permissoes";
 
 // Baixa uma tabela do painel em Excel (?formato=xlsx, padrão) ou CSV (?formato=csv).
 export async function GET(pedido: Request, { params }: RouteContext<"/painel/exportar/[tabela]">) {
   const { tabela } = await params;
   const definicao = Object.hasOwn(TABELAS, tabela) ? TABELAS[tabela] : undefined;
   if (!definicao) return new Response("Tabela não encontrada", { status: 404 });
-  const usuario = await exigirAcesso(definicao.area, `/painel`);
+  const { acesso } = await exigirPagina(definicao.pagina, "ver", `/painel`);
   const formato = new URL(pedido.url).searchParams.get("formato") === "csv" ? "csv" : "xlsx";
-  const { colunas, linhas } = await definicao.carregar(podeAcessar(usuario.perfis, "painel-administracao"));
+  const { colunas, linhas } = await definicao.carregar({
+    documentos: acesso.administradora,
+    valores: temExtra(acesso, "valores"),
+    vendas: podeVer(acesso, "vendas"),
+  });
   const nome = nomeDoArquivo(definicao.arquivo, hojeEmSaoPaulo(), formato);
   const cabecalhos = {
     "Content-Disposition": `attachment; filename="${nome}"`,

@@ -151,7 +151,7 @@ export async function gravarLinkDeSenha(tx: Prisma.TransactionClient, usuarioId:
 export async function contaComPerfil(
   tx: Prisma.TransactionClient,
   dados: { nome: string; email: string },
-  perfil: "cliente" | "fornecedora",
+  perfil: "cliente" | "fornecedora" | "ajudante",
 ): Promise<{ id: string; nova: boolean }> {
   const existente = await tx.usuario.findUnique({ where: { email: dados.email } });
   if (existente) {

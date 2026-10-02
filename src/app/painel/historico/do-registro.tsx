@@ -7,13 +7,14 @@ import estilos from "../painel.module.css";
 export async function HistoricoDoRegistro({
   tabela,
   registroId,
-  administradora,
+  verRestritos,
 }: {
   tabela: TabelaDoHistorico;
   registroId: string;
-  administradora: boolean;
+  /** Custo e % repasse: só quem pode ver valores. */
+  verRestritos: boolean;
 }) {
-  const linhas = await historicoDoRegistro(tabela, registroId, administradora);
+  const linhas = await historicoDoRegistro(tabela, registroId, verRestritos);
   return (
     <section aria-labelledby="titulo-historico">
       <h2 id="titulo-historico">Histórico de alterações</h2>

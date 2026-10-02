@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Pedidos" };
 const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 
 export default async function Pedidos() {
-  await exigirAcesso("painel", "/painel/pedidos");
+  await exigirPagina("pedidos", "ver", "/painel/pedidos");
   await liberarReservasVencidas();
   const pedidos = await prisma.pedido.findMany({
     orderBy: { numero: "desc" },

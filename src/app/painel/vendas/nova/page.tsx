@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Nova venda" };
 
 // Venda pelo WhatsApp, grupos, Instagram, loja ou Bag, registrada direto no painel.
 export default async function NovaVenda() {
-  await exigirAcesso("painel-administracao", "/painel/vendas/nova");
+  await exigirPagina("vendas", "alterar", "/painel/vendas/nova");
   await liberarReservasVencidas();
   const ids = await pecasDaVenda();
   const [encontradas, clientes, grupos] = await Promise.all([

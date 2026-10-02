@@ -2,9 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirExtra, exigirPagina } from "@/lib/acesso";
+import { mostrarPercentual } from "@/lib/fornecedoras/dados";
+import { temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
-import { escolherCategorias, FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel, statusNoFormulario } from "@/lib/pecas/dados";
+import {
+  escolherCategorias,
+  FORNECEDORA_LOJA,
+  hojeEmSaoPaulo,
+  lerFormularioPeca,
+  reaisNoCampo,
+  situacaoEditavel,
+  statusNoFormulario,
+} from "@/lib/pecas/dados";
 import { autorDe } from "@/lib/historico/regras";
 import {
   adicionarFotos,
@@ -48,8 +58,13 @@ async function fotosDoFormulario(dados: FormData): Promise<Buffer[] | string> {
 const avisoFotos = (recusadas: number) => (recusadas > 0 ? `&fotosRecusadas=${recusadas}` : "");
 
 export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pecas", "alterar");
   const valores = valoresDigitados(dados);
+  // Sem "Ver custo, repasse e lucro": a peça usa o repasse padrão da fornecedora e fica sem custo.
+  if (!temExtra(usuario.acesso, "valores")) {
+    valores.custoCentavos = "";
+    valores.percentualRepasse = "";
+  }
   const categorias = await categoriasMarcadas(dados);
   const erro = (mensagem: string): EstadoPeca => ({ erro: mensagem, valores, categorias });
 
@@ -79,7 +94,7 @@ export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<Es
 }
 
 export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pecas", "alterar");
   const valores = valoresDigitados(dados);
   const id = valores.id ?? "";
   const peca = await prisma.peca.findUnique({
@@ -89,10 +104,17 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
       status: true,
       naoListada: true,
       dataEntrada: true,
+      custoCentavos: true,
+      percentualRepasse: true,
       fornecedora: { select: { percentualRepassePadrao: true } },
     },
   });
   if (!peca) return { erro: "Esta peça não existe mais.", valores };
+  // Quem não vê custo e repasse não pode mudá-los: ficam os que já estavam.
+  if (!temExtra(usuario.acesso, "valores")) {
+    valores.custoCentavos = reaisNoCampo(peca.custoCentavos);
+    valores.percentualRepasse = peca.percentualRepasse === null ? "" : mostrarPercentual(peca.percentualRepasse);
+  }
   const categorias = await categoriasMarcadas(dados, id);
 
   // Peça reservada, com devolução pedida ou vendida: a troca de status mexe no
@@ -116,9 +138,9 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
   redirect(`/painel/pecas/${id}?salva=1`);
 }
 
-/** Só a administradora exclui. Peça vendida ou num pedido aberto não sai (motivoParaNaoExcluir). */
+/** Só quem tem "Excluir peças". Peça vendida ou num pedido aberto não sai (motivoParaNaoExcluir). */
 export async function excluir(dados: FormData): Promise<void> {
-  const usuario = await exigirAcesso("painel-administracao");
+  const usuario = await exigirExtra("excluir_peca");
   const id = String(dados.get("id") ?? "");
   const r = await excluirPeca(id, autorDe(usuario));
   if (!r.ok) redirect(`/painel/pecas/${id}?naoExcluida=1`);
@@ -126,14 +148,14 @@ export async function excluir(dados: FormData): Promise<void> {
 }
 
 export async function duplicar(dados: FormData): Promise<void> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pecas", "alterar");
   const copia = await duplicarPeca(String(dados.get("id") ?? ""), hojeEmSaoPaulo(), autorDe(usuario));
   if (!copia) redirect("/painel/pecas");
   redirect(`/painel/pecas/${copia.id}?duplicada=1`);
 }
 
 export async function enviarFotos(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
-  await exigirAcesso("painel");
+  await exigirPagina("pecas", "alterar");
   const id = String(dados.get("id") ?? "");
   if (!(await prisma.peca.findUnique({ where: { id }, select: { id: true } }))) return { erro: "Esta peça não existe mais." };
   const fotos = await fotosDoFormulario(dados);
@@ -149,7 +171,7 @@ export async function enviarFotos(_estado: EstadoPeca, dados: FormData): Promise
 }
 
 export async function apagarFotoDaPeca(dados: FormData): Promise<void> {
-  await exigirAcesso("painel");
+  await exigirPagina("pecas", "alterar");
   const id = String(dados.get("id") ?? "");
   await removerFoto(id, String(dados.get("fotoId") ?? ""));
   revalidatePath(`/painel/pecas/${id}`);
@@ -157,7 +179,7 @@ export async function apagarFotoDaPeca(dados: FormData): Promise<void> {
 
 /** Muda a ordem das fotos: destacar (primeira), para antes ou para depois. */
 export async function ordenarFoto(dados: FormData): Promise<void> {
-  await exigirAcesso("painel");
+  await exigirPagina("pecas", "alterar");
   const id = String(dados.get("id") ?? "");
   const destino = Number(dados.get("destino"));
   if (!Number.isInteger(destino)) return;

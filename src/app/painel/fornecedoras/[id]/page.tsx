@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
+import { temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import estilos from "../../painel.module.css";
@@ -19,7 +20,8 @@ const VENDIDAS = ["vendida", "na_sacolinha", "enviada", "retirada"] as const;
 
 export default async function Fornecedora({ params, searchParams }: PageProps<"/painel/fornecedoras/[id]">) {
   const { id } = await params;
-  await exigirAcesso("painel-administracao", `/painel/fornecedoras/${id}`);
+  const { acesso } = await exigirPagina("fornecedoras", "ver", `/painel/fornecedoras/${id}`);
+  const valores = temExtra(acesso, "valores");
   const aviso = await searchParams;
 
   const fornecedora = await prisma.fornecedora.findUnique({
@@ -76,28 +78,31 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
                 f.usuario.ultimoAcessoEm ? ` Último acesso em ${formatarDataHora(f.usuario.ultimoAcessoEm)}.` : ""
               }`}
         </p>
-        {f.ativa && <AcessoDaFornecedora id={f.id} temConta={Boolean(f.usuario)} />}
+        {f.ativa && acesso.administradora && <AcessoDaFornecedora id={f.id} temConta={Boolean(f.usuario)} />}
       </section>
       <FormularioFornecedora
         acao={salvarFornecedora}
         textoBotao="Salvar alterações"
         voltar="/painel/fornecedoras"
+        mostrarRepasse={valores}
+        mostrarDocumentos={acesso.administradora}
         iniciais={{
           id: f.id,
           nome: f.nome,
           telefone: f.telefone ?? "",
           email: f.email ?? "",
-          documento: f.documento ?? "",
-          pix: f.pix ?? "",
+          // CPF/CNPJ e Pix nem chegam ao navegador de quem não é administradora.
+          documento: acesso.administradora ? (f.documento ?? "") : "",
+          pix: acesso.administradora ? (f.pix ?? "") : "",
           endereco: f.endereco ?? "",
           cep: f.cep ?? "",
           cidade: f.cidade ?? "",
           estado: f.estado ?? "",
-          percentualRepassePadrao: mostrarPercentual(f.percentualRepassePadrao),
+          percentualRepassePadrao: valores ? mostrarPercentual(f.percentualRepassePadrao) : "",
           ativa: f.ativa,
         }}
       />
-      <HistoricoDoRegistro tabela="fornecedora" registroId={id} administradora />
+      <HistoricoDoRegistro tabela="fornecedora" registroId={id} verRestritos={valores} />
     </>
   );
 }

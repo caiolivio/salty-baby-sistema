@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAlterar } from "@/lib/permissoes";
 import estilos from "../painel.module.css";
 import proprios from "../formulario.module.css";
 import { BotoesExportar } from "../exportar/botoes";
@@ -11,8 +11,8 @@ import { BotoesExportar } from "../exportar/botoes";
 export const metadata: Metadata = { title: "Fornecedoras" };
 
 export default async function Fornecedoras({ searchParams }: PageProps<"/painel/fornecedoras">) {
-  const usuario = await exigirAcesso("painel", "/painel/fornecedoras");
-  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const usuario = await exigirPagina("fornecedoras", "ver", "/painel/fornecedoras");
+  const podeCadastrar = podeAlterar(usuario.acesso, "fornecedoras");
   const parametros = await searchParams;
   const busca = typeof parametros.q === "string" ? parametros.q.trim() : "";
 
@@ -37,7 +37,7 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
         <h1 className={estilos.titulo}>Fornecedoras</h1>
         <span className={proprios.exportar}>
           <BotoesExportar tabela="fornecedoras" />
-          {administradora && (
+          {podeCadastrar && (
             <Link href="/painel/fornecedoras/nova" className={proprios.botao}>
               + Nova fornecedora
             </Link>
@@ -67,7 +67,7 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
               <tr key={f.id}>
                 <td className={`${estilos.codigo} ${estilos.curta}`}>{f.codigo}</td>
                 <td>
-                  {administradora ? <Link href={`/painel/fornecedoras/${f.id}`}>{f.nome}</Link> : f.nome}
+                  <Link href={`/painel/fornecedoras/${f.id}`}>{f.nome}</Link>
                   {!f.ativa && <span className={proprios.inativa}>inativa</span>}
                 </td>
                 <td data-rotulo="Cidade">{f.cidade}</td>

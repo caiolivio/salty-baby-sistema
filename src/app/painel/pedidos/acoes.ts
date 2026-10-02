@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirExtra, exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { autorDe } from "@/lib/historico/regras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
@@ -13,7 +13,7 @@ import { lerConfirmacao } from "@/lib/vendas/regras";
 
 /** Cancela um pedido reservado: as peças voltam na hora para a vitrine. */
 export async function cancelarPedido(dados: FormData): Promise<void> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pedidos", "alterar");
   const id = String(dados.get("id") ?? "");
   await encerrarPedido(id, "cancelado", autorDe(usuario));
   revalidatePath("/painel/pedidos");
@@ -24,7 +24,7 @@ export type EstadoConfirmar = { erro?: string; forma?: string; desconto?: string
 
 /** Confirmar pagamento: só a administradora (CLAUDE.md, "Pedido, reserva e pagamento"). */
 export async function confirmar(_anterior: EstadoConfirmar, dados: FormData): Promise<EstadoConfirmar> {
-  const usuario = await exigirAcesso("painel-administracao");
+  const usuario = await exigirExtra("confirmar_pagamento");
   const id = String(dados.get("id") ?? "");
   const pedido = await prisma.pedido.findUnique({ where: { id }, select: { totalCentavos: true } });
   if (!pedido) return { erro: "Pedido não encontrado." };
@@ -56,7 +56,7 @@ function atualizar(id: string) {
 
 /** Inclui uma peça no pedido pelo código (novo ou antigo). */
 export async function incluirPeca(_anterior: EstadoEdicao, dados: FormData): Promise<EstadoEdicao> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pedidos", "alterar");
   const id = String(dados.get("id") ?? "");
   const digitado = String(dados.get("codigo") ?? "");
   const codigo = lerCodigoPeca(digitado);
@@ -69,7 +69,7 @@ export async function incluirPeca(_anterior: EstadoEdicao, dados: FormData): Pro
 
 /** Tira uma peça do pedido (ela volta para a vitrine se estava reservada). */
 export async function tirarPeca(_anterior: EstadoEdicao, dados: FormData): Promise<EstadoEdicao> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("pedidos", "alterar");
   const id = String(dados.get("id") ?? "");
   const r = await tirarPecaDoPedido(id, String(dados.get("pecaId") ?? ""), autorDe(usuario));
   if (!r.ok) return { erro: r.erro };
@@ -81,7 +81,7 @@ export type EstadoCliente = { erro?: string; ok?: boolean; nome?: string; telefo
 
 /** Corrige nome e WhatsApp, liga o pedido a uma cliente do cadastro e guarda observações. */
 export async function salvarCliente(_anterior: EstadoCliente, dados: FormData): Promise<EstadoCliente> {
-  await exigirAcesso("painel");
+  await exigirPagina("pedidos", "alterar");
   const id = String(dados.get("id") ?? "");
   const digitado = {
     nome: String(dados.get("nome") ?? ""),

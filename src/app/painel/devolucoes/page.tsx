@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { enderecoDaFoto } from "@/lib/fotos";
@@ -14,7 +14,7 @@ import { BotoesExportar } from "../exportar/botoes";
 export const metadata: Metadata = { title: "Devoluções" };
 
 export default async function Devolucoes({ searchParams }: PageProps<"/painel/devolucoes">) {
-  await exigirAcesso("painel", "/painel/devolucoes");
+  await exigirPagina("devolucoes", "ver", "/painel/devolucoes");
   const { ver } = await searchParams;
   const historico = ver === "historico";
 

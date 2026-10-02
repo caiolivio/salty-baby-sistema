@@ -19,11 +19,17 @@ export function FormularioFornecedora({
   iniciais,
   textoBotao,
   voltar,
+  mostrarRepasse = true,
+  mostrarDocumentos = true,
 }: {
   acao: Acao;
   iniciais: ValoresFornecedora;
   textoBotao: string;
   voltar: string;
+  /** Suporte sem "Ver custo, repasse e lucro" não vê nem muda o repasse. */
+  mostrarRepasse?: boolean;
+  /** CPF/CNPJ e Pix: só a administradora. */
+  mostrarDocumentos?: boolean;
 }) {
   const [estado, enviar, enviando] = useActionState(acao, undefined);
   // Depois de um erro, o formulário volta com o que a pessoa digitou.
@@ -59,27 +65,35 @@ export function FormularioFornecedora({
         </div>
       </fieldset>
 
-      <fieldset className={estilos.grupo}>
-        <legend>Pagamento do repasse</legend>
-        <div className={estilos.grade}>
-          <label className={estilos.campo}>
-            Repasse padrão (%)
-            <input name="percentualRepassePadrao" inputMode="decimal" defaultValue={v("percentualRepassePadrao") ?? "40"} />
-            <span className={estilos.dica}>
-              Parte do valor de venda que vai para a fornecedora. Vale para as peças novas; as já cadastradas e as já vendidas não mudam.
-            </span>
-          </label>
-          <label className={estilos.campo}>
-            Chave Pix
-            <input name="pix" maxLength={191} defaultValue={v("pix")} />
-          </label>
-          <label className={estilos.campo}>
-            CPF ou CNPJ
-            <input name="documento" inputMode="numeric" maxLength={20} defaultValue={v("documento")} />
-            <span className={estilos.dica}>Só a administradora vê.</span>
-          </label>
-        </div>
-      </fieldset>
+      {(mostrarRepasse || mostrarDocumentos) && (
+        <fieldset className={estilos.grupo}>
+          <legend>Pagamento do repasse</legend>
+          <div className={estilos.grade}>
+            {mostrarRepasse && (
+              <label className={estilos.campo}>
+                Repasse padrão (%)
+                <input name="percentualRepassePadrao" inputMode="decimal" defaultValue={v("percentualRepassePadrao") ?? "40"} />
+                <span className={estilos.dica}>
+                  Parte do valor de venda que vai para a fornecedora. Vale para as peças novas; as já cadastradas e as já vendidas não mudam.
+                </span>
+              </label>
+            )}
+            {mostrarDocumentos && (
+              <>
+                <label className={estilos.campo}>
+                  Chave Pix
+                  <input name="pix" maxLength={191} defaultValue={v("pix")} />
+                </label>
+                <label className={estilos.campo}>
+                  CPF ou CNPJ
+                  <input name="documento" inputMode="numeric" maxLength={20} defaultValue={v("documento")} />
+                  <span className={estilos.dica}>Só a administradora vê.</span>
+                </label>
+              </>
+            )}
+          </div>
+        </fieldset>
+      )}
 
       <fieldset className={estilos.grupo}>
         <legend>Endereço</legend>

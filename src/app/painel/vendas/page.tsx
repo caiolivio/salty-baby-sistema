@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
+import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -21,9 +22,10 @@ const CANAIS: Record<string, string> = {
   bag: "Bag",
 };
 
-// Valores de repasse e lucro: só a administradora vê.
+// Repasse e lucro: só quem pode ver custo, repasse e lucro.
 export default async function Vendas({ searchParams }: PageProps<"/painel/vendas">) {
-  await exigirAcesso("painel-administracao", "/painel/vendas");
+  const { acesso } = await exigirPagina("vendas", "ver", "/painel/vendas");
+  const valores = temExtra(acesso, "valores");
   const aviso = await searchParams;
   const pagina = Math.max(1, Number(aviso.pagina) || 1);
   const [total, vendas, somas] = await Promise.all([
@@ -50,9 +52,11 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
         <h1 className={estilos.titulo}>Vendas</h1>
         <span className={proprios.exportar}>
           <BotoesExportar tabela="vendas" />
-          <Link href="/painel/vendas/nova" className={proprios.botao}>
-            + Nova venda
-          </Link>
+          {podeAlterar(acesso, "vendas") && (
+            <Link href="/painel/vendas/nova" className={proprios.botao}>
+              + Nova venda
+            </Link>
+          )}
         </span>
       </div>
       {aviso.registrada && (
@@ -65,14 +69,18 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
           <strong>{formatarReais(somas._sum.valorPagoCentavos ?? 0)}</strong>
           vendido ({total} vendas)
         </div>
-        <div className={estilos.cartao}>
-          <strong>{formatarReais(somas._sum.repasseCentavos ?? 0)}</strong>
-          de repasse às fornecedoras
-        </div>
-        <div className={estilos.cartao}>
-          <strong>{formatarReais(somas._sum.lucroCentavos ?? 0)}</strong>
-          de lucro da loja
-        </div>
+        {valores && (
+          <>
+            <div className={estilos.cartao}>
+              <strong>{formatarReais(somas._sum.repasseCentavos ?? 0)}</strong>
+              de repasse às fornecedoras
+            </div>
+            <div className={estilos.cartao}>
+              <strong>{formatarReais(somas._sum.lucroCentavos ?? 0)}</strong>
+              de lucro da loja
+            </div>
+          </>
+        )}
       </div>
       <div className={estilos.tabelaCaixa}>
         <table className={estilos.tabela}>
@@ -82,8 +90,8 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
               <th>Venda</th>
               <th>Peças</th>
               <th className={estilos.numero}>Total</th>
-              <th className={estilos.numero}>Repasse</th>
-              <th className={estilos.numero}>Lucro</th>
+              {valores && <th className={estilos.numero}>Repasse</th>}
+              {valores && <th className={estilos.numero}>Lucro</th>}
             </tr>
           </thead>
           <tbody>
@@ -113,12 +121,16 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
                   {formatarReais(v.totalCentavos)}
                   {v.descontoCentavos > 0 && <span className={estilos.antigo}>desc. {formatarReais(v.descontoCentavos)}</span>}
                 </td>
-                <td className={estilos.numero} data-rotulo="Repasse">
-                  {formatarReais(soma(v.itens, "repasseCentavos"))}
-                </td>
-                <td className={estilos.numero} data-rotulo="Lucro">
-                  {formatarReais(soma(v.itens, "lucroCentavos"))}
-                </td>
+                {valores && (
+                  <td className={estilos.numero} data-rotulo="Repasse">
+                    {formatarReais(soma(v.itens, "repasseCentavos"))}
+                  </td>
+                )}
+                {valores && (
+                  <td className={estilos.numero} data-rotulo="Lucro">
+                    {formatarReais(soma(v.itens, "lucroCentavos"))}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

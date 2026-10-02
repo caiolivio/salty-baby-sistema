@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Passos } from "@/componentes/passos";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarDia, formatarDataHora } from "@/lib/datas";
 import { NOMES_ETAPA, PASSOS, passoDaEtapa, situacaoDosPassos } from "@/lib/fornecedoras/candidatura";
@@ -26,7 +26,7 @@ const ERROS: Record<string, string> = {
 
 export default async function Candidatura({ params, searchParams }: PageProps<"/painel/candidaturas/[id]">) {
   const { id } = await params;
-  await exigirAcesso("painel-administracao", `/painel/candidaturas/${id}`);
+  await exigirPagina("candidaturas", "ver", `/painel/candidaturas/${id}`);
   const aviso = await searchParams;
 
   const c = await prisma.candidatura.findUnique({

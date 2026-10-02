@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirExtra } from "@/lib/acesso";
 import { copiasNoServidor, situacaoDoDrive, ultimosBackups } from "@/lib/backup/executar";
 import { tamanhoLegivel } from "@/lib/backup/regras";
 import { formatarDataHora } from "@/lib/datas";
 import { TABELAS } from "@/lib/exportacao/tabelas";
+import { podeVer } from "@/lib/permissoes";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
@@ -25,7 +26,7 @@ const ERROS: Record<string, string> = {
 const SITUACOES = { rodando: "Em andamento…", ok: "Feita", erro: "Com erro" } as const;
 
 export default async function Backup({ searchParams }: PageProps<"/painel/backup">) {
-  await exigirAcesso("painel-administracao", "/painel/backup");
+  const { acesso } = await exigirExtra("backup", "/painel/backup");
   const { erro, drive: avisoDrive } = await searchParams;
   const [drive, backups, locais] = await Promise.all([situacaoDoDrive(), ultimosBackups(), copiasNoServidor()]);
   const rodando = backups.some((b) => b.situacao === "rodando");
@@ -141,7 +142,9 @@ export default async function Backup({ searchParams }: PageProps<"/painel/backup
         <div className={estilos.tabelaCaixa}>
           <table className={estilos.tabela}>
             <tbody>
-              {Object.entries(TABELAS).map(([chave, tabela]) => (
+              {Object.entries(TABELAS)
+                .filter(([, tabela]) => podeVer(acesso, tabela.pagina))
+                .map(([chave, tabela]) => (
                 <tr key={chave}>
                   <td>{tabela.titulo}</td>
                   <td>
