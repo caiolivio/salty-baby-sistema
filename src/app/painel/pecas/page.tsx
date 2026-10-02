@@ -19,6 +19,7 @@ const POR_PAGINA = 50;
 export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">) {
   await exigirAcesso("painel", "/painel/pecas");
   const parametros = await searchParams;
+  const excluida = typeof parametros.excluida === "string" ? parametros.excluida : "";
   const busca = typeof parametros.q === "string" ? parametros.q.trim() : "";
   const pagina = Math.max(1, Number(parametros.pagina) || 1);
 
@@ -63,6 +64,11 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
           </Link>
         </span>
       </div>
+      {excluida && (
+        <p className={proprios.aviso} role="status">
+          Peça {excluida} excluída. O código dela não será usado de novo.
+        </p>
+      )}
       <form className={estilos.busca} role="search">
         <input
           name="q"

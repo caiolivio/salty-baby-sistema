@@ -11,7 +11,7 @@ import { BotoesExportar } from "../exportar/botoes";
 export const metadata: Metadata = { title: "Histórico · Salty Baby" };
 
 const POR_PAGINA = 100;
-const CAMPOS_COMUNS = ["Status", "Preço", "Cadastro", "% repasse", "Custo", "Quantidade", "% repasse padrão"];
+const CAMPOS_COMUNS = ["Status", "Preço", "Cadastro", "Exclusão", "% repasse", "Custo", "Quantidade", "% repasse padrão"];
 const ENDERECOS: Record<string, string> = {
   peca: "/painel/pecas/",
   fornecedora: "/painel/fornecedoras/",

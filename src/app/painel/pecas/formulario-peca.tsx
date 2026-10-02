@@ -50,7 +50,8 @@ export function FormularioPeca({
   categorias,
   categoriasMarcadas = [],
   podeIncluirCategoria = false,
-  situacaoFixa,
+  opcoesDeStatus = SITUACOES_DO_CADASTRO,
+  avisoDoStatus,
 }: {
   acao: Acao;
   iniciais: ValoresPeca;
@@ -65,8 +66,10 @@ export function FormularioPeca({
   categoriasMarcadas?: string[];
   /** Só a administradora cria categorias. */
   podeIncluirCategoria?: boolean;
-  /** Peça vendida: a situação só muda pelas vendas. */
-  situacaoFixa?: string;
+  /** Status que dá para escolher (a peça reservada ou vendida tem outra lista: opcoesDeStatus). */
+  opcoesDeStatus?: readonly { valor: string; nome: string }[];
+  /** O que a troca de status faz, quando mexe em pedido, devolução ou venda. */
+  avisoDoStatus?: string | null;
 }) {
   const [estado, despachar, enviando] = useActionState(acao, undefined);
   const [preparando, setPreparando] = useState(false);
@@ -221,17 +224,14 @@ export function FormularioPeca({
           </label>
           <label className={estilos.campo}>
             Status
-            {situacaoFixa ? (
-              <span className={estilos.fixo}>{situacaoFixa} (muda pelas vendas)</span>
-            ) : (
-              <select name="status" defaultValue={v("status") ?? "rascunho"}>
-                {SITUACOES_DO_CADASTRO.map((s) => (
-                  <option key={s.valor} value={s.valor}>
-                    {s.nome}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select name="status" defaultValue={v("status") ?? "rascunho"}>
+              {opcoesDeStatus.map((s) => (
+                <option key={s.valor} value={s.valor}>
+                  {s.nome}
+                </option>
+              ))}
+            </select>
+            {avisoDoStatus && <span className={estilos.dica}>{avisoDoStatus}</span>}
           </label>
           <label className={estilos.campo}>
             Data de entrada

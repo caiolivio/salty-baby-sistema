@@ -12,7 +12,8 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
-import { reaisNoCampo, situacaoEditavel, statusNoFormulario } from "@/lib/pecas/dados";
+import { avisoDaTroca, opcoesDeStatus, reaisNoCampo, statusNoFormulario } from "@/lib/pecas/dados";
+import { motivoParaNaoExcluirPeca } from "@/lib/pecas/gravar";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { nomeDoStatus } from "@/lib/situacoes";
 import proprios from "../../formulario.module.css";
@@ -24,6 +25,7 @@ import { venderPeca } from "../../vendas/nova/acoes";
 import { DivulgarNoGrupo } from "../divulgar-no-grupo";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
+import { ExcluirPeca } from "../excluir-peca";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 
 export const metadata: Metadata = { title: "Peça · Salty Baby" };
@@ -47,6 +49,8 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
   const situacao = nomeDoStatus(p.status, p.naoListada);
+  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const naoExclui = administradora ? await motivoParaNaoExcluirPeca(prisma, p.id) : null;
 
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
   const divulgavel = p.status === "publicada" && p.quantidade > 0;
@@ -115,6 +119,11 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
       {aviso.salva && (
         <p className={proprios.aviso} role="status">
           Alterações salvas.
+        </p>
+      )}
+      {aviso.naoExcluida && (
+        <p className={proprios.erro} role="alert">
+          A peça não foi excluída. {naoExclui ?? "Tente de novo."}
         </p>
       )}
       {aviso.fotosRecusadas && (
@@ -221,7 +230,8 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Salty (peça da loja)",
           consignada: p.tipo === "consignada",
         }}
-        situacaoFixa={situacaoEditavel(p.status) ? undefined : situacao}
+        opcoesDeStatus={opcoesDeStatus(p.status)}
+        avisoDoStatus={avisoDaTroca(p.status)}
         iniciais={{
           id: p.id,
           nome: p.nome,
@@ -242,7 +252,22 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           dataEntrada: p.dataEntrada.toISOString().slice(0, 10),
         }}
       />
-      <HistoricoDoRegistro tabela="peca" registroId={p.id} administradora={podeAcessar(usuario.perfis, "painel-administracao")} />
+      {administradora && (
+        <section className={proprios.zonaPerigo} aria-labelledby="excluir">
+          <strong id="excluir">Excluir peça</strong>
+          {naoExclui ? (
+            <p>{naoExclui}</p>
+          ) : (
+            <>
+              <span className={proprios.dica}>
+                Para peças cadastradas por engano. A exclusão fica no histórico, e o código {p.codigo} não volta a ser usado.
+              </span>
+              <ExcluirPeca id={p.id} codigo={p.codigo} />
+            </>
+          )}
+        </section>
+      )}
+      <HistoricoDoRegistro tabela="peca" registroId={p.id} administradora={administradora} />
     </>
   );
 }
