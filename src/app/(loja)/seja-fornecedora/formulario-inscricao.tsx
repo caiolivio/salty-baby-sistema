@@ -62,7 +62,7 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
             autoComplete="tel"
             required
             maxLength={20}
-            placeholder="(12) 98105-3623"
+            placeholder="(11) 98765-4321"
             defaultValue={v("telefone")}
           />
         </label>

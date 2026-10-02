@@ -1,11 +1,13 @@
-import { ACORDO, TITULO_ACORDO } from "@/lib/fornecedoras/acordo";
+import { acordoDaLoja } from "@/lib/fornecedoras/acordo";
+import { lerLoja } from "@/lib/loja/servidor";
 import estilos from "../loja.module.css";
 
-export function TextoDoAcordo() {
+export async function TextoDoAcordo() {
+  const acordo = acordoDaLoja(await lerLoja());
   return (
     <div className={estilos.acordo}>
-      <strong>{TITULO_ACORDO}</strong>
-      {ACORDO.map((s) => (
+      <strong>{acordo.titulo}</strong>
+      {acordo.secoes.map((s) => (
         <div key={s.titulo}>
           <h3>{s.titulo}</h3>
           <p>{s.texto}</p>
@@ -16,7 +18,8 @@ export function TextoDoAcordo() {
 }
 
 /** O que tem em cada parte da área (mostrado no "Parabéns"). */
-export function ComoFuncionaAArea() {
+export async function ComoFuncionaAArea() {
+  const loja = await lerLoja();
   return (
     <ul className={estilos.listaPassos}>
       <li>
@@ -25,13 +28,13 @@ export function ComoFuncionaAArea() {
       </li>
       <li>
         <strong>Minhas peças:</strong> todas as suas peças, com o status de cada uma e a data de entrada. Ali você pede peças
-        de volta, a partir de 6 meses da entrada.
+        de volta, a partir de {loja.mesesDevolucao} meses da entrada.
       </li>
       <li>
         <strong>Vendas:</strong> cada peça vendida, quando, por quanto e quanto você recebe, e se o repasse já foi pago.
       </li>
       <li>
-        <strong>Enviar peças:</strong> mande fotos de peças novas para a Salty avaliar.
+        <strong>Enviar peças:</strong> mande fotos de peças novas para a {loja.nomeCurto} avaliar.
       </li>
       <li>
         <strong>Meus dados:</strong> e-mail, endereço, WhatsApp, chave Pix e senha, além do acordo de consignação.

@@ -19,10 +19,12 @@ import { ComoFuncionaAArea, TextoDoAcordo } from "./acordo-texto";
 import { EscolherPeriodo } from "./escolher-periodo";
 import { FormularioDados } from "./formulario-dados";
 import { EnviarPecas } from "./propostas";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Área da fornecedora · Salty Baby", robots: { index: false } };
+export const metadata: Metadata = { title: "Área da fornecedora", robots: { index: false } };
 
-function AceiteDoAcordo({ falta, texto }: { falta: boolean; texto: string }) {
+async function AceiteDoAcordo({ falta, texto }: { falta: boolean; texto: string }) {
+  const loja = await lerLoja();
   return (
     <section className={estilos.secaoArea} aria-labelledby="regras">
       <h2 id="regras">Regras da consignação</h2>
@@ -35,7 +37,7 @@ function AceiteDoAcordo({ falta, texto }: { falta: boolean; texto: string }) {
       <form action={aceitar} className={estilos.formConta}>
         <label className={estilos.marcarLinha}>
           <input type="checkbox" name="de_acordo" value="sim" required />
-          <span>Li e estou de acordo com as regras da consignação da Salty Baby.</span>
+          <span>Li e estou de acordo com as regras da consignação da {loja.nome}.</span>
         </label>
         <button type="submit" className={estilos.botaoWhats}>
           {texto}
@@ -49,12 +51,13 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
   const usuario = await exigirAcesso("area-fornecedora", "/fornecedora");
   const parametros = await searchParams;
   const situacao = await situacaoNaArea(usuario.id);
+  const loja = await lerLoja();
 
   if (situacao.tipo === "sem-cadastro") {
     return (
       <section className={estilos.explicacao}>
         <h1 className={estilos.tituloPagina}>Sua área ainda não está pronta</h1>
-        <p>Fale com a Salty pelo WhatsApp para terminar o seu cadastro de fornecedora.</p>
+        <p>Fale com a {loja.nomeCurto} pelo WhatsApp para terminar o seu cadastro de fornecedora.</p>
       </section>
     );
   }
@@ -67,8 +70,8 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           <h1 className={estilos.tituloPagina}>Seja uma fornecedora</h1>
           <p>
             {candidatura.etapa === "recusada"
-              ? "Desta vez a sua inscrição não foi aprovada. Obrigada pelo interesse! Se quiser, fale com a Salty pelo WhatsApp."
-              : "A curadoria ainda está avaliando as suas peças. A Salty entra em contato pelo WhatsApp."}
+              ? `Desta vez a sua inscrição não foi aprovada. Obrigada pelo interesse! Se quiser, fale com a ${loja.nomeCurto} pelo WhatsApp.`
+              : `A curadoria ainda está avaliando as suas peças. A ${loja.nomeCurto} entra em contato pelo WhatsApp.`}
           </p>
         </section>
       );
@@ -81,7 +84,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           <Passos nomes={PASSOS} situacoes={situacaoDosPassos(2, true)} />
           <section className={estilos.explicacao}>
             <p>
-              Você aceitou o acordo de consignação. Agora <strong>a Salty entra em contato pelo WhatsApp</strong> para combinar
+              Você aceitou o acordo de consignação. Agora <strong>a {loja.nomeCurto} entra em contato pelo WhatsApp</strong> para combinar
               a entrega das peças e finalizar a sua parceria (passo 3).
             </p>
             <p>Enquanto isso, você pode continuar mandando peças.</p>
@@ -97,7 +100,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <Passos nomes={PASSOS} situacoes={situacaoDosPassos(2)} />
         <section className={estilos.explicacao}>
           <p>
-            Agora é o <strong>passo 2</strong>: mostre mais peças que você quer deixar com a Salty, com os detalhes de cada
+            Agora é o <strong>passo 2</strong>: mostre mais peças que você quer deixar com a {loja.nomeCurto}, com os detalhes de cada
             uma, e leia e aceite as regras da consignação no fim da página.
           </p>
         </section>
@@ -163,7 +166,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         )}
         <section className={estilos.parabens}>
           <h1>
-            {veioDaInscricao ? "Parabéns, você agora é parceira da Salty Baby! 🎉" : "Parabéns, cadastro finalizado! 🎉"}
+            {veioDaInscricao ? `Parabéns, você agora é parceira da ${loja.nome}! 🎉` : "Parabéns, cadastro finalizado! 🎉"}
           </h1>
           <p>
             Seu código de fornecedora é <strong>{fornecedora.codigo}</strong>. Ele aparece no código de cada peça sua.
@@ -272,7 +275,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             <strong>{contagem.aVenda}</strong>
           </div>
           <div className={estilos.saldo}>
-            <span>Em cadastro na Salty</span>
+            <span>Em cadastro na {loja.nomeCurto}</span>
             <strong>{contagem.emCadastro}</strong>
           </div>
           <div className={estilos.saldo}>

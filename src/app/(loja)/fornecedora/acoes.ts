@@ -19,6 +19,7 @@ import { etapaDaFornecedora, lerDadosDaFornecedora } from "@/lib/fornecedoras/co
 import { aceitarTermos, salvarDadosDaFornecedora } from "@/lib/fornecedoras/convites";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { exigirFornecedoraLiberada } from "./liberada";
+import { autorDe } from "@/lib/historico/regras";
 
 // Ações da área da fornecedora. Cada uma confere o login e só mexe nos dados
 // de quem está logada.
@@ -56,7 +57,7 @@ export async function enviarProposta(_estado: EstadoProposta, dados: FormData): 
     return { erro: "A foto não abriu. Tire ou escolha a foto de novo.", valores };
   }
   refresh();
-  return { ok: `"${lido.dados.nome}" enviada para a Salty avaliar.` };
+  return { ok: `"${lido.dados.nome}" enviada para a loja avaliar.` };
 }
 
 export async function tirar(dados: FormData): Promise<void> {
@@ -117,9 +118,10 @@ export async function mudarSenha(_estado: EstadoSenha, dados: FormData): Promise
 
 /** Pede de volta as peças marcadas (só as que já passaram dos 6 meses). */
 export async function pedirDevolucoes(dados: FormData): Promise<void> {
-  const { fornecedora } = await exigirFornecedoraLiberada("/fornecedora/pecas");
+  const { fornecedora, usuario } = await exigirFornecedoraLiberada("/fornecedora/pecas");
   const ids = dados.getAll("peca").map(String);
-  const pedidas = ids.length > 0 ? await pedirDevolucao(fornecedora.id, ids, hojeEmSaoPaulo()) : 0;
+  const autor = autorDe({ id: usuario.id, nome: `${usuario.nome} (fornecedora ${fornecedora.codigo})` });
+  const pedidas = ids.length > 0 ? await pedirDevolucao(fornecedora.id, ids, hojeEmSaoPaulo(), autor) : 0;
   redirect(`/fornecedora/pecas?pedidas=${pedidas}`);
 }
 

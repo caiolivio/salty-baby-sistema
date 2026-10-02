@@ -14,7 +14,7 @@ import { Aprovar } from "../aprovar";
 import visual from "../candidaturas.module.css";
 import { PropostasNoPainel } from "../propostas";
 
-export const metadata: Metadata = { title: "Inscrição de fornecedora · Salty Baby" };
+export const metadata: Metadata = { title: "Inscrição de fornecedora" };
 
 const ERROS: Record<string, string> = {
   "sem-acordo": "Ela ainda não aceitou o acordo (passo 2).",

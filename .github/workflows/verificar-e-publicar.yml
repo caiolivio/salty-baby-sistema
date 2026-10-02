@@ -2,6 +2,8 @@ name: Verificar e publicar
 
 # Em todo pull request e em toda mudança na main: roda as verificações e,
 # se passarem, publica no site de teste (teste.saltybaby.com.br).
+# Só a mudança na main (pull request aceito) vai também para o site de
+# verdade (app.saltybaby.com.br), depois de o teste ter dado certo.
 on:
   pull_request:
   push:
@@ -56,78 +58,50 @@ jobs:
     concurrency:
       group: publicar-teste
       cancel-in-progress: false
-    env:
-      SSH_USUARIO: sbdeployteste
-      NOME_PROCESSO: saltybaby-teste
-      PORTA: 4100
-      DB_NOME: saltybabyteste
-      ENDERECO: https://teste.saltybaby.com.br
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/publicar
         with:
-          node-version: 22
-          cache: npm
+          ssh-usuario: sbdeployteste
+          nome-processo: saltybaby-teste
+          porta: 4100
+          endereco: https://teste.saltybaby.com.br
+          db-nome: saltybabyteste
+          db-usuario: ${{ secrets.DB_TESTE_USUARIO }}
+          db-senha: ${{ secrets.DB_TESTE_SENHA }}
+          # Só no site de teste: permite apagar a importação do Notion para testar de novo.
+          importacao-pode-apagar: sim
+          ssh-chave: ${{ secrets.SSH_PRIVATE_KEY }}
+          codigo-primeiro-acesso: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
+          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
 
-      # Só para ter o Prisma, que aplica as migrações do banco.
-      - run: npm ci
-
-      - uses: actions/download-artifact@v4
+  publicar-app:
+    name: Publicar no app.saltybaby.com.br
+    needs: [verificar, publicar-teste]
+    # Só o que entrou na main (ou um pedido manual a partir da main).
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: producao
+      url: https://app.saltybaby.com.br
+    concurrency:
+      group: publicar-app
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publicar
         with:
-          name: pacote
-
-      - name: Preparar o acesso à VPS
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          echo "DESTINO=$SSH_USUARIO@$VPS_HOST" >> "$GITHUB_ENV"
-
-      - name: Atualizar a estrutura do banco (migrações)
-        env:
-          DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
-          DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
-        run: |
-          limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
-          codificar() { node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$1"; }
-          # O MySQL só aceita conexões de dentro da VPS: um túnel SSH leva a
-          # porta 3307 daqui até a 3306 de lá enquanto as migrações rodam.
-          ssh -f -N -o ExitOnForwardFailure=yes -L 3307:127.0.0.1:3306 "$DESTINO"
-          DATABASE_URL="mysql://$(codificar "$(limpar "$DB_USUARIO")"):$(codificar "$(limpar "$DB_SENHA")")@127.0.0.1:3307/$DB_NOME"
-          echo "::add-mask::$DATABASE_URL"
-          DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
-
-      - name: Gravar as configurações no servidor
-        env:
-          DB_USUARIO: ${{ secrets.DB_TESTE_USUARIO }}
-          DB_SENHA: ${{ secrets.DB_TESTE_SENHA }}
-          CODIGO_PRIMEIRO_ACESSO: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
-        run: |
-          # Remove espaços e quebras de linha que às vezes entram ao colar o segredo.
-          limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
-          DB_USUARIO="$(limpar "$DB_USUARIO")"
-          DB_SENHA="$(limpar "$DB_SENHA")"
-          {
-            echo "NODE_ENV=production"
-            echo "PORT=$PORTA"
-            echo "HOSTNAME=127.0.0.1"
-            echo "DB_HOST=127.0.0.1"
-            echo "DB_PORT=3306"
-            echo "DB_NOME=$DB_NOME"
-            printf 'DB_USUARIO=`%s`\n' "$DB_USUARIO"
-            printf 'DB_SENHA=`%s`\n' "$DB_SENHA"
-            echo "AUTH_URL=$ENDERECO"
-            # Só no site de teste: permite apagar a importação do Notion para testar de novo.
-            echo "IMPORTACAO_PODE_APAGAR=sim"
-            printf 'CODIGO_PRIMEIRO_ACESSO=`%s`\n' "$(limpar "$CODIGO_PRIMEIRO_ACESSO")"
-            echo "VERSAO=$GITHUB_SHA"
-          } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'
-
-      - name: Enviar e ligar a nova versão
-        run: |
-          scp app.tgz "$DESTINO:saltybaby/upload/app.tgz"
-          ssh "$DESTINO" bash -s -- "$NOME_PROCESSO" "$PORTA" "$GITHUB_SHA" < scripts/servidor/publicar.sh
+          ssh-usuario: sbdeployapp
+          nome-processo: saltybaby-app
+          porta: 3100
+          endereco: https://app.saltybaby.com.br
+          db-nome: saltybaby
+          db-usuario: saltybabyuser
+          db-senha: ${{ secrets.DB_APP_SENHA }}
+          importacao-pode-apagar: nao
+          ssh-chave: ${{ secrets.SSH_PRIVATE_KEY }}
+          codigo-primeiro-acesso: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
+          google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}

@@ -3,7 +3,7 @@
 
 import { enderecoDaPeca } from "../vitrine";
 
-/** Minutos que as peças ficam reservadas depois de "Fechar pedido". */
+/** Minutos que as peças ficam reservadas depois de "Fechar pedido" (padrão; a loja configura). */
 export const MINUTOS_DE_RESERVA = 15;
 /** Máximo de peças num carrinho (evita um cookie enorme). */
 export const LIMITE_CARRINHO = 40;
@@ -26,8 +26,8 @@ export function tirarDoCarrinho(ids: string[], id: string): string[] {
   return ids.filter((x) => x !== id);
 }
 
-export function fimDaReserva(agora: Date): Date {
-  return new Date(agora.getTime() + MINUTOS_DE_RESERVA * 60_000);
+export function fimDaReserva(agora: Date, minutos = MINUTOS_DE_RESERVA): Date {
+  return new Date(agora.getTime() + minutos * 60_000);
 }
 
 /** Minutos que faltam (arredondado para cima; 0 quando venceu). */
@@ -50,7 +50,7 @@ export function lerTelefoneCliente(valor: unknown): string | undefined {
   return digitos.length === 10 || digitos.length === 11 ? digitos : undefined;
 }
 
-/** (12) 98105-3623 */
+/** (11) 98765-4321 */
 export function formatarTelefone(digitos: string): string {
   if (!/^\d{10,11}$/.test(digitos)) return digitos;
   return `(${digitos.slice(0, 2)}) ${digitos.slice(2, -4)}-${digitos.slice(-4)}`;
@@ -83,6 +83,7 @@ export function mensagemDoPedido(
     itens: ItemDaMensagem[];
   },
   origem: string,
+  minutosReserva = MINUTOS_DE_RESERVA,
 ): string {
   const base = origem.replace(/\/+$/, "");
   const linhas = pedido.itens.map((p, i) => {
@@ -95,6 +96,6 @@ export function mensagemDoPedido(
     ...linhas,
     "",
     `Total: ${pedido.total}`,
-    `As peças ficam reservadas por ${MINUTOS_DE_RESERVA} minutos. Como faço o pagamento?`,
+    `As peças ficam reservadas por ${minutosReserva} minutos. Como faço o pagamento?`,
   ].join("\n");
 }

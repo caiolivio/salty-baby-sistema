@@ -542,3 +542,106 @@ model ConviteFornecedora {
   @@index([fornecedoraId])
   @@map("convites_fornecedora")
 }
+
+/// Ligação com o Google Drive onde vão as cópias de segurança. Há uma só (id 1).
+/// A autorização do Google fica cifrada com a chave do servidor (AUTH_SECRET).
+model GoogleDrive {
+  id                 Int      @id
+  email              String?  @db.VarChar(191)
+  autorizacaoCifrada String   @map("autorizacao_cifrada") @db.Text
+  pastaId            String?  @map("pasta_id") @db.VarChar(191)
+  pastaFotosId       String?  @map("pasta_fotos_id") @db.VarChar(191)
+  conectadoEm        DateTime @default(now()) @map("conectado_em")
+
+  @@map("google_drive")
+}
+
+enum SituacaoBackup {
+  rodando
+  ok
+  erro
+}
+
+/// Cada cópia de segurança feita (pelo agendamento diário ou pelo botão do painel).
+model Backup {
+  id            String         @id @default(cuid())
+  situacao      SituacaoBackup @default(rodando)
+  origem        String         @db.VarChar(20)
+  arquivo       String?        @db.VarChar(191)
+  tamanho       Int?
+  noDrive       Boolean        @default(false) @map("no_drive")
+  fotosEnviadas Int            @default(0) @map("fotos_enviadas")
+  mensagem      String?        @db.Text
+  iniciadoEm    DateTime       @default(now()) @map("iniciado_em")
+  terminadoEm   DateTime?      @map("terminado_em")
+
+  @@index([iniciadoEm])
+  @@map("backups")
+}
+
+/// Fotos já copiadas para o Google Drive: só as novas são enviadas a cada dia.
+model BackupFoto {
+  caminho   String   @id @db.VarChar(191)
+  driveId   String   @map("drive_id") @db.VarChar(191)
+  enviadaEm DateTime @default(now()) @map("enviada_em")
+
+  @@map("backup_fotos")
+}
+
+/// Histórico de alterações: quem mudou o quê (preço, status, dados), quando e por quê.
+/// Sem chave estrangeira de propósito: o histórico fica mesmo se o registro sumir.
+model Alteracao {
+  id         String   @id @default(cuid())
+  /// "peca", "fornecedora" ou "cliente".
+  tabela     String   @db.VarChar(20)
+  registroId String   @map("registro_id") @db.VarChar(191)
+  /// Como o registro aparecia na hora (ex.: "F06-00001 · Macacão").
+  rotulo     String   @db.VarChar(191)
+  campo      String   @db.VarChar(80)
+  antes      String?  @db.Text
+  depois     String?  @db.Text
+  /// Só a administradora vê (custo, repasse, CPF/CNPJ, Pix).
+  restrito   Boolean  @default(false)
+  usuarioId  String?  @map("usuario_id") @db.VarChar(191)
+  /// Nome de quem mudou, como era na hora.
+  quem       String   @db.VarChar(191)
+  /// De onde veio a mudança (ex.: "Pedido nº 12 pago", "Edição no painel").
+  motivo     String?  @db.VarChar(191)
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  @@index([tabela, registroId, criadoEm])
+  @@index([criadoEm])
+  @@map("alteracoes")
+}
+
+/// Configurações da loja (uma linha só, id 1): marca, contato e regras. Com elas
+/// o mesmo sistema serve a outra loja; a migração já grava os dados da Salty Baby.
+model ConfiguracaoLoja {
+  id             Int      @id
+  nome           String   @db.VarChar(80)
+  /// Como os textos chamam a loja ("a Salty entra em contato").
+  nomeCurto      String   @map("nome_curto") @db.VarChar(40)
+  slogan         String?  @db.VarChar(120)
+  /// Uma linha sobre a loja, no rodapé e no aviso de privacidade (ex.: "Brechó infantil em Caraguatatuba-SP").
+  descricao      String?  @db.VarChar(160)
+  /// WhatsApp da loja só com números, com o 55 do Brasil (ex.: 5512981053623).
+  whatsapp       String   @db.VarChar(20)
+  instagram      String?  @db.VarChar(60)
+  /// Cores em #RRGGBB: destaque (ícones), principal (botões e links) e texto.
+  corDestaque    String   @map("cor_destaque") @db.VarChar(7)
+  corPrincipal   String   @map("cor_principal") @db.VarChar(7)
+  corTexto       String   @map("cor_texto") @db.VarChar(7)
+  /// Arquivos enviados no painel (pasta de fotos, em "loja/"). Vazio = os da pasta public/marca.
+  logo           String?  @db.VarChar(191)
+  icone          String?  @db.VarChar(191)
+  /// Prefixo do código das peças da própria loja (SB-00012). Só muda enquanto não há peça da loja.
+  prefixoLoja    String   @map("prefixo_loja") @db.VarChar(4)
+  /// Pontos-base (4000 = 40%): repasse de quem é cadastrada sem outro valor.
+  repassePadrao  Int      @map("repasse_padrao")
+  minutosReserva Int      @map("minutos_reserva")
+  /// A fornecedora pede a peça de volta só depois deste tempo da entrada.
+  mesesDevolucao Int      @map("meses_devolucao")
+  atualizadoEm   DateTime @updatedAt @map("atualizado_em")
+
+  @@map("configuracao_loja")
+}

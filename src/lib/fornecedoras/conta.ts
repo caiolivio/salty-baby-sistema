@@ -26,7 +26,7 @@ const campos = z.object({
     if (!t.trim()) return null;
     const lido = lerTelefoneCliente(t);
     if (!lido) {
-      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (12) 98105-3623." });
+      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (11) 98765-4321." });
       return z.NEVER;
     }
     return lido;
@@ -52,10 +52,10 @@ export function lerDadosDaFornecedora(
 }
 
 /** Mensagem que a loja manda no WhatsApp com o link de primeiro acesso. */
-export function mensagemDoConvite(nome: string, link: string): string {
+export function mensagemDoConvite(nome: string, link: string, nomeLoja = "Salty Baby"): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
-    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da Salty Baby 💛`,
+    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
     "Agora você tem uma área só sua no nosso site, para acompanhar suas peças, suas vendas e quanto tem a receber.",
     `Toque no link para terminar seu cadastro e criar sua senha (vale por ${VALIDADE_LINK_DIAS} dias):`,
     link,

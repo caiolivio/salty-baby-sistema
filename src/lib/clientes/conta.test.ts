@@ -23,7 +23,7 @@ describe("cadastro da cliente", () => {
     expect(lerCadastro({ ...cadastro, email: "maria" })).toEqual({ ok: false, erro: "Confira o e-mail." });
     expect(lerCadastro({ ...cadastro, telefone: "98105-3623" })).toEqual({
       ok: false,
-      erro: "Escreva o WhatsApp com DDD, por exemplo (12) 98105-3623.",
+      erro: "Escreva o WhatsApp com DDD, por exemplo (11) 98765-4321.",
     });
     expect(lerCadastro({ ...cadastro, senha: "curta1", confirmacao: "curta1" }).ok).toBe(false);
     expect(lerCadastro({ ...cadastro, confirmacao: "outra2026" })).toEqual({ ok: false, erro: "As duas senhas não são iguais." });

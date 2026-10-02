@@ -13,7 +13,7 @@ import estilos from "../loja.module.css";
 import { tirar } from "./acoes";
 import { FecharPedido } from "./fechar-pedido";
 
-export const metadata: Metadata = { title: "Carrinho · Salty Baby" };
+export const metadata: Metadata = { title: "Carrinho" };
 
 export default async function Carrinho() {
   const ids = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value);
