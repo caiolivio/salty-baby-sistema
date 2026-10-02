@@ -299,6 +299,15 @@ model Crianca {
   @@map("criancas")
 }
 
+/// Quem paga o desconto: dividido (repasse sobre o valor com desconto), loja
+/// (repasse sobre o preço cheio), fornecedora (sai todo do repasse) ou misto.
+enum DescontoPorConta {
+  dividido
+  loja
+  fornecedora
+  misto
+}
+
 enum CanalVenda {
   site
   whatsapp_privado
@@ -328,6 +337,8 @@ model Venda {
   subtotalCentavos Int             @map("subtotal_centavos")
   descontoCentavos Int             @default(0) @map("desconto_centavos")
   totalCentavos    Int             @map("total_centavos")
+  /// Por que a loja deu o desconto (opcional).
+  motivoDesconto   String?         @map("motivo_desconto") @db.VarChar(200)
   /// De onde veio a venda antiga, quando importada (ex.: "Notion: ka - liquida").
   origem           String?         @db.VarChar(191)
   criadoEm         DateTime        @default(now()) @map("criado_em")
@@ -343,22 +354,24 @@ model Venda {
 /// Repasse, desconto e lucro ficam gravados em cada item no momento da venda,
 /// para que uma mudança futura de percentual não altere o histórico.
 model ItemVenda {
-  id                    String    @id @default(cuid())
-  vendaId               String    @map("venda_id")
-  pecaId                String    @map("peca_id")
-  quantidade            Int       @default(1)
-  precoUnitarioCentavos Int       @map("preco_unitario_centavos")
-  descontoCentavos      Int       @default(0) @map("desconto_centavos")
-  valorPagoCentavos     Int       @map("valor_pago_centavos")
-  percentualRepasse     Int?      @map("percentual_repasse")
-  repasseCentavos       Int       @map("repasse_centavos")
-  custoCentavos         Int?      @map("custo_centavos")
-  lucroCentavos         Int       @map("lucro_centavos")
+  id                    String            @id @default(cuid())
+  vendaId               String            @map("venda_id")
+  pecaId                String            @map("peca_id")
+  quantidade            Int               @default(1)
+  precoUnitarioCentavos Int               @map("preco_unitario_centavos")
+  descontoCentavos      Int               @default(0) @map("desconto_centavos")
+  /// Quem pagou o desconto deste item (vazio: sem desconto).
+  descontoPorConta      DescontoPorConta? @map("desconto_por_conta")
+  valorPagoCentavos     Int               @map("valor_pago_centavos")
+  percentualRepasse     Int?              @map("percentual_repasse")
+  repasseCentavos       Int               @map("repasse_centavos")
+  custoCentavos         Int?              @map("custo_centavos")
+  lucroCentavos         Int               @map("lucro_centavos")
   /// A fornecedora já recebeu o repasse deste item.
-  repasseRecebido       Boolean   @default(false) @map("repasse_recebido")
-  repasseRecebidoEm     DateTime? @map("repasse_recebido_em") @db.Date
-  venda                 Venda     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
-  peca                  Peca      @relation(fields: [pecaId], references: [id])
+  repasseRecebido       Boolean           @default(false) @map("repasse_recebido")
+  repasseRecebidoEm     DateTime?         @map("repasse_recebido_em") @db.Date
+  venda                 Venda             @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  peca                  Peca              @relation(fields: [pecaId], references: [id])
 
   @@index([vendaId])
   @@index([pecaId])

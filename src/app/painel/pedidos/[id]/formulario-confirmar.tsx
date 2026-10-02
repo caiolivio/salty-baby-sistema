@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import { DESTINOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import estilos from "../../formulario.module.css";
+import { CamposDeDesconto, type PecaDoDesconto } from "../../vendas/campos-de-desconto";
 import { confirmar } from "../acoes";
 
-export function ConfirmarPagamento({ id }: { id: string }) {
+export function ConfirmarPagamento({ id, pecas, mostrarValores }: { id: string; pecas: PecaDoDesconto[]; mostrarValores: boolean }) {
   const [estado, acao, enviando] = useActionState(confirmar, undefined);
+  const v = estado?.valores ?? {};
   return (
     <form action={acao} className={estilos.formulario} key={JSON.stringify(estado ?? null)}>
       <input type="hidden" name="id" value={id} />
@@ -20,7 +22,7 @@ export function ConfirmarPagamento({ id }: { id: string }) {
         <div className={estilos.grade}>
           <label className={estilos.campo}>
             Forma de pagamento
-            <select name="forma" defaultValue={estado?.forma ?? ""} required>
+            <select name="forma" defaultValue={v.forma ?? ""} required>
               <option value="" disabled>
                 Escolha…
               </option>
@@ -31,20 +33,16 @@ export function ConfirmarPagamento({ id }: { id: string }) {
               ))}
             </select>
           </label>
-          <label className={estilos.campo}>
-            Desconto (R$)
-            <input name="desconto" inputMode="decimal" placeholder="0,00" defaultValue={estado?.desconto} />
-            <span className={estilos.dica}>Opcional. É dividido entre as peças, e o repasse é calculado depois do desconto.</span>
-          </label>
         </div>
         <div className={estilos.opcoes}>
           {DESTINOS.map((d, i) => (
             <label key={d.valor} className={estilos.marcar}>
-              <input type="radio" name="destino" value={d.valor} defaultChecked={estado?.destino ? estado.destino === d.valor : i === 0} /> {d.nome}
+              <input type="radio" name="destino" value={d.valor} defaultChecked={v.destino ? v.destino === d.valor : i === 0} /> {d.nome}
             </label>
           ))}
         </div>
       </fieldset>
+      <CamposDeDesconto pecas={pecas} valores={v} mostrarValores={mostrarValores} />
       <div className={estilos.acoes}>
         <button type="submit" className={estilos.botao} disabled={enviando}>
           {enviando ? "Confirmando…" : "Confirmar pagamento"}

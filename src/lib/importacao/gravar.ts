@@ -70,6 +70,8 @@ export async function gravarImportacao(plano: PlanoImportacao): Promise<void> {
                 quantidade: i.quantidade,
                 precoUnitarioCentavos: i.precoUnitarioCentavos,
                 descontoCentavos: i.descontoCentavos,
+                // No Notion o desconto era sempre dividido (peça da loja: da loja).
+                descontoPorConta: i.descontoCentavos > 0 ? (i.percentualRepasse === undefined ? "loja" : "dividido") : null,
                 valorPagoCentavos: i.valorPagoCentavos,
                 percentualRepasse: i.percentualRepasse,
                 repasseCentavos: i.repasseCentavos,

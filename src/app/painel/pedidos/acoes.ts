@@ -20,27 +20,26 @@ export async function cancelarPedido(dados: FormData): Promise<void> {
   revalidatePath(`/painel/pedidos/${id}`);
 }
 
-export type EstadoConfirmar = { erro?: string; forma?: string; desconto?: string; destino?: string } | undefined;
+export type EstadoConfirmar = { erro?: string; valores?: Record<string, string> } | undefined;
 
-/** Confirmar pagamento: só a administradora (CLAUDE.md, "Pedido, reserva e pagamento"). */
+/** Confirmar pagamento: administradora ou suporte com esse acesso liberado. */
 export async function confirmar(_anterior: EstadoConfirmar, dados: FormData): Promise<EstadoConfirmar> {
   const usuario = await exigirExtra("confirmar_pagamento");
-  const id = String(dados.get("id") ?? "");
-  const pedido = await prisma.pedido.findUnique({ where: { id }, select: { totalCentavos: true } });
+  // Devolve o que foi digitado, para o formulário não voltar vazio depois de um erro.
+  const valores = Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  const id = valores.id ?? "";
+  const pedido = await prisma.pedido.findUnique({
+    where: { id },
+    select: { itens: { orderBy: { ordem: "asc" }, select: { pecaId: true, precoCentavos: true, peca: { select: { codigo: true } } } } },
+  });
   if (!pedido) return { erro: "Pedido não encontrado." };
   const lido = lerConfirmacao(
-    { forma: dados.get("forma"), desconto: dados.get("desconto"), destino: dados.get("destino") },
-    pedido.totalCentavos,
+    valores,
+    pedido.itens.map((i) => ({ id: i.pecaId, codigo: i.peca.codigo, precoCentavos: i.precoCentavos })),
   );
-  // Devolve o que foi digitado, para o formulário não voltar vazio depois de um erro.
-  const digitado = {
-    forma: String(dados.get("forma") ?? ""),
-    desconto: String(dados.get("desconto") ?? ""),
-    destino: String(dados.get("destino") ?? ""),
-  };
-  if (!lido.ok) return { erro: lido.erro, ...digitado };
+  if (!lido.ok) return { erro: lido.erro, valores };
   const resultado = await confirmarPagamento(id, lido.dados, hojeEmSaoPaulo(), autorDe(usuario));
-  if (!resultado.ok) return { erro: resultado.erro, ...digitado };
+  if (!resultado.ok) return { erro: resultado.erro, valores };
   revalidatePath("/painel/pedidos");
   revalidatePath("/painel/vendas");
   redirect(`/painel/pedidos/${id}?pago=1`);

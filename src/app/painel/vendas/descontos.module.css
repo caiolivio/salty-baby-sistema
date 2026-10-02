@@ -1,0 +1,58 @@
+.pecas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #d5e3e8;
+}
+
+.pecas li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #d5e3e8;
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.campos input {
+  width: 7em;
+}
+
+.campos input,
+.campos select {
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid #b8c9d0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.abrir,
+.tirar {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  color: var(--petroleo);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.prejuizo {
+  color: #b3261e;
+  font-weight: 700;
+}
+
+.total {
+  margin: 0;
+  padding: 10px 12px;
+}
