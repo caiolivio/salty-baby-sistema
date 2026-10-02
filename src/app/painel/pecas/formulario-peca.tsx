@@ -50,7 +50,9 @@ export function FormularioPeca({
   categorias,
   categoriasMarcadas = [],
   podeIncluirCategoria = false,
-  situacaoFixa,
+  opcoesDeStatus = SITUACOES_DO_CADASTRO,
+  avisoDoStatus,
+  opcaoDaLoja = "Peça da própria loja",
 }: {
   acao: Acao;
   iniciais: ValoresPeca;
@@ -65,8 +67,12 @@ export function FormularioPeca({
   categoriasMarcadas?: string[];
   /** Só a administradora cria categorias. */
   podeIncluirCategoria?: boolean;
-  /** Peça vendida: a situação só muda pelas vendas. */
-  situacaoFixa?: string;
+  /** Status que dá para escolher (a peça reservada ou vendida tem outra lista: opcoesDeStatus). */
+  opcoesDeStatus?: readonly { valor: string; nome: string }[];
+  /** O que a troca de status faz, quando mexe em pedido, devolução ou venda. */
+  avisoDoStatus?: string | null;
+  /** Texto da opção "peça da loja" na lista de fornecedoras (nome e prefixo da loja). */
+  opcaoDaLoja?: string;
 }) {
   const [estado, despachar, enviando] = useActionState(acao, undefined);
   const [preparando, setPreparando] = useState(false);
@@ -108,7 +114,7 @@ export function FormularioPeca({
             ) : (
               <select name="fornecedoraId" required value={fornecedoraId} onChange={(e) => setFornecedoraId(e.target.value)}>
                 <option value="">Escolha…</option>
-                <option value={FORNECEDORA_LOJA}>Salty (peça da loja, código SB)</option>
+                <option value={FORNECEDORA_LOJA}>{opcaoDaLoja}</option>
                 {fornecedoras?.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.codigo} · {f.nome}
@@ -220,18 +226,15 @@ export function FormularioPeca({
             <input name="quantidade" type="number" min={0} max={999} step={1} defaultValue={v("quantidade") ?? "1"} />
           </label>
           <label className={estilos.campo}>
-            Situação
-            {situacaoFixa ? (
-              <span className={estilos.fixo}>{situacaoFixa} (muda pelas vendas)</span>
-            ) : (
-              <select name="status" defaultValue={v("status") ?? "rascunho"}>
-                {SITUACOES_DO_CADASTRO.map((s) => (
-                  <option key={s.valor} value={s.valor}>
-                    {s.nome}
-                  </option>
-                ))}
-              </select>
-            )}
+            Status
+            <select name="status" defaultValue={v("status") ?? "rascunho"}>
+              {opcoesDeStatus.map((s) => (
+                <option key={s.valor} value={s.valor}>
+                  {s.nome}
+                </option>
+              ))}
+            </select>
+            {avisoDoStatus && <span className={estilos.dica}>{avisoDoStatus}</span>}
           </label>
           <label className={estilos.campo}>
             Data de entrada

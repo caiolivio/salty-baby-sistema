@@ -15,7 +15,7 @@ import { FormularioVenda } from "./formulario-venda";
 import { IncluirNaVenda } from "./incluir-na-venda";
 import { pecasDaVenda } from "./pecas-da-venda";
 
-export const metadata: Metadata = { title: "Nova venda · Salty Baby" };
+export const metadata: Metadata = { title: "Nova venda" };
 
 // Venda pelo WhatsApp, grupos, Instagram, loja ou Bag, registrada direto no painel.
 export default async function NovaVenda() {

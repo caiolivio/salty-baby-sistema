@@ -16,7 +16,7 @@ import estilos from "../../painel.module.css";
 import { cancelarPedido } from "../acoes";
 import { DadosCliente, IncluirPeca, TirarPeca } from "./editar-pedido";
 
-export const metadata: Metadata = { title: "Pedido · Salty Baby" };
+export const metadata: Metadata = { title: "Pedido" };
 
 const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 

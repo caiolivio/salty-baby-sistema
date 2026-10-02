@@ -110,7 +110,7 @@
 .aviso {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #e6f5f5;
+  background: color-mix(in srgb, var(--turquesa) 12%, #ffffff);
   color: var(--petroleo);
   font-weight: 600;
 }
@@ -287,7 +287,7 @@ label.botaoSecundario:focus-within {
 
 .marca:has(input:checked) {
   border-color: var(--petroleo);
-  background: #e6f5f5;
+  background: color-mix(in srgb, var(--turquesa) 12%, #ffffff);
   color: var(--petroleo);
   font-weight: 600;
 }
@@ -318,4 +318,95 @@ label.botaoSecundario:focus-within {
   color: var(--petroleo);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.linkGerado {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--fundo-suave);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.botaoPerigo {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: 1px solid var(--erro);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--erro);
+  cursor: pointer;
+}
+
+.botaoPerigo:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.zonaPerigo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+
+.previaLogo {
+  width: 180px;
+  max-width: 100%;
+  height: 100px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.previaIcone {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.linhaCor {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.linhaCor input[type="color"] {
+  width: 48px;
+  height: 42px;
+  padding: 2px;
+  flex: none;
+}
+
+.linhaCor input:not([type="color"]) {
+  flex: 1;
+}
+
+.previaCores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.bolinha {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
 }

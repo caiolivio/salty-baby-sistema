@@ -1,5 +1,6 @@
 "use client";
 
+import { CampoSenha } from "@/componentes/campo-senha";
 import { useActionState } from "react";
 import estilos from "@/componentes/formulario.module.css";
 import { entrar } from "./acoes";
@@ -20,7 +21,7 @@ export function FormularioEntrar({ voltar }: { voltar?: string }) {
       </label>
       <label className={estilos.campo}>
         Senha
-        <input name="senha" type="password" autoComplete="current-password" required />
+        <CampoSenha name="senha" autoComplete="current-password" required />
       </label>
       {voltar && <input type="hidden" name="voltar" value={voltar} />}
       <button className={estilos.botao} type="submit" disabled={enviando}>
