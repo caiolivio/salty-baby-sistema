@@ -38,6 +38,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
             {p.nome}
           </Link>
         ))}
+        {acesso.administradora && <Link href="/painel/acertos">Contas a pagar</Link>}
         {temExtra(acesso, "backup") && <Link href="/painel/backup">Backup</Link>}
         {acesso.administradora && <Link href="/painel/equipe">Equipe</Link>}
         {acesso.administradora && <Link href="/painel/configuracoes">Configurações</Link>}

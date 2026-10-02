@@ -10,6 +10,7 @@ export async function GET(pedido: Request, { params }: RouteContext<"/painel/exp
   const definicao = Object.hasOwn(TABELAS, tabela) ? TABELAS[tabela] : undefined;
   if (!definicao) return new Response("Tabela não encontrada", { status: 404 });
   const { acesso } = await exigirPagina(definicao.pagina, "ver", `/painel`);
+  if (definicao.soAdministradora && !acesso.administradora) return new Response("Sem acesso", { status: 403 });
   const formato = new URL(pedido.url).searchParams.get("formato") === "csv" ? "csv" : "xlsx";
   const { colunas, linhas } = await definicao.carregar({
     documentos: acesso.administradora,

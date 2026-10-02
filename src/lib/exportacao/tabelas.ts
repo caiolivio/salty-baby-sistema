@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "../banco";
+import { nomeDaFormaAcerto } from "../acertos/regras";
 import { NOMES_ETAPA } from "../fornecedoras/candidatura";
 import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
 import { NOMES_QUEM_PAGA } from "../vendas/descontos";
@@ -22,6 +23,8 @@ export type TabelaExportavel = {
   arquivo: string;
   /** Quem pode exportar: as mesmas pessoas que veem a lista no painel. */
   pagina: Pagina;
+  /** Só a administradora baixa (pagamentos às fornecedoras, com Pix e valores). */
+  soAdministradora?: boolean;
   carregar: (ver: Visao) => Promise<Exportacao>;
 };
 
@@ -289,6 +292,29 @@ async function devolucoes() {
   );
 }
 
+async function acertos() {
+  const linhas = await prisma.acerto.findMany({
+    orderBy: [{ data: "desc" }, { numero: "desc" }],
+    include: { fornecedora: { select: { codigo: true, nome: true } } },
+  });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Nº", valor: (a) => a.numero },
+      { titulo: "Pago em", tipo: "data", valor: (a) => a.data },
+      { titulo: "Fornecedora", valor: (a) => `${a.fornecedora.codigo} · ${a.fornecedora.nome}` },
+      { titulo: "Forma", valor: (a) => nomeDaFormaAcerto(a.forma) },
+      { titulo: "Peças", valor: (a) => a.pecas },
+      { titulo: "Total do repasse", tipo: "reais", valor: (a) => a.totalCentavos },
+      { titulo: "Observação", valor: (a) => a.observacao },
+      { titulo: "Registrado por", valor: (a) => a.quem },
+      { titulo: "Registrado em", tipo: "datahora", valor: (a) => a.criadoEm },
+      { titulo: "Desfeito em", tipo: "datahora", valor: (a) => a.canceladoEm },
+    ],
+    linhas,
+  );
+}
+
 async function historico(ver: Visao) {
   // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
   const linhas = await prisma.alteracao.findMany({
@@ -322,4 +348,5 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", pagina: "candidaturas", carregar: candidaturas },
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
   historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
+  acertos: { titulo: "Pagamentos às fornecedoras", arquivo: "pagamentos-fornecedoras", pagina: "vendas", soAdministradora: true, carregar: acertos },
 };

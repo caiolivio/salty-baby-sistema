@@ -1,0 +1,72 @@
+.comprovante {
+  max-width: 720px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--fundo);
+}
+
+.comprovante h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  color: var(--petroleo);
+}
+
+.dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 16px;
+  margin: 16px 0;
+}
+
+.dados div {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+}
+
+.dados span {
+  font-size: 0.8rem;
+  color: #4a5a64;
+}
+
+.itens {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.itens li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.numero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.numero span {
+  font-size: 0.8rem;
+  color: #4a5a64;
+}
+
+.totais {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.desfeito {
+  color: var(--erro);
+  font-weight: 600;
+}

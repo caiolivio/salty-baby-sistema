@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { calcularRepasse } from "@/lib/calculos";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -57,6 +58,12 @@ export default async function MinhasVendas() {
                     ? `Pago${i.repasseRecebidoEm ? ` em ${formatarData(i.repasseRecebidoEm)}` : ""}`
                     : "A receber"}
                 </span>
+                {i.acerto && !i.acerto.canceladoEm && (
+                  <>
+                    <br />
+                    <Link href={`/fornecedora/pagamentos/${i.acerto.id}`}>Comprovante nº {i.acerto.numero}</Link>
+                  </>
+                )}
               </div>
             </li>
           ))}
