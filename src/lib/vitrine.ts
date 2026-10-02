@@ -60,9 +60,6 @@ export function tamanhosDisponiveis(existentes: Iterable<string | null>): Tamanh
   return TAMANHOS.filter((t) => tem.has(t.valor)).map((t) => t.valor);
 }
 
-/** WhatsApp da Salty Baby, (12) 98105-3623. A variável WHATSAPP_LOJA pode trocar. */
-export const WHATSAPP_LOJA = "5512981053623";
-
 /** Link do WhatsApp da loja com a mensagem pronta (número só com dígitos, com 55 e DDD). */
 export function linkWhatsapp(numero: string | undefined, mensagem: string): string | undefined {
   const digitos = (numero ?? "").replace(/\D/g, "");
@@ -90,7 +87,8 @@ export function linkCompartilharWhatsapp(mensagem: string): string {
 export function mensagemParaAmiga(
   peca: { codigo: string; nome: string; tamanho: string | null; preco: string },
   origem: string,
+  nomeLoja: string,
 ): string {
   const partes = [peca.nome, peca.tamanho && `tam. ${peca.tamanho}`, peca.preco].filter(Boolean).join(" · ");
-  return `Vi isso aqui na Salty Baby e lembrei de você! 💛\n${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
+  return `Vi isso aqui na ${nomeLoja} e lembrei de você! 💛\n${partes}\n${origem.replace(/\/+$/, "")}${enderecoDaPeca(peca.codigo)}`;
 }

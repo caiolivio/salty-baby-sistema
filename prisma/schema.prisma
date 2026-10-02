@@ -613,3 +613,35 @@ model Alteracao {
   @@index([criadoEm])
   @@map("alteracoes")
 }
+
+/// Configurações da loja (uma linha só, id 1): marca, contato e regras. Com elas
+/// o mesmo sistema serve a outra loja; a migração já grava os dados da Salty Baby.
+model ConfiguracaoLoja {
+  id             Int      @id
+  nome           String   @db.VarChar(80)
+  /// Como os textos chamam a loja ("a Salty entra em contato").
+  nomeCurto      String   @map("nome_curto") @db.VarChar(40)
+  slogan         String?  @db.VarChar(120)
+  /// Uma linha sobre a loja, no rodapé e no aviso de privacidade (ex.: "Brechó infantil em Caraguatatuba-SP").
+  descricao      String?  @db.VarChar(160)
+  /// WhatsApp da loja só com números, com o 55 do Brasil (ex.: 5512981053623).
+  whatsapp       String   @db.VarChar(20)
+  instagram      String?  @db.VarChar(60)
+  /// Cores em #RRGGBB: destaque (ícones), principal (botões e links) e texto.
+  corDestaque    String   @map("cor_destaque") @db.VarChar(7)
+  corPrincipal   String   @map("cor_principal") @db.VarChar(7)
+  corTexto       String   @map("cor_texto") @db.VarChar(7)
+  /// Arquivos enviados no painel (pasta de fotos, em "loja/"). Vazio = os da pasta public/marca.
+  logo           String?  @db.VarChar(191)
+  icone          String?  @db.VarChar(191)
+  /// Prefixo do código das peças da própria loja (SB-00012). Só muda enquanto não há peça da loja.
+  prefixoLoja    String   @map("prefixo_loja") @db.VarChar(4)
+  /// Pontos-base (4000 = 40%): repasse de quem é cadastrada sem outro valor.
+  repassePadrao  Int      @map("repasse_padrao")
+  minutosReserva Int      @map("minutos_reserva")
+  /// A fornecedora pede a peça de volta só depois deste tempo da entrada.
+  mesesDevolucao Int      @map("meses_devolucao")
+  atualizadoEm   DateTime @updatedAt @map("atualizado_em")
+
+  @@map("configuracao_loja")
+}

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "../banco";
+import { lerLoja } from "../loja/servidor";
 import { situacaoDaDevolucao } from "./saldos";
 import { registrarStatus, SELECAO_STATUS } from "../historico/gravar";
 import type { Autor } from "../historico/regras";
@@ -55,13 +56,14 @@ export async function dadosDaFornecedora(fornecedoraId: string) {
  */
 export async function pedirDevolucao(fornecedoraId: string, pecaIds: string[], hoje: string, autor: Autor): Promise<number> {
   let pedidas = 0;
+  const { mesesDevolucao } = await lerLoja();
   for (const pecaId of [...new Set(pecaIds)].slice(0, 500)) {
     const ok = await prisma.$transaction(async (tx) => {
       const peca = await tx.peca.findFirst({
         where: { id: pecaId, fornecedoraId },
         select: { ...SELECAO_STATUS, dataEntrada: true },
       });
-      if (!peca || situacaoDaDevolucao(peca, hoje).tipo !== "pode") return false;
+      if (!peca || situacaoDaDevolucao(peca, hoje, mesesDevolucao).tipo !== "pode") return false;
       // Só muda se o status ainda for o lido (uma cliente pode ter reservado agora).
       const mudou = await tx.peca.updateMany({
         where: { id: pecaId, status: peca.status },

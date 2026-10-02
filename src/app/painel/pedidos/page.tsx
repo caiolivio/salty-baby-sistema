@@ -11,7 +11,7 @@ import estilos from "../painel.module.css";
 import { cancelarPedido } from "./acoes";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Pedidos · Salty Baby" };
+export const metadata: Metadata = { title: "Pedidos" };
 
 const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 

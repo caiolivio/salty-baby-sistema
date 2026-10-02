@@ -9,7 +9,6 @@ import {
   mensagemDaPeca,
   mensagemParaAmiga,
   tamanhosDisponiveis,
-  WHATSAPP_LOJA,
 } from "./vitrine";
 
 describe("vitrine", () => {
@@ -75,7 +74,7 @@ describe("linkWhatsapp", () => {
 
 describe("número da loja", () => {
   it("é um WhatsApp válido", () => {
-    expect(linkWhatsapp(WHATSAPP_LOJA, "Oi")).toBe("https://wa.me/5512981053623?text=Oi");
+    expect(linkWhatsapp("5512981053623", "Oi")).toBe("https://wa.me/5512981053623?text=Oi");
   });
 });
 
@@ -108,7 +107,7 @@ describe("mensagemDaPeca", () => {
 
 describe("compartilhar com uma amiga", () => {
   it("monta a mensagem e o link sem número", () => {
-    const mensagem = mensagemParaAmiga({ codigo: "F06-00001", nome: "Body", tamanho: "RN", preco: "R$ 25,00" }, "https://x/");
+    const mensagem = mensagemParaAmiga({ codigo: "F06-00001", nome: "Body", tamanho: "RN", preco: "R$ 25,00" }, "https://x/", "Salty Baby");
     expect(mensagem).toBe("Vi isso aqui na Salty Baby e lembrei de você! 💛\nBody · tam. RN · R$ 25,00\nhttps://x/peca/f06-00001");
     expect(linkCompartilharWhatsapp("Oi & tchau")).toBe("https://wa.me/?text=Oi%20%26%20tchau");
   });

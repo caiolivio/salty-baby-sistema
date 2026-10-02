@@ -21,7 +21,7 @@ import { pecasDaDivulgacao } from "./lista-da-divulgacao";
 import marketing from "./marketing.module.css";
 import { MontarPost } from "./montar-post";
 
-export const metadata: Metadata = { title: "WhatsApp Marketing · Salty Baby" };
+export const metadata: Metadata = { title: "WhatsApp Marketing" };
 
 const RESULTADOS = 60;
 const nomeDoTamanho = (t: string | null) => TAMANHOS.find((x) => x.valor === t)?.nome ?? t;

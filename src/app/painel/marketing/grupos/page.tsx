@@ -6,7 +6,7 @@ import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { EditarGrupo, NovoGrupo } from "./formularios";
 
-export const metadata: Metadata = { title: "Grupos de WhatsApp · Salty Baby" };
+export const metadata: Metadata = { title: "Grupos de WhatsApp" };
 
 export default async function Grupos() {
   await exigirAcesso("painel-administracao", "/painel/marketing/grupos");

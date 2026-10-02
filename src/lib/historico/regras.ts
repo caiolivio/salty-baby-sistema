@@ -1,6 +1,7 @@
 import { formatarData } from "../datas";
 import { formatarReais } from "../dinheiro";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
+import { whatsappNaTela } from "../loja/regras";
 import { formatarTelefone } from "../pedidos/regras";
 import { nomeDoStatus } from "../situacoes";
 import { TAMANHOS } from "../tamanhos";
@@ -8,7 +9,7 @@ import { TAMANHOS } from "../tamanhos";
 // Histórico de alterações (LGPD e controle da loja): quem mudou o quê, quando.
 // Aqui ficam só as regras, sem banco, para poder testar.
 
-export type TabelaDoHistorico = "peca" | "fornecedora" | "cliente";
+export type TabelaDoHistorico = "peca" | "fornecedora" | "cliente" | "loja";
 
 /** Quem fez a mudança. `usuarioId` vazio = o próprio sistema ou alguém sem login. */
 export type Autor = { usuarioId: string | null; nome: string };
@@ -189,12 +190,51 @@ export function compararParcial<T extends object>(campos: readonly Campo<T>[], a
   return comparar(campos, antes, { ...antes, ...mudou });
 }
 
+export type EstadoLoja = {
+  nome: string;
+  nomeCurto: string;
+  slogan: string | null;
+  descricao: string | null;
+  whatsapp: string;
+  instagram: string | null;
+  corDestaque: string;
+  corPrincipal: string;
+  corTexto: string;
+  logo: string | null;
+  icone: string | null;
+  prefixoLoja: string;
+  repassePadrao: number;
+  minutosReserva: number;
+  mesesDevolucao: number;
+};
+
+
+/** Configurações da loja: repasse padrão só a administradora vê (como nas fornecedoras). */
+export const CAMPOS_LOJA: readonly Campo<EstadoLoja>[] = [
+  { titulo: "Nome da loja", ler: (l) => l.nome },
+  { titulo: "Nome curto", ler: (l) => l.nomeCurto },
+  { titulo: "Slogan", ler: (l) => l.slogan },
+  { titulo: "Descrição", ler: (l) => l.descricao },
+  { titulo: "WhatsApp da loja", ler: (l) => l.whatsapp, mostrar: (v) => whatsappNaTela(String(v)) },
+  { titulo: "Instagram", ler: (l) => l.instagram },
+  { titulo: "Cor de destaque", ler: (l) => l.corDestaque },
+  { titulo: "Cor principal", ler: (l) => l.corPrincipal },
+  { titulo: "Cor do texto", ler: (l) => l.corTexto },
+  { titulo: "Logo", ler: (l) => (l.logo ? `imagem enviada (${l.logo.slice(-12, -4)})` : "original") },
+  { titulo: "Ícone", ler: (l) => (l.icone ? `imagem enviada (${l.icone.slice(-12, -4)})` : "original") },
+  { titulo: "Prefixo das peças da loja", ler: (l) => l.prefixoLoja },
+  { titulo: "% repasse padrão", ler: (l) => l.repassePadrao, mostrar: pontosBase, restrito: true },
+  { titulo: "Minutos de reserva", ler: (l) => l.minutosReserva },
+  { titulo: "Meses para pedir devolução", ler: (l) => l.mesesDevolucao },
+];
+
 // ---------------------------------------------------------------- tela
 
 export const NOMES_TABELA: Record<TabelaDoHistorico, string> = {
   peca: "Peça",
   fornecedora: "Fornecedora",
   cliente: "Cliente",
+  loja: "Configurações",
 };
 
 /** "R$ 30,00 → R$ 25,00", "(vazio) → Azul". */

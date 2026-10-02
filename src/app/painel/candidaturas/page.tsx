@@ -11,7 +11,7 @@ import estilos from "../painel.module.css";
 import visual from "./candidaturas.module.css";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Seja fornecedora · Salty Baby" };
+export const metadata: Metadata = { title: "Seja fornecedora" };
 
 const FILTROS: { valor: string; nome: string; etapas: EtapaCandidatura[] }[] = [
   { valor: "abertas", nome: "Em andamento", etapas: ["enviada", "aprovada", "acordo_aceito"] },

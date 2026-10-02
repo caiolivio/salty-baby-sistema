@@ -6,7 +6,7 @@ import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "./painel.module.css";
 
-export const metadata: Metadata = { title: "Painel · Salty Baby" };
+export const metadata: Metadata = { title: "Painel" };
 
 export default async function Painel() {
   const usuario = await exigirAcesso("painel", "/painel");

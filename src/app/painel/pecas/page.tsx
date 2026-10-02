@@ -11,14 +11,17 @@ import { ImprimirEtiquetas } from "./imprimir-etiquetas";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Peças · Salty Baby" };
+export const metadata: Metadata = { title: "Peças" };
 
 const POR_PAGINA = 50;
 
 export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">) {
   await exigirAcesso("painel", "/painel/pecas");
+  const loja = await lerLoja();
   const parametros = await searchParams;
+  const excluida = typeof parametros.excluida === "string" ? parametros.excluida : "";
   const busca = typeof parametros.q === "string" ? parametros.q.trim() : "";
   const pagina = Math.max(1, Number(parametros.pagina) || 1);
 
@@ -63,6 +66,11 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
           </Link>
         </span>
       </div>
+      {excluida && (
+        <p className={proprios.aviso} role="status">
+          Peça {excluida} excluída. O código dela não será usado de novo.
+        </p>
+      )}
       <form className={estilos.busca} role="search">
         <input
           name="q"
@@ -123,7 +131,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                       <span className={estilos.antigo}>{p.fornecedora.nome}</span>
                     </>
                   ) : (
-                    "Salty (loja)"
+                    `${loja.nomeCurto} (loja)`
                   )}
                 </td>
                 <td className={estilos.curta} data-rotulo="Tamanho">

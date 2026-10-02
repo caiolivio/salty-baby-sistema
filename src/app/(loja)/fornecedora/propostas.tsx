@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/banco";
+import { lerLoja } from "@/lib/loja/servidor";
 import { formatarDia } from "@/lib/datas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import estilos from "../loja.module.css";
@@ -50,12 +51,13 @@ export async function EnviarPecas({ dono, titulo }: { dono: Dono; titulo: string
     orderBy: { nome: "asc" },
     select: { id: true, nome: true },
   });
+  const loja = await lerLoja();
   return (
     <>
       <section className={estilos.secaoArea} aria-labelledby="enviar">
         <h2 id="enviar">{titulo}</h2>
         <p>
-          Mande uma foto e os detalhes de cada peça. A Salty avalia e, quando receber a peça, define o preço e coloca à venda.
+          Mande uma foto e os detalhes de cada peça. A {loja.nomeCurto} avalia e, quando receber a peça, define o preço e coloca à venda.
         </p>
         <FormularioProposta categorias={categorias} />
       </section>

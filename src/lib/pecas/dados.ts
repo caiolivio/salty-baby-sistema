@@ -46,6 +46,55 @@ export function statusNoFormulario(status: string, naoListada: boolean): string 
   return status === "publicada" && naoListada ? "nao_listada" : status;
 }
 
+/** Depois da venda a peça só anda entre estes (entrega); voltar ao estoque exigiria desfazer a venda. */
+export const SITUACOES_DEPOIS_DA_VENDA = [
+  { valor: "vendida", nome: "Vendida" },
+  { valor: "na_sacolinha", nome: "Na sacolinha" },
+  { valor: "enviada", nome: "Enviada" },
+  { valor: "retirada", nome: "Retirada" },
+] as const;
+
+const NOMES_EM_ANDAMENTO: Record<string, string> = {
+  reservada: "Reservada (num pedido)",
+  devolucao_pedida: "Devolução pedida",
+};
+
+export type OpcaoDeStatus = { valor: string; nome: string };
+
+/**
+ * Status que a página da peça oferece, a partir do atual.
+ * - Reservada: qualquer status do cadastro (a peça sai do pedido).
+ * - Devolução pedida: "Devolvida" conclui o pedido de devolução; os outros cancelam.
+ * - Vendida e depois: só os passos da entrega.
+ */
+export function opcoesDeStatus(atual: string): OpcaoDeStatus[] {
+  if (SITUACOES_DEPOIS_DA_VENDA.some((s) => s.valor === atual)) return [...SITUACOES_DEPOIS_DA_VENDA];
+  if (situacaoEditavel(atual)) return [...SITUACOES_DO_CADASTRO];
+  return [{ valor: atual, nome: NOMES_EM_ANDAMENTO[atual] ?? atual }, ...SITUACOES_DO_CADASTRO];
+}
+
+/** O que acontece ao trocar o status de uma peça reservada ou com devolução pedida (dica na tela). */
+export function avisoDaTroca(atual: string): string | null {
+  if (atual === "reservada") return "Ao trocar, a peça sai do pedido em que está (se for a única, o pedido é cancelado).";
+  if (atual === "devolucao_pedida") {
+    return "Escolha \"Devolvida\" para concluir a devolução. Outro status cancela o pedido de devolução da fornecedora.";
+  }
+  if (SITUACOES_DEPOIS_DA_VENDA.some((s) => s.valor === atual)) {
+    return "Peça vendida: dá para marcar a entrega. Para ela voltar ao estoque, a venda precisa ser desfeita.";
+  }
+  return null;
+}
+
+/** Por que a peça não pode ser excluída (null = pode). */
+export function motivoParaNaoExcluir(peca: { status: string; vendas: number; pedidoAberto: number | null }): string | null {
+  if (peca.vendas > 0) {
+    return "Esta peça já foi vendida, e a venda guarda o repasse e o lucro dela. Para tirá-la do estoque, use o status \"Baixa\".";
+  }
+  if (peca.pedidoAberto !== null) return `Esta peça está no pedido nº ${peca.pedidoAberto}. Tire-a do pedido antes de excluir.`;
+  if (peca.status === "devolucao_pedida") return "A fornecedora pediu esta peça de volta. Resolva em Devoluções antes de excluir.";
+  return null;
+}
+
 /** Valor da fornecedora no formulário para as peças da própria loja. */
 export const FORNECEDORA_LOJA = "loja";
 

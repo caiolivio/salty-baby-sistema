@@ -58,7 +58,7 @@
   border-color: var(--petroleo);
   background: var(--petroleo);
   color: #fff;
-  box-shadow: 0 0 0 4px rgba(50, 175, 181, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--turquesa) 25%, transparent);
 }
 
 .nome {

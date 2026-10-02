@@ -15,7 +15,7 @@ export async function terminarCadastro(_estado: EstadoConvite, dados: FormData):
     [...dados.entries()].filter((par): par is [string, string] => typeof par[1] === "string" && !/senha|confirmacao/.test(par[0])),
   );
   const codigo = dados.get("codigo");
-  if (!codigoValido(codigo)) return { erro: "Este link não vale mais. Peça um novo à Salty.", valores };
+  if (!codigoValido(codigo)) return { erro: "Este link não vale mais. Peça um novo à loja.", valores };
   const lido = lerDadosDaFornecedora(valores);
   if (!lido.ok) return { erro: lido.erro, valores };
   const senha = lerNovaSenha({ senha: dados.get("senha"), confirmacao: dados.get("confirmacao") });
@@ -27,10 +27,10 @@ export async function terminarCadastro(_estado: EstadoConvite, dados: FormData):
   const r = await usarConvite(codigo, lido.dados, senha.dados);
   if (!r.ok) {
     const erro = {
-      convite: "Este link já foi usado ou venceu. Peça um novo à Salty.",
-      "email-de-outra-fornecedora": "Este e-mail já é de outra fornecedora. Use outro e-mail ou fale com a Salty.",
+      convite: "Este link já foi usado ou venceu. Peça um novo à loja.",
+      "email-de-outra-fornecedora": "Este e-mail já é de outra fornecedora. Use outro e-mail ou fale com a loja.",
       "senha-da-conta":
-        "Este e-mail já tem uma conta no site da Salty (de compras, por exemplo). Para usar o mesmo e-mail, digite a senha dessa conta. Se esqueceu, use outro e-mail ou fale com a Salty.",
+        "Este e-mail já tem uma conta no nosso site (de compras, por exemplo). Para usar o mesmo e-mail, digite a senha dessa conta. Se esqueceu, use outro e-mail ou fale com a loja.",
     }[r.motivo];
     return { erro, valores };
   }

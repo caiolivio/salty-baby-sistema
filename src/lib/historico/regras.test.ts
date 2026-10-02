@@ -122,3 +122,21 @@ it("textos longos ficam cortados", () => {
   expect(resumir("curto")).toBe("curto");
   expect(resumir(null)).toBeNull();
 });
+
+describe("CAMPOS_LOJA", () => {
+  it("mostra o WhatsApp formatado e a troca de logo sem o caminho do arquivo", async () => {
+    const { CAMPOS_LOJA, comparar } = await import("./regras");
+    const { LOJA_PADRAO } = await import("../loja/regras");
+    const mudancas = comparar(CAMPOS_LOJA, LOJA_PADRAO, {
+      ...LOJA_PADRAO,
+      whatsapp: "5513998765432",
+      logo: "loja/logo-1234-abcd-efgh5678.png",
+      repassePadrao: 5000,
+    });
+    expect(mudancas).toEqual([
+      { campo: "WhatsApp da loja", antes: "(12) 98105-3623", depois: "(13) 99876-5432", restrito: false },
+      { campo: "Logo", antes: "original", depois: "imagem enviada (efgh5678)", restrito: false },
+      { campo: "% repasse padrão", antes: "40%", depois: "50%", restrito: true },
+    ]);
+  });
+});

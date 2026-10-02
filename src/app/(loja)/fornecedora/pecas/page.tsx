@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { formatarData, formatarDia } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { dadosDaFornecedora } from "@/lib/fornecedoras/area";
-import { MESES_PARA_DEVOLUCAO, situacaoDaDevolucao } from "@/lib/fornecedoras/saldos";
+import { situacaoDaDevolucao } from "@/lib/fornecedoras/saldos";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { nomeDoStatus } from "@/lib/situacoes";
@@ -10,8 +10,9 @@ import { TAMANHOS } from "@/lib/tamanhos";
 import estilos from "../../loja.module.css";
 import { pedirDevolucoes } from "../acoes";
 import { exigirFornecedoraLiberada } from "../liberada";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Minhas peças · Salty Baby", robots: { index: false } };
+export const metadata: Metadata = { title: "Minhas peças", robots: { index: false } };
 
 const brasileira = (t: string) => `${t.slice(8, 10)}/${t.slice(5, 7)}/${t.slice(0, 4)}`;
 
@@ -20,7 +21,8 @@ export default async function MinhasPecas({ searchParams }: PageProps<"/forneced
   const { pedidas } = await searchParams;
   const hoje = hojeEmSaoPaulo();
   const { pecas } = await dadosDaFornecedora(fornecedora.id);
-  const linhas = pecas.map((p) => ({ ...p, devolucao: situacaoDaDevolucao(p, hoje) }));
+  const loja = await lerLoja();
+  const linhas = pecas.map((p) => ({ ...p, devolucao: situacaoDaDevolucao(p, hoje, loja.mesesDevolucao) }));
   const podeAlguma = linhas.some((l) => l.devolucao.tipo === "pode");
 
   return (
@@ -29,16 +31,16 @@ export default async function MinhasPecas({ searchParams }: PageProps<"/forneced
       {pedidas !== undefined && (
         <p className={Number(pedidas) > 0 ? estilos.sucesso : estilos.erro} role="status">
           {Number(pedidas) > 0
-            ? `Pedido de devolução feito para ${pedidas} peça(s). Elas saíram da vitrine, e a Salty vai combinar a entrega com você.`
+            ? `Pedido de devolução feito para ${pedidas} peça(s). Elas saíram da vitrine, e a ${loja.nomeCurto} vai combinar a entrega com você.`
             : "Nenhuma peça foi pedida. Marque as peças que podem ser devolvidas."}
         </p>
       )}
       <p className={estilos.dica}>
-        Você pode pedir uma peça de volta a partir de {MESES_PARA_DEVOLUCAO} meses da data de entrada. Ao pedir, ela sai da
+        Você pode pedir uma peça de volta a partir de {loja.mesesDevolucao} meses da data de entrada. Ao pedir, ela sai da
         vitrine na hora.
       </p>
       {pecas.length === 0 ? (
-        <p>Você ainda não tem peças na Salty.</p>
+        <p>Você ainda não tem peças na {loja.nomeCurto}.</p>
       ) : (
         <form action={pedirDevolucoes} className={estilos.secaoArea}>
           <ul className={estilos.listaPecasArea}>
@@ -62,7 +64,7 @@ export default async function MinhasPecas({ searchParams }: PageProps<"/forneced
                   {p.tamanho && ` · ${TAMANHOS.find((t) => t.valor === p.tamanho)?.nome ?? p.tamanho}`}
                   <br />
                   <span className={estilos.seloProposta}>
-                    {p.status === "rascunho" ? "Em cadastro na Salty" : nomeDoStatus(p.status)}
+                    {p.status === "rascunho" ? `Em cadastro na ${loja.nomeCurto}` : nomeDoStatus(p.status)}
                   </span>{" "}
                   Entrada em {formatarData(p.dataEntrada)}
                   {p.precoCentavos > 0 && ` · ${formatarReais(p.precoCentavos)}`}
