@@ -60,24 +60,23 @@ export type EstadoVenda =
   | { erro?: string; valores?: Record<string, string> }
   | undefined;
 
-const CAMPOS = ["canal", "grupo", "forma", "desconto", "destino", "data", "clienteId", "novaNome", "novaTelefone"] as const;
-
 export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): Promise<EstadoVenda> {
   const usuario = await exigirPagina("vendas", "alterar");
-  const valores = Object.fromEntries(CAMPOS.map((c) => [c, String(dados.get(c) ?? "")]));
+  const valores = Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  const texto = (campo: string) => valores[campo] ?? "";
   const ids = await pecasDaVenda();
   if (ids.length === 0) return { erro: "Inclua pelo menos uma peça na venda.", valores };
-  const precos = await prisma.peca.findMany({ where: { id: { in: ids } }, select: { precoCentavos: true } });
-  const total = precos.reduce((s, p) => s + p.precoCentavos, 0);
+  const encontradas = await prisma.peca.findMany({ where: { id: { in: ids } }, select: { id: true, codigo: true, precoCentavos: true } });
+  const pecas = ids.flatMap((id) => encontradas.filter((p) => p.id === id));
   const hoje = hojeEmSaoPaulo();
-  const lido = lerVendaDireta(valores, total, hoje, await listarGruposEmUso());
+  const lido = lerVendaDireta(valores, pecas, hoje, await listarGruposEmUso());
   if (!lido.ok) return { erro: lido.erro, valores };
 
   let cliente: ClienteDaVenda = null;
   if (valores.clienteId === "nova") {
-    const nome = lerNomeCliente(valores.novaNome);
+    const nome = lerNomeCliente(texto("novaNome"));
     if (!nome) return { erro: "Escreva o nome da nova cliente.", valores };
-    const telefone = valores.novaTelefone.trim() ? lerTelefoneCliente(valores.novaTelefone) : null;
+    const telefone = texto("novaTelefone").trim() ? lerTelefoneCliente(texto("novaTelefone")) : null;
     if (telefone === undefined) return { erro: "O WhatsApp precisa ter DDD, por exemplo (11) 98765-4321.", valores };
     cliente = { nova: { nome, telefone } };
   } else if (valores.clienteId) {

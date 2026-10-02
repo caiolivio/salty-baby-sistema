@@ -2,8 +2,8 @@
 // Repasse, desconto e lucro são calculados aqui e gravados em cada item, para
 // que uma mudança futura de percentual não altere o histórico.
 
-import { calcularVenda, distribuirDesconto } from "../calculos";
-import { lerReais } from "../importacao/notion";
+import { calcularRepasse } from "../calculos";
+import { dividirDescontos, lerPlanoDeDesconto, type PecaComPreco, type PlanoDeDesconto, type QuemPaga } from "./descontos";
 
 export const FORMAS_PAGAMENTO = [
   { valor: "pix", nome: "Pix" },
@@ -22,6 +22,7 @@ export type Destino = (typeof DESTINOS)[number]["valor"];
 
 export type PecaParaVender = {
   id: string;
+  codigo?: string;
   tipo: "consignada" | "loja";
   precoCentavos: number;
   /** Percentual da própria peça; vazio usa o padrão da fornecedora. */
@@ -30,10 +31,14 @@ export type PecaParaVender = {
   custoCentavos: number | null;
 };
 
+export type DescontoPorConta = QuemPaga | "misto";
+
 export type ItemCalculado = {
   pecaId: string;
   precoUnitarioCentavos: number;
   descontoCentavos: number;
+  /** De quem é o desconto deste item (vazio: sem desconto). */
+  descontoPorConta: DescontoPorConta | null;
   valorPagoCentavos: number;
   percentualRepasse: number | null;
   repasseCentavos: number;
@@ -42,66 +47,76 @@ export type ItemCalculado = {
 };
 
 /**
- * Calcula cada item da venda. O desconto do pedido é dividido entre as peças na
- * proporção do preço, e o repasse é calculado sobre o valor com desconto.
+ * Calcula cada item da venda. Os descontos (por peça e do carrinho) vêm de
+ * `dividirDescontos`; o repasse depende de quem paga cada desconto:
+ * - dividido: o repasse é calculado sobre o valor com esse desconto;
+ * - loja: o desconto não mexe no repasse;
+ * - fornecedora: o desconto inteiro sai do repasse (e não pode passar dele).
+ * Peças da loja não têm repasse: o desconto sai só do lucro.
  */
-export function calcularItens(pecas: PecaParaVender[], descontoCentavos: number): ItemCalculado[] {
-  const pagos = distribuirDesconto(
-    pecas.map((p) => p.precoCentavos),
-    descontoCentavos,
-  );
-  return pecas.map((peca, i) => {
-    const valorPago = pagos[i];
-    if (peca.tipo === "consignada") {
-      const percentual = peca.percentualRepasse ?? peca.percentualPadraoFornecedora ?? 0;
-      const r = calcularVenda({ tipo: "consignada", valorPago, percentualRepasse: percentual });
-      return {
-        pecaId: peca.id,
-        precoUnitarioCentavos: peca.precoCentavos,
-        descontoCentavos: peca.precoCentavos - valorPago,
-        valorPagoCentavos: valorPago,
-        percentualRepasse: percentual,
-        repasseCentavos: r.repasse,
-        custoCentavos: null,
-        lucroCentavos: r.lucro,
-      };
-    }
-    const r = calcularVenda({ tipo: "loja", valorPago, custo: peca.custoCentavos ?? 0 });
-    return {
+export function calcularItens(
+  pecas: readonly PecaParaVender[],
+  plano: PlanoDeDesconto,
+): { ok: true; itens: ItemCalculado[]; descontoCentavos: number } | { ok: false; erro: string } {
+  const partes = dividirDescontos(pecas, plano);
+  if (!partes.ok) return partes;
+  const itens: ItemCalculado[] = [];
+  for (const [i, peca] of pecas.entries()) {
+    const p = partes.dados[i];
+    const desconto = p.descontoPeca + p.descontoCarrinho;
+    const porConta = new Set<QuemPaga>();
+    if (p.descontoPeca > 0) porConta.add(peca.tipo === "loja" ? "loja" : p.quemPeca);
+    if (p.descontoCarrinho > 0) porConta.add(peca.tipo === "loja" ? "loja" : p.quemCarrinho);
+    const descontoPorConta: DescontoPorConta | null = porConta.size === 0 ? null : porConta.size > 1 ? "misto" : [...porConta][0];
+    const base = {
       pecaId: peca.id,
       precoUnitarioCentavos: peca.precoCentavos,
-      descontoCentavos: peca.precoCentavos - valorPago,
-      valorPagoCentavos: valorPago,
-      percentualRepasse: null,
-      repasseCentavos: 0,
-      custoCentavos: peca.custoCentavos,
-      lucroCentavos: r.lucro,
+      descontoCentavos: desconto,
+      descontoPorConta,
+      valorPagoCentavos: p.valorPago,
     };
-  });
+    if (peca.tipo === "loja") {
+      const custo = peca.custoCentavos ?? 0;
+      itens.push({ ...base, percentualRepasse: null, repasseCentavos: 0, custoCentavos: peca.custoCentavos, lucroCentavos: p.valorPago - custo });
+      continue;
+    }
+    const percentual = peca.percentualRepasse ?? peca.percentualPadraoFornecedora ?? 0;
+    const daParte = (quem: QuemPaga) =>
+      (p.quemPeca === quem ? p.descontoPeca : 0) + (p.quemCarrinho === quem ? p.descontoCarrinho : 0);
+    const repasse = calcularRepasse(p.precoCentavos - daParte("dividido"), percentual) - daParte("fornecedora");
+    if (repasse < 0) {
+      return {
+        ok: false,
+        erro: `O desconto por conta da fornecedora na ${peca.codigo ? `peça ${peca.codigo}` : "peça"} passa do valor que ela receberia. Diminua o desconto ou divida com a loja.`,
+      };
+    }
+    itens.push({
+      ...base,
+      percentualRepasse: percentual,
+      repasseCentavos: repasse,
+      custoCentavos: null,
+      lucroCentavos: p.valorPago - repasse,
+    });
+  }
+  return { ok: true, itens, descontoCentavos: itens.reduce((s, i) => s + i.descontoCentavos, 0) };
 }
 
-export type DadosConfirmacao = { forma: FormaPagamento; descontoCentavos: number; destino: Destino };
+export type DadosConfirmacao = { forma: FormaPagamento; desconto: PlanoDeDesconto; destino: Destino };
 
-/** Lê o formulário "Confirmar pagamento". O desconto é opcional (em reais). */
+/** Lê o formulário "Confirmar pagamento": forma, destino e os descontos (opcionais). */
 export function lerConfirmacao(
-  valores: { forma?: unknown; desconto?: unknown; destino?: unknown },
-  totalCentavos: number,
+  valores: Record<string, unknown>,
+  pecas: readonly PecaComPreco[],
 ): { ok: true; dados: DadosConfirmacao } | { ok: false; erro: string } {
   const forma = FORMAS_PAGAMENTO.find((f) => f.valor === valores.forma)?.valor;
   if (!forma) return { ok: false, erro: "Escolha a forma de pagamento." };
   const destino = DESTINOS.find((d) => d.valor === valores.destino)?.valor ?? "vendida";
-  const texto = typeof valores.desconto === "string" ? valores.desconto.trim() : "";
-  let desconto: number;
-  try {
-    desconto = lerReais(texto);
-  } catch {
-    desconto = -1;
-  }
-  if (desconto < 0) {
-    return { ok: false, erro: "O desconto precisa ser um valor em reais, como 5 ou 5,50." };
-  }
-  if (desconto > totalCentavos) return { ok: false, erro: "O desconto não pode ser maior que o total." };
-  return { ok: true, dados: { forma, descontoCentavos: desconto, destino } };
+  const plano = lerPlanoDeDesconto(valores, pecas);
+  if (!plano.ok) return plano;
+  // Confere os limites (desconto maior que o preço ou que o total) já aqui.
+  const partes = dividirDescontos(pecas, plano.dados);
+  if (!partes.ok) return partes;
+  return { ok: true, dados: { forma, desconto: plano.dados, destino } };
 }
 
 // Venda direta no painel (WhatsApp, grupos, Instagram, loja e Bag).
@@ -129,8 +144,8 @@ export type DadosVendaDireta = DadosConfirmacao & {
  * vazia vira hoje e não pode ser no futuro.
  */
 export function lerVendaDireta(
-  valores: { canal?: unknown; grupo?: unknown; forma?: unknown; desconto?: unknown; destino?: unknown; data?: unknown },
-  totalCentavos: number,
+  valores: Record<string, unknown>,
+  pecas: readonly PecaComPreco[],
   hoje: string,
   grupos: { id: string; nome: string }[],
 ): { ok: true; dados: DadosVendaDireta } | { ok: false; erro: string } {
@@ -143,7 +158,7 @@ export function lerVendaDireta(
     return { ok: false, erro: "A data da venda não é válida." };
   }
   if (data > hoje) return { ok: false, erro: "A data da venda não pode ser no futuro." };
-  const lido = lerConfirmacao(valores, totalCentavos);
+  const lido = lerConfirmacao(valores, pecas);
   if (!lido.ok) return lido;
   return { ok: true, dados: { ...lido.dados, canal, grupo: grupo?.nome ?? null, grupoId: grupo?.id ?? null, data } };
 }

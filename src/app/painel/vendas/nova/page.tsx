@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
+import { temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
@@ -19,7 +20,8 @@ export const metadata: Metadata = { title: "Nova venda" };
 
 // Venda pelo WhatsApp, grupos, Instagram, loja ou Bag, registrada direto no painel.
 export default async function NovaVenda() {
-  await exigirPagina("vendas", "alterar", "/painel/vendas/nova");
+  const { acesso } = await exigirPagina("vendas", "alterar", "/painel/vendas/nova");
+  const valores = temExtra(acesso, "valores");
   await liberarReservasVencidas();
   const ids = await pecasDaVenda();
   const [encontradas, clientes, grupos] = await Promise.all([
@@ -34,8 +36,11 @@ export default async function NovaVenda() {
         status: true,
         quantidade: true,
         precoCentavos: true,
+        tipo: true,
+        percentualRepasse: true,
+        custoCentavos: true,
         fotos: { orderBy: { ordem: "asc" }, take: 1, select: { arquivo: true } },
-        fornecedora: { select: { codigo: true, nome: true } },
+        fornecedora: { select: { codigo: true, nome: true, percentualRepassePadrao: true } },
       },
     }),
     listarOpcoesDeClientes(),
@@ -120,7 +125,17 @@ export default async function NovaVenda() {
 
       <FormularioVenda hoje={hojeEmSaoPaulo()} clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
         grupos={grupos.map(({ id, nome }) => ({ id, nome }))}
-        vazia={pecas.length === 0} />
+        mostrarValores={valores}
+        pecas={pecas.map((p) => ({
+          id: p.id,
+          codigo: p.codigo,
+          nome: p.nome,
+          precoCentavos: p.precoCentavos,
+          loja: p.tipo === "loja",
+          // Custo e repasse só vão ao navegador de quem pode ver.
+          percentualRepasse: valores ? (p.percentualRepasse ?? p.fornecedora?.percentualRepassePadrao ?? null) : null,
+          custoCentavos: valores ? p.custoCentavos : null,
+        }))} />
     </>
   );
 }

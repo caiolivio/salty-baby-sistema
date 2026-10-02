@@ -1,7 +1,9 @@
 import "server-only";
 import { prisma } from "../banco";
 import { registrar, rotuloDaPeca } from "../historico/gravar";
+import { formatarReais } from "../dinheiro";
 import { mudancaDeStatus, type Autor, type Mudanca } from "../historico/regras";
+import { NOMES_QUEM_PAGA } from "./descontos";
 import { calcularItens, type DadosConfirmacao, type DadosVendaDireta, type ItemCalculado } from "./regras";
 
 export type ResultadoConfirmar = { ok: true; vendaId: string } | { ok: false; erro: string };
@@ -13,8 +15,8 @@ type Transacao = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 const data = (aaaammdd: string) => new Date(`${aaaammdd}T00:00:00Z`);
 
 /**
- * Tira cada peça do estoque (só se ainda estiver na situação esperada) e
- * calcula desconto, repasse e lucro de cada item.
+ * Calcula desconto, repasse e lucro de cada item e tira cada peça do estoque
+ * (só se ainda estiver na situação esperada). O desconto entra no histórico da peça.
  */
 async function venderPecas(
   tx: Transacao,
@@ -23,7 +25,7 @@ async function venderPecas(
   dados: DadosConfirmacao,
   autor: Autor,
   motivo: string,
-): Promise<ItemCalculado[]> {
+): Promise<{ itens: ItemCalculado[]; descontoCentavos: number }> {
   const pecas = await tx.peca.findMany({
     where: { id: { in: itens.map((i) => i.pecaId) } },
     select: {
@@ -44,7 +46,21 @@ async function venderPecas(
     if (!peca) throw new Recusa("Uma das peças não existe mais.");
     return { item, peca };
   });
-  for (const { peca } of lista) {
+  const calculo = calcularItens(
+    lista.map(({ item, peca }) => ({
+      id: peca.id,
+      codigo: peca.codigo,
+      tipo: peca.tipo,
+      precoCentavos: item.precoCentavos,
+      percentualRepasse: peca.percentualRepasse,
+      percentualPadraoFornecedora: peca.fornecedora?.percentualRepassePadrao ?? null,
+      custoCentavos: peca.custoCentavos,
+    })),
+    dados.desconto,
+  );
+  if (!calculo.ok) throw new Recusa(calculo.erro);
+
+  for (const [i, { peca }] of lista.entries()) {
     const sobra = Math.max(0, peca.quantidade - 1);
     const novoStatus = sobra > 0 ? "publicada" : dados.destino;
     // A condição no próprio UPDATE impede vender a mesma peça duas vezes.
@@ -59,19 +75,19 @@ async function venderPecas(
     if (sobra !== peca.quantidade) {
       mudancas.push({ campo: "Quantidade", antes: String(peca.quantidade), depois: String(sobra), restrito: false });
     }
+    const item = calculo.itens[i];
+    if (item.descontoCentavos > 0) {
+      const motivoDoDesconto = dados.desconto.motivo ? ` · ${dados.desconto.motivo}` : "";
+      mudancas.push({
+        campo: "Desconto na venda",
+        antes: null,
+        depois: `${formatarReais(item.descontoCentavos)} (${NOMES_QUEM_PAGA[item.descontoPorConta ?? "dividido"]})${motivoDoDesconto}`,
+        restrito: false,
+      });
+    }
     await registrar(tx, { tabela: "peca", id: peca.id, rotulo: rotuloDaPeca(peca) }, mudancas, autor, motivo);
   }
-  return calcularItens(
-    lista.map(({ item, peca }) => ({
-      id: peca.id,
-      tipo: peca.tipo,
-      precoCentavos: item.precoCentavos,
-      percentualRepasse: peca.percentualRepasse,
-      percentualPadraoFornecedora: peca.fornecedora?.percentualRepassePadrao ?? null,
-      custoCentavos: peca.custoCentavos,
-    })),
-    dados.descontoCentavos,
-  );
+  return calculo;
 }
 
 /**
@@ -98,8 +114,10 @@ export async function confirmarPagamento(
       // Reservada por este pedido, ou de volta à venda depois que a reserva venceu.
       const statusAceito = pedido.status === "reservado" ? "reservada" : "publicada";
       const motivo = `Pedido nº ${pedido.numero} pago`;
-      const itens = await venderPecas(tx, pedido.itens, statusAceito, dados, autor, motivo).catch((erro) => {
-        throw erro instanceof Recusa ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`) : erro;
+      const { itens, descontoCentavos } = await venderPecas(tx, pedido.itens, statusAceito, dados, autor, motivo).catch((erro) => {
+        throw erro instanceof Recusa && erro.message.includes("não está mais disponível")
+          ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`)
+          : erro;
       });
       const venda = await tx.venda.create({
         data: {
@@ -111,8 +129,9 @@ export async function confirmarPagamento(
           clienteId: pedido.clienteId,
           formaPagamento: dados.forma,
           subtotalCentavos: pedido.totalCentavos,
-          descontoCentavos: dados.descontoCentavos,
-          totalCentavos: pedido.totalCentavos - dados.descontoCentavos,
+          descontoCentavos,
+          totalCentavos: pedido.totalCentavos - descontoCentavos,
+          motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,
           origem: `Pedido nº ${pedido.numero} do site · ${pedido.nomeCliente}`,
           itens: { create: itens },
         },
@@ -148,8 +167,7 @@ export async function registrarVendaDireta(
         precoCentavos: precos.find((p) => p.id === pecaId)?.precoCentavos ?? 0,
       }));
       const subtotal = itensDaVenda.reduce((s, i) => s + i.precoCentavos, 0);
-      if (dados.descontoCentavos > subtotal) throw new Recusa("O desconto não pode ser maior que o total.");
-      const itens = await venderPecas(tx, itensDaVenda, "publicada", dados, autor, "Venda registrada no painel");
+      const { itens, descontoCentavos } = await venderPecas(tx, itensDaVenda, "publicada", dados, autor, "Venda registrada no painel");
       // A nova cliente só entra no cadastro se a venda der certo.
       const clienteId = !cliente ? null : "id" in cliente ? cliente.id : (await tx.cliente.create({ data: cliente.nova })).id;
       const venda = await tx.venda.create({
@@ -161,8 +179,9 @@ export async function registrarVendaDireta(
           clienteId,
           formaPagamento: dados.forma,
           subtotalCentavos: subtotal,
-          descontoCentavos: dados.descontoCentavos,
-          totalCentavos: subtotal - dados.descontoCentavos,
+          descontoCentavos,
+          totalCentavos: subtotal - descontoCentavos,
+          motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,
           itens: { create: itens },
         },
       });

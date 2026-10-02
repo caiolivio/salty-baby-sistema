@@ -250,6 +250,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
           </>
         )}
         {pedido.venda?.formaPagamento && ` · ${FORMAS_PAGAMENTO.find((f) => f.valor === pedido.venda?.formaPagamento)?.nome}`}
+        {pedido.venda?.motivoDesconto && ` · motivo do desconto: ${pedido.venda.motivoDesconto}`}
       </p>
       {aberto && <IncluirPeca id={pedido.id} />}
     </>

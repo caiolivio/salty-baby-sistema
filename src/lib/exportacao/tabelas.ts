@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "../banco";
 import { NOMES_ETAPA } from "../fornecedoras/candidatura";
 import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
+import { NOMES_QUEM_PAGA } from "../vendas/descontos";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
 import type { Pagina } from "../permissoes";
@@ -208,6 +209,8 @@ async function vendas(ver: Visao) {
       { titulo: "Quantidade", tipo: "numero", valor: (i) => i.quantidade },
       { titulo: "Preço", tipo: "reais", valor: (i) => i.precoUnitarioCentavos },
       { titulo: "Desconto", tipo: "reais", valor: (i) => i.descontoCentavos },
+      { titulo: "Desconto por conta", valor: (i) => (i.descontoPorConta ? NOMES_QUEM_PAGA[i.descontoPorConta] : null) },
+      { titulo: "Motivo do desconto", valor: (i) => i.venda.motivoDesconto },
       { titulo: "Valor pago", tipo: "reais", valor: (i) => i.valorPagoCentavos },
       ...so<L>(ver.valores, [
         { titulo: "% repasse", tipo: "numero", valor: (i) => (i.percentualRepasse === null ? null : i.percentualRepasse / 100) },

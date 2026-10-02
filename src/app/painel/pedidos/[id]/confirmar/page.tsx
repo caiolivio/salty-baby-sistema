@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { exigirExtra } from "@/lib/acesso";
+import { temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -19,12 +20,28 @@ const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: 
 /** Página enxuta para confirmar o pagamento direto da lista de pedidos. */
 export default async function ConfirmarPedido({ params }: PageProps<"/painel/pedidos/[id]/confirmar">) {
   const { id } = await params;
-  await exigirExtra("confirmar_pagamento", `/painel/pedidos/${id}/confirmar`);
+  const { acesso } = await exigirExtra("confirmar_pagamento", `/painel/pedidos/${id}/confirmar`);
+  const valores = temExtra(acesso, "valores");
   await liberarReservasVencidas();
   const pedido = await prisma.pedido.findUnique({
     where: { id },
     include: {
-      itens: { orderBy: { ordem: "asc" }, include: { peca: { select: { id: true, codigo: true, nome: true, tamanho: true, status: true } } } },
+      itens: { orderBy: { ordem: "asc" }, include: {
+          peca: {
+            select: {
+              id: true,
+              codigo: true,
+              nome: true,
+              tamanho: true,
+              status: true,
+              tipo: true,
+              percentualRepasse: true,
+              custoCentavos: true,
+              fornecedora: { select: { percentualRepassePadrao: true } },
+            },
+          },
+        },
+      },
     },
   });
   if (!pedido) notFound();
@@ -85,7 +102,22 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
       </p>
 
-      {aberto && <ConfirmarPagamento id={pedido.id} />}
+      {aberto && (
+        <ConfirmarPagamento
+          id={pedido.id}
+          mostrarValores={valores}
+          pecas={pedido.itens.map((i) => ({
+            id: i.pecaId,
+            codigo: i.peca.codigo,
+            nome: i.peca.nome,
+            precoCentavos: i.precoCentavos,
+            loja: i.peca.tipo === "loja",
+            // Custo e repasse só vão ao navegador de quem pode ver.
+            percentualRepasse: valores ? (i.peca.percentualRepasse ?? i.peca.fornecedora?.percentualRepassePadrao ?? null) : null,
+            custoCentavos: valores ? i.peca.custoCentavos : null,
+          }))}
+        />
+      )}
       {pedido.status === "reservado" && (
         <form action={cancelarPedido}>
           <input type="hidden" name="id" value={pedido.id} />

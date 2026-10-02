@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { CANAIS_DIRETOS, DESTINOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import estilos from "../../formulario.module.css";
+import { CamposDeDesconto, type PecaDoDesconto } from "../campos-de-desconto";
 import { registrarVenda } from "./acoes";
 
 type Opcao = { id: string; nome: string; detalhe: string };
@@ -11,13 +12,16 @@ export function FormularioVenda({
   hoje,
   clientes,
   grupos,
-  vazia,
+  pecas,
+  mostrarValores,
 }: {
   hoje: string;
   clientes: Opcao[];
   grupos: { id: string; nome: string }[];
-  vazia: boolean;
+  pecas: PecaDoDesconto[];
+  mostrarValores: boolean;
 }) {
+  const vazia = pecas.length === 0;
   const [estado, acao, enviando] = useActionState(registrarVenda, undefined);
   const v = estado?.valores ?? {};
   const [canal, setCanal] = useState(v.canal ?? "");
@@ -74,11 +78,6 @@ export function FormularioVenda({
             </select>
           </label>
           <label className={estilos.campo}>
-            Desconto (R$)
-            <input name="desconto" inputMode="decimal" placeholder="0,00" defaultValue={v.desconto} />
-            <span className={estilos.dica}>Opcional. É dividido entre as peças, e o repasse é calculado depois do desconto.</span>
-          </label>
-          <label className={estilos.campo}>
             Data da venda
             <input name="data" type="date" defaultValue={v.data || hoje} max={hoje} required />
           </label>
@@ -92,6 +91,7 @@ export function FormularioVenda({
           ))}
         </div>
       </fieldset>
+      {!vazia && <CamposDeDesconto pecas={pecas} valores={v} mostrarValores={mostrarValores} />}
       <fieldset className={estilos.grupo}>
         <legend>Cliente</legend>
         <div className={estilos.grade}>
