@@ -9,8 +9,9 @@ import estilos from "../../painel.module.css";
 import { novaPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
 import { FormularioPeca } from "../formulario-peca";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Nova peça · Salty Baby" };
+export const metadata: Metadata = { title: "Nova peça" };
 
 export default async function NovaPeca({ searchParams }: PageProps<"/painel/pecas/nova">) {
   const usuario = await exigirAcesso("painel", "/painel/pecas/nova");
@@ -23,6 +24,7 @@ export default async function NovaPeca({ searchParams }: PageProps<"/painel/peca
     }),
     opcoesDeCategoria(),
   ]);
+  const loja = await lerLoja();
 
   return (
     <>
@@ -37,6 +39,7 @@ export default async function NovaPeca({ searchParams }: PageProps<"/painel/peca
         voltar="/painel/pecas"
         categorias={categorias}
         podeIncluirCategoria={podeAcessar(usuario.perfis, "painel-administracao")}
+        opcaoDaLoja={`${loja.nomeCurto} (peça da loja, código ${loja.prefixoLoja})`}
         fornecedoras={fornecedoras.map((f) => ({
           id: f.id,
           codigo: f.codigo,

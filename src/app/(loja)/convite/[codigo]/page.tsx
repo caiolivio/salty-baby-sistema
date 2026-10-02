@@ -7,11 +7,13 @@ import { buscarConvite } from "@/lib/fornecedoras/convites";
 import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../../loja.module.css";
 import { FormularioConvite } from "./formulario-convite";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Primeiro acesso · Salty Baby", robots: { index: false } };
+export const metadata: Metadata = { title: "Primeiro acesso", robots: { index: false } };
 
 export default async function Convite({ params }: PageProps<"/convite/[codigo]">) {
   const { codigo } = await params;
+  const loja = await lerLoja();
   const f = codigoValido(codigo) ? await buscarConvite(codigo) : null;
 
   if (!f) {
@@ -19,7 +21,7 @@ export default async function Convite({ params }: PageProps<"/convite/[codigo]">
       <div className={estilos.paginaFornecedora}>
         <h1 className={estilos.tituloPagina}>Este link não vale mais</h1>
         <p>
-          O link já foi usado ou passou do prazo. Peça um novo à Salty pelo WhatsApp, ou <Link href="/entrar">entre</Link> com a
+          O link já foi usado ou passou do prazo. Peça um novo à {loja.nomeCurto} pelo WhatsApp, ou <Link href="/entrar">entre</Link> com a
           senha que você já criou.
         </p>
       </div>
@@ -32,7 +34,7 @@ export default async function Convite({ params }: PageProps<"/convite/[codigo]">
       <Passos nomes={PASSOS_PRIMEIRO_ACESSO} situacoes={["atual", "pendente", "pendente"]} />
       <section className={estilos.explicacao}>
         <p>
-          Você é a fornecedora <strong>{f.codigo}</strong> da Salty Baby. Para liberar a sua área, termine o seu cadastro em 3
+          Você é a fornecedora <strong>{f.codigo}</strong> da {loja.nome}. Para liberar a sua área, termine o seu cadastro em 3
           passos: <strong>confira seus dados e crie sua senha</strong>, leia e aceite o acordo de consignação e pronto.
         </p>
         <p>

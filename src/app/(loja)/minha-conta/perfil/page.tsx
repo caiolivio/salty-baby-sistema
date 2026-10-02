@@ -5,7 +5,7 @@ import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../../loja.module.css";
 import { FormularioPerfil, FormularioSenha } from "./formularios";
 
-export const metadata: Metadata = { title: "Meus dados · Salty Baby" };
+export const metadata: Metadata = { title: "Meus dados" };
 
 export default async function MeusDados() {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");

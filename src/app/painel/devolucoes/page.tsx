@@ -11,7 +11,7 @@ import estilos from "../painel.module.css";
 import { cancelar, marcarDevolvidas } from "./acoes";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Devoluções · Salty Baby" };
+export const metadata: Metadata = { title: "Devoluções" };
 
 export default async function Devolucoes({ searchParams }: PageProps<"/painel/devolucoes">) {
   await exigirAcesso("painel", "/painel/devolucoes");

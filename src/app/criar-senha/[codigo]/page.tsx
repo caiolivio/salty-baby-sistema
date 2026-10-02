@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import estilos from "@/componentes/formulario.module.css";
 import { codigoValido } from "@/lib/clientes/conta";
 import { buscarLinkDeSenha } from "@/lib/clientes/contas";
 import { FormularioCriarSenha } from "./formulario-criar-senha";
+import { LogoDaLoja } from "@/componentes/logo-da-loja";
 
-export const metadata: Metadata = { title: "Criar senha · Salty Baby", robots: { index: false } };
+export const metadata: Metadata = { title: "Criar senha", robots: { index: false } };
 
 export default async function CriarSenha({ params }: PageProps<"/criar-senha/[codigo]">) {
   const { codigo } = await params;
@@ -16,7 +16,7 @@ export default async function CriarSenha({ params }: PageProps<"/criar-senha/[co
     <main className={estilos.pagina}>
       <div className={estilos.cartao}>
         <Link href="/" className={estilos.logo}>
-          <Image src="/marca/logo-salty-baby-400px.png" alt="Salty Baby · início" width={400} height={218} priority />
+          <LogoDaLoja alt="Voltar ao início" />
         </Link>
         {usuario ? (
           <>

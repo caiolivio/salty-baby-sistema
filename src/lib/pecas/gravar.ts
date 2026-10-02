@@ -1,12 +1,13 @@
 import "server-only";
 import type { Prisma, StatusPeca } from "@/generated/prisma/client";
 import { prisma } from "../banco";
-import { chaveSequenciaPeca, codigoPeca, numeroSeguro, PREFIXO_LOJA } from "../codigos";
+import { chaveSequenciaPeca, codigoPeca, numeroSeguro } from "../codigos";
 import { apagarFoto, guardarFotoDePeca } from "../fotos";
 import { registrar, registrarCadastro, registrarStatus, rotuloDaPeca, SELECAO_STATUS } from "../historico/gravar";
 import { compararPeca, type Autor, type EstadoPeca } from "../historico/regras";
 import { nomeDoStatus } from "../situacoes";
 import { motivoParaNaoExcluir, moverNaLista, opcoesDeStatus, type DadosPeca } from "./dados";
+import { lerLoja } from "../loja/servidor";
 
 type Transacao = Prisma.TransactionClient;
 
@@ -75,8 +76,9 @@ export async function criarPeca(
   autor: Autor,
   motivo?: string,
 ): Promise<{ id: string; codigo: string }> {
+  const { prefixoLoja } = await lerLoja();
   return prisma.$transaction(async (tx) => {
-    const codigo = await reservarCodigo(tx, fornecedora?.codigo ?? PREFIXO_LOJA);
+    const codigo = await reservarCodigo(tx, fornecedora?.codigo ?? prefixoLoja);
     const criada = await tx.peca.create({
       data: {
         ...camposDoBanco(dados),
@@ -131,7 +133,8 @@ export async function duplicarPeca(id: string, hoje: string, autor: Autor): Prom
       include: { fornecedora: { select: { codigo: true } }, categorias: { select: { categoriaId: true } } },
     });
     if (!original) return null;
-    const codigo = await reservarCodigo(tx, original.fornecedora?.codigo ?? PREFIXO_LOJA);
+    // Peça da loja: o mesmo prefixo da original (ele não muda depois que há peças da loja).
+    const codigo = await reservarCodigo(tx, original.fornecedora?.codigo ?? original.codigo.split("-")[0]);
     const copia = await tx.peca.create({
       data: {
         codigo,

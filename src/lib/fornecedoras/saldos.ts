@@ -4,7 +4,7 @@
 import { calcularRepasse } from "../calculos";
 import { dentroDoPeriodo, type Periodo } from "../clientes/perfil";
 
-/** A fornecedora pode pedir a peça de volta só depois de 6 meses da entrada. */
+/** A fornecedora pode pedir a peça de volta só depois deste tempo da entrada (padrão; a loja configura). */
 export const MESES_PARA_DEVOLUCAO = 6;
 
 /** Status em que a peça ainda está com a Salty, esperando venda. */
@@ -13,9 +13,9 @@ export const STATUS_A_VENDA = ["publicada", "reservada"] as const;
 export const STATUS_DEVOLVIVEIS = ["publicada", "rascunho"] as const;
 
 /** Data (aaaa-mm-dd) a partir da qual a peça pode ser devolvida. */
-export function devolucaoDisponivelEm(dataEntrada: Date): string {
+export function devolucaoDisponivelEm(dataEntrada: Date, meses = MESES_PARA_DEVOLUCAO): string {
   const ano = dataEntrada.getUTCFullYear();
-  const mes = dataEntrada.getUTCMonth() + MESES_PARA_DEVOLUCAO;
+  const mes = dataEntrada.getUTCMonth() + meses;
   const dia = dataEntrada.getUTCDate();
   // 31/08 + 6 meses = 28/02 (ou 29/02), nunca "31/02" virando março.
   const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
@@ -29,10 +29,14 @@ export type SituacaoDevolucaoDaPeca =
   | { tipo: "nao-se-aplica" };
 
 /** Se a peça pode ser pedida de volta hoje (aaaa-mm-dd), e desde quando. */
-export function situacaoDaDevolucao(peca: { status: string; dataEntrada: Date }, hoje: string): SituacaoDevolucaoDaPeca {
+export function situacaoDaDevolucao(
+  peca: { status: string; dataEntrada: Date },
+  hoje: string,
+  meses = MESES_PARA_DEVOLUCAO,
+): SituacaoDevolucaoDaPeca {
   if (peca.status === "devolucao_pedida") return { tipo: "pedida" };
   if (!(STATUS_DEVOLVIVEIS as readonly string[]).includes(peca.status)) return { tipo: "nao-se-aplica" };
-  const data = devolucaoDisponivelEm(peca.dataEntrada);
+  const data = devolucaoDisponivelEm(peca.dataEntrada, meses);
   return data <= hoje ? { tipo: "pode" } : { tipo: "a-partir-de", data };
 }
 

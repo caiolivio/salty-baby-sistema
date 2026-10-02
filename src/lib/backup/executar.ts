@@ -17,6 +17,7 @@ import {
   nomeDaCopia,
   opcoesDoMysql,
 } from "./regras";
+import { lerLoja } from "@/lib/loja/servidor";
 
 // Cópia de segurança: grava o banco inteiro num arquivo compactado na VPS e,
 // se o Google Drive estiver ligado, envia esse arquivo e as fotos novas para lá.
@@ -35,9 +36,10 @@ function segredoDoServidor(): string {
   return segredo;
 }
 
-function nomeDaPastaNoDrive(): string {
+async function nomeDaPastaNoDrive(): Promise<string> {
+  const { nome } = await lerLoja();
   const site = (process.env.AUTH_URL ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  return site ? `Salty Baby · cópias de segurança (${site})` : "Salty Baby · cópias de segurança";
+  return site ? `${nome} · cópias de segurança (${site})` : `${nome} · cópias de segurança`;
 }
 
 // ---------------------------------------------------------------- ligação com o Drive
@@ -165,7 +167,7 @@ async function enviarAoDrive(arquivo: string): Promise<{ fotos: number; faltam: 
   // Pasta principal (refeita se alguém apagou).
   let pastaId = ligacao.pastaId;
   if (!pastaId || !(await drive.pastaExiste(chave, pastaId))) {
-    pastaId = await drive.criarPasta(chave, nomeDaPastaNoDrive());
+    pastaId = await drive.criarPasta(chave, await nomeDaPastaNoDrive());
     await prisma.googleDrive.update({ where: { id: 1 }, data: { pastaId, pastaFotosId: null } });
     await prisma.backupFoto.deleteMany();
   }

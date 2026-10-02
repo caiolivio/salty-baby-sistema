@@ -8,6 +8,7 @@ import { VERSAO_ACORDO } from "./acordo";
 import type { DadosInscricao, DadosProposta } from "./candidatura";
 import { criarFornecedoraNaTransacao } from "./gravar";
 import type { Autor } from "../historico/regras";
+import { lerLoja } from "../loja/servidor";
 
 // "Seja uma fornecedora": inscrição (passo 1), curadoria no painel, peças e
 // acordo (passo 2) e efetivação da parceria (passo 3).
@@ -115,11 +116,12 @@ export type ResultadoEfetivacao =
   | { ok: false; motivo: "nao-encontrada" | "sem-acordo" | "ja-efetivada" };
 
 /**
- * Passo 3: a Salty efetiva a parceria. Cria a fornecedora com o próximo
+ * Passo 3: a loja efetiva a parceria. Cria a fornecedora com o próximo
  * código (F48, F49…), ligada à conta da candidata, e as peças propostas passam
  * a ser dela.
  */
 export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivacao> {
+  const { repassePadrao } = await lerLoja();
   return prisma.$transaction(async (tx) => {
     const c = await tx.candidatura.findUnique({ where: { id } });
     if (!c) return { ok: false as const, motivo: "nao-encontrada" as const };
@@ -136,6 +138,7 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
       usuarioId: c.usuarioId,
       termosAceitosEm: c.acordoAceitoEm,
       termosVersao: c.acordoVersao,
+      percentualRepassePadrao: repassePadrao,
     });
     await tx.candidatura.update({ where: { id }, data: { etapa: "efetivada", fornecedoraId } });
     await tx.pecaProposta.updateMany({ where: { candidaturaId: id }, data: { fornecedoraId } });

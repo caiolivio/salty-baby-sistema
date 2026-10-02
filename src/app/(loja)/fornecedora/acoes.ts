@@ -57,7 +57,7 @@ export async function enviarProposta(_estado: EstadoProposta, dados: FormData): 
     return { erro: "A foto não abriu. Tire ou escolha a foto de novo.", valores };
   }
   refresh();
-  return { ok: `"${lido.dados.nome}" enviada para a Salty avaliar.` };
+  return { ok: `"${lido.dados.nome}" enviada para a loja avaliar.` };
 }
 
 export async function tirar(dados: FormData): Promise<void> {

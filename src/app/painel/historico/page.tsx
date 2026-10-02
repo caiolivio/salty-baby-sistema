@@ -8,7 +8,7 @@ import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Histórico · Salty Baby" };
+export const metadata: Metadata = { title: "Histórico" };
 
 const POR_PAGINA = 100;
 const CAMPOS_COMUNS = ["Status", "Preço", "Cadastro", "Exclusão", "% repasse", "Custo", "Quantidade", "% repasse padrão"];
@@ -17,6 +17,7 @@ const ENDERECOS: Record<string, string> = {
   fornecedora: "/painel/fornecedoras/",
   cliente: "/painel/clientes/",
 };
+const ENDERECO_FIXO: Record<string, string> = { loja: "/painel/configuracoes" };
 
 const texto = (v: string | string[] | undefined) => (typeof v === "string" ? v.trim() : "");
 const dia = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
@@ -115,7 +116,13 @@ export default async function Historico({ searchParams }: PageProps<"/painel/his
                 <tr key={a.id}>
                   <td className={estilos.curta}>{formatarDataHora(a.criadoEm)}</td>
                   <td data-rotulo={NOMES_TABELA[a.tabela as TabelaDoHistorico] ?? a.tabela}>
-                    {ENDERECOS[a.tabela] ? <Link href={`${ENDERECOS[a.tabela]}${a.registroId}`}>{a.rotulo}</Link> : a.rotulo}
+                    {ENDERECO_FIXO[a.tabela] ? (
+                      <Link href={ENDERECO_FIXO[a.tabela]}>{a.rotulo}</Link>
+                    ) : ENDERECOS[a.tabela] ? (
+                      <Link href={`${ENDERECOS[a.tabela]}${a.registroId}`}>{a.rotulo}</Link>
+                    ) : (
+                      a.rotulo
+                    )}
                   </td>
                   <td data-rotulo="O que mudou">
                     <strong>{a.campo}</strong>

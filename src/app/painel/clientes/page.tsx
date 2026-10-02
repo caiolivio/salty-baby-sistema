@@ -11,7 +11,7 @@ import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Clientes · Salty Baby" };
+export const metadata: Metadata = { title: "Clientes" };
 
 const POR_PAGINA = 100;
 

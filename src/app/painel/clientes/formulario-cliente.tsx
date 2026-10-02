@@ -46,7 +46,7 @@ export function FormularioCliente({
           </label>
           <label className={estilos.campo}>
             WhatsApp
-            <input name="telefone" type="tel" inputMode="tel" maxLength={40} defaultValue={v("telefone")} placeholder="(12) 98105-3623" />
+            <input name="telefone" type="tel" inputMode="tel" maxLength={40} defaultValue={v("telefone")} placeholder="(11) 98765-4321" />
           </label>
           <label className={estilos.campo}>
             E-mail

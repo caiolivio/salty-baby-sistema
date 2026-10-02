@@ -31,7 +31,7 @@ import { GraficoGasto } from "../grafico-gasto";
 import { FormularioCliente } from "../formulario-cliente";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 
-export const metadata: Metadata = { title: "Cliente · Salty Baby" };
+export const metadata: Metadata = { title: "Cliente" };
 
 const NOMES_PEDIDO = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 const canal = (c: string) => (c === "site" ? "Site" : (CANAIS_DIRETOS.find((d) => d.valor === c)?.nome ?? c));

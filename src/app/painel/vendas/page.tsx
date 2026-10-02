@@ -9,7 +9,7 @@ import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Vendas · Salty Baby" };
+export const metadata: Metadata = { title: "Vendas" };
 
 const POR_PAGINA = 50;
 const CANAIS: Record<string, string> = {
@@ -71,7 +71,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
         </div>
         <div className={estilos.cartao}>
           <strong>{formatarReais(somas._sum.lucroCentavos ?? 0)}</strong>
-          de lucro da Salty
+          de lucro da loja
         </div>
       </div>
       <div className={estilos.tabelaCaixa}>

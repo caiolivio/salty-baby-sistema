@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "../banco";
 import { registrarStatus, SELECAO_STATUS } from "../historico/gravar";
 import { AUTOR_SISTEMA, type Autor } from "../historico/regras";
+import { lerLoja } from "../loja/servidor";
 import { fimDaReserva } from "./regras";
 
 /** Erro usado para desfazer a transação quando alguma peça já saiu. */
@@ -61,6 +62,7 @@ export async function fecharPedido(
   autor: Autor,
   agora = new Date(),
 ): Promise<ResultadoFechar> {
+  const { minutosReserva } = await lerLoja();
   try {
     const id = await prisma.$transaction(async (tx) => {
       const pecas = await tx.peca.findMany({
@@ -96,7 +98,7 @@ export async function fecharPedido(
           // Cliente logada: o pedido já fica ligado à ficha dela (e a venda também).
           clienteId: cliente.clienteId ?? null,
           grupoId,
-          reservadoAte: fimDaReserva(agora),
+          reservadoAte: fimDaReserva(agora, minutosReserva),
           totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos, 0),
           itens: {
             create: pecaIds.map((pecaId, ordem) => ({
