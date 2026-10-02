@@ -15,14 +15,14 @@ import { CartaoPeca, SELECAO_CARTAO } from "./cartao-peca";
 import estilos from "./loja.module.css";
 import { quemVeALoja } from "./quem-ve";
 
-export const metadata: Metadata = {
-  title: "Salty Baby · Moda Sustentável",
-  description: "Brechó infantil em Caraguatatuba-SP. Roupas, calçados e acessórios de bebê e criança.",
-};
+// Título e descrição: os da loja (layout raiz).
+export const metadata: Metadata = {};
 
 /** Só aparece na vitrine a peça à venda e com estoque. */
 const A_VENDA: Prisma.PecaWhereInput = {
   status: "publicada",
+  // "Não listado" está à venda, mas só para quem tem o link.
+  naoListada: false,
   quantidade: { gt: 0 },
 };
 

@@ -16,7 +16,21 @@ export function pastaDeFotos(): string {
 
 /** Reduz a foto e grava. Devolve o nome base usado no banco (sem extensão). */
 export async function guardarFotoDePeca(pecaId: string, conteudo: Buffer): Promise<string> {
-  const base = `pecas/${pecaId}/${randomUUID()}`;
+  return guardarFotoEm(`pecas/${pecaId}`, conteudo);
+}
+
+/** Foto de uma peça proposta por quem quer ser fornecedora. */
+export async function guardarFotoDeProposta(conteudo: Buffer): Promise<string> {
+  return guardarFotoEm(`propostas/${new Date().toISOString().slice(0, 7)}`, conteudo);
+}
+
+/** Lê uma foto já guardada (o tamanho grande), para copiar para outra peça. */
+export async function lerFotoGuardada(base: string): Promise<Buffer | null> {
+  return lerArquivoDeFoto([`${base}.webp`]);
+}
+
+async function guardarFotoEm(pasta: string, conteudo: Buffer): Promise<string> {
+  const base = `${pasta}/${randomUUID()}`;
   const destino = path.join(pastaDeFotos(), base);
   await mkdir(path.dirname(destino), { recursive: true });
   const imagem = sharp(conteudo, { failOn: "error" }).rotate(); // respeita a orientação do celular
@@ -55,4 +69,39 @@ export async function apagarFoto(base: string): Promise<void> {
   const alvo = path.resolve(raiz, base);
   if (!alvo.startsWith(raiz + path.sep)) return;
   await Promise.all([rm(`${alvo}.webp`, { force: true }), rm(`${alvo}-p.webp`, { force: true })]);
+}
+
+/**
+ * Logo ou ícone da loja (configurações), em PNG: o ícone vira quadrado de 512 px
+ * (aba do navegador e atalho do celular); o logo fica com até 800 px de largura.
+ */
+export async function guardarImagemDaLoja(tipo: "logo" | "icone", conteudo: Buffer): Promise<string> {
+  const base = `loja/${tipo}-${randomUUID()}.png`;
+  const destino = path.join(pastaDeFotos(), base);
+  await mkdir(path.dirname(destino), { recursive: true });
+  const imagem = sharp(conteudo, { failOn: "error" }).rotate();
+  const png =
+    tipo === "icone"
+      ? await imagem.resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer()
+      : await imagem.resize(800, 800, { fit: "inside", withoutEnlargement: true }).png().toBuffer();
+  await writeFile(destino, png);
+  return base;
+}
+
+/** Lê o logo ou o ícone guardado (só arquivos .png da pasta "loja"). */
+export async function lerImagemDaLoja(base: string): Promise<Buffer | null> {
+  const raiz = pastaDeFotos();
+  const alvo = path.resolve(raiz, base);
+  if (!alvo.startsWith(path.join(raiz, "loja") + path.sep) || !alvo.endsWith(".png")) return null;
+  try {
+    return await readFile(alvo);
+  } catch {
+    return null;
+  }
+}
+
+export async function apagarImagemDaLoja(base: string): Promise<void> {
+  const raiz = pastaDeFotos();
+  const alvo = path.resolve(raiz, base);
+  if (alvo.startsWith(path.join(raiz, "loja") + path.sep)) await rm(alvo, { force: true });
 }

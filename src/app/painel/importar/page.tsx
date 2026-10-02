@@ -8,7 +8,7 @@ import { ImportadorNotion } from "./importador";
 import estilos from "./importar.module.css";
 import painel from "../painel.module.css";
 
-export const metadata: Metadata = { title: "Importar do Notion · Salty Baby" };
+export const metadata: Metadata = { title: "Importar do Notion" };
 
 export default async function Importar() {
   await exigirAcesso("painel-administracao", "/painel/importar");

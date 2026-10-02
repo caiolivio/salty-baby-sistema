@@ -5,19 +5,23 @@ import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
-import { NOMES_SITUACAO } from "@/lib/situacoes";
+import { nomeDoStatus } from "@/lib/situacoes";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { ImprimirEtiquetas } from "./imprimir-etiquetas";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
+import { BotoesExportar } from "../exportar/botoes";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Peças · Salty Baby" };
+export const metadata: Metadata = { title: "Peças" };
 
 const POR_PAGINA = 50;
 
 export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">) {
   await exigirAcesso("painel", "/painel/pecas");
+  const loja = await lerLoja();
   const parametros = await searchParams;
+  const excluida = typeof parametros.excluida === "string" ? parametros.excluida : "";
   const busca = typeof parametros.q === "string" ? parametros.q.trim() : "";
   const pagina = Math.max(1, Number(parametros.pagina) || 1);
 
@@ -55,10 +59,18 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Peças</h1>
-        <Link href="/painel/pecas/nova" className={proprios.botao}>
-          + Nova peça
-        </Link>
+        <span className={proprios.exportar}>
+          <BotoesExportar tabela="pecas" />
+          <Link href="/painel/pecas/nova" className={proprios.botao}>
+            + Nova peça
+          </Link>
+        </span>
       </div>
+      {excluida && (
+        <p className={proprios.aviso} role="status">
+          Peça {excluida} excluída. O código dela não será usado de novo.
+        </p>
+      )}
       <form className={estilos.busca} role="search">
         <input
           name="q"
@@ -85,7 +97,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
               <th>Fornecedora</th>
               <th>Tamanho</th>
               <th className={estilos.numero}>Preço</th>
-              <th>Situação</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -119,7 +131,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                       <span className={estilos.antigo}>{p.fornecedora.nome}</span>
                     </>
                   ) : (
-                    "Salty (loja)"
+                    `${loja.nomeCurto} (loja)`
                   )}
                 </td>
                 <td className={estilos.curta} data-rotulo="Tamanho">
@@ -128,8 +140,8 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                 <td className={estilos.numero} data-rotulo="Preço">
                   {formatarReais(p.precoCentavos)}
                 </td>
-                <td className={estilos.curta} data-rotulo="Situação">
-                  {NOMES_SITUACAO[p.status] ?? p.status}
+                <td className={estilos.curta} data-rotulo="Status">
+                  {nomeDoStatus(p.status, p.naoListada)}
                   {p.quantidade > 1 && ` (${p.quantidade})`}
                 </td>
               </tr>

@@ -31,6 +31,9 @@ model Usuario {
   /// Ficha de cliente ligada a esta conta (quem tem o perfil cliente).
   cliente        Cliente?
   linksDeSenha   LinkDeSenha[]
+  /// Ficha de fornecedora ligada a esta conta (quem tem o perfil fornecedora).
+  fornecedora    Fornecedora?
+  candidatura    Candidatura?
 
   @@map("usuarios")
 }
@@ -56,27 +59,39 @@ model Sequencia {
 }
 
 model Fornecedora {
-  id                      String   @id @default(cuid())
-  numero                  Int      @unique
+  id                      String               @id @default(cuid())
+  numero                  Int                  @unique
   /// "F" + número com pelo menos 2 dígitos (F01, F48, F100). Nunca faz parte do nome.
-  codigo                  String   @unique @db.VarChar(10)
-  nome                    String   @db.VarChar(160)
-  telefone                String?  @db.VarChar(40)
-  email                   String?  @db.VarChar(191)
+  codigo                  String               @unique @db.VarChar(10)
+  nome                    String               @db.VarChar(160)
+  telefone                String?              @db.VarChar(40)
+  email                   String?              @db.VarChar(191)
   /// CPF ou CNPJ: só a administradora vê.
-  documento               String?  @db.VarChar(30)
-  pix                     String?  @db.VarChar(191)
-  endereco                String?  @db.VarChar(255)
-  cep                     String?  @db.VarChar(15)
-  cidade                  String?  @db.VarChar(100)
-  estado                  String?  @db.VarChar(60)
-  pais                    String?  @db.VarChar(60)
+  documento               String?              @db.VarChar(30)
+  pix                     String?              @db.VarChar(191)
+  endereco                String?              @db.VarChar(255)
+  cep                     String?              @db.VarChar(15)
+  cidade                  String?              @db.VarChar(100)
+  estado                  String?              @db.VarChar(60)
+  pais                    String?              @db.VarChar(60)
   /// Pontos-base: 4000 = 40%.
-  percentualRepassePadrao Int      @default(4000) @map("percentual_repasse_padrao")
-  ativa                   Boolean  @default(true)
-  criadoEm                DateTime @default(now()) @map("criado_em")
-  atualizadoEm            DateTime @updatedAt @map("atualizado_em")
+  percentualRepassePadrao Int                  @default(4000) @map("percentual_repasse_padrao")
+  ativa                   Boolean              @default(true)
+  /// Conta de acesso à área da fornecedora.
+  usuarioId               String?              @unique @map("usuario_id")
+  /// Quando aceitou o acordo de consignação, e qual versão do texto.
+  termosAceitosEm         DateTime?            @map("termos_aceitos_em")
+  termosVersao            String?              @map("termos_versao") @db.VarChar(20)
+  /// Quando viu o "Parabéns" (passo 3) e entrou na área de verdade.
+  boasVindasEm            DateTime?            @map("boas_vindas_em")
+  criadoEm                DateTime             @default(now()) @map("criado_em")
+  atualizadoEm            DateTime             @updatedAt @map("atualizado_em")
+  usuario                 Usuario?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   pecas                   Peca[]
+  candidatura             Candidatura?
+  propostas               PecaProposta[]
+  devolucoes              Devolucao[]
+  convites                ConviteFornecedora[]
 
   @@map("fornecedoras")
 }
@@ -95,6 +110,8 @@ enum StatusPeca {
   enviada
   retirada
   devolvida
+  /// A fornecedora pediu a peça de volta: sai da vitrine até a Salty devolver.
+  devolucao_pedida
   doada
   baixa
 }
@@ -164,6 +181,8 @@ model Peca {
   medidas           String?         @db.VarChar(160)
   descricao         String?         @db.Text
   status            StatusPeca      @default(rascunho)
+  /// "Não listado": à venda só para quem tem o link (não aparece na vitrine). Vale com status publicada.
+  naoListada        Boolean         @default(false) @map("nao_listada")
   dataEntrada       DateTime        @map("data_entrada") @db.Date
   criadoEm          DateTime        @default(now()) @map("criado_em")
   atualizadoEm      DateTime        @updatedAt @map("atualizado_em")
@@ -173,6 +192,8 @@ model Peca {
   itensVendidos     ItemVenda[]
   itensPedido       ItemPedido[]
   favoritos         Favorito[]
+  proposta          PecaProposta?
+  devolucoes        Devolucao[]
 
   @@index([codigoAntigo])
   @@index([status])
@@ -194,23 +215,23 @@ model FotoPeca {
 }
 
 model Cliente {
-  id           String    @id @default(cuid())
-  nome         String    @db.VarChar(160)
-  telefone     String?   @db.VarChar(40)
-  email        String?   @db.VarChar(191)
+  id           String     @id @default(cuid())
+  nome         String     @db.VarChar(160)
+  telefone     String?    @db.VarChar(40)
+  email        String?    @db.VarChar(191)
   /// Só a administradora vê.
-  cpf          String?   @db.VarChar(20)
-  endereco     String?   @db.VarChar(255)
-  cep          String?   @db.VarChar(15)
-  cidade       String?   @db.VarChar(100)
-  estado       String?   @db.VarChar(60)
-  pais         String?   @db.VarChar(60)
-  observacao   String?   @db.Text
+  cpf          String?    @db.VarChar(20)
+  endereco     String?    @db.VarChar(255)
+  cep          String?    @db.VarChar(15)
+  cidade       String?    @db.VarChar(100)
+  estado       String?    @db.VarChar(60)
+  pais         String?    @db.VarChar(60)
+  observacao   String?    @db.Text
   /// Conta de acesso ao site (área do cliente), criada pela cliente ou pela loja.
-  usuarioId    String?   @unique @map("usuario_id")
-  criadoEm     DateTime  @default(now()) @map("criado_em")
-  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
-  usuario      Usuario?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuarioId    String?    @unique @map("usuario_id")
+  criadoEm     DateTime   @default(now()) @map("criado_em")
+  atualizadoEm DateTime   @updatedAt @map("atualizado_em")
+  usuario      Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   vendas       Venda[]
   pedidos      Pedido[]
   criancas     Crianca[]
@@ -330,13 +351,14 @@ model ItemVenda {
 
 /// Lista de categorias que a administradora mantém no painel. Uma peça pode ter várias.
 model Categoria {
-  id       String          @id @default(cuid())
-  nome     String          @unique @db.VarChar(60)
-  ordem    Int             @default(0)
+  id        String          @id @default(cuid())
+  nome      String          @unique @db.VarChar(60)
+  ordem     Int             @default(0)
   /// Categoria desativada some do cadastro, mas continua nas peças que já a têm.
-  ativa    Boolean         @default(true)
-  criadoEm DateTime        @default(now()) @map("criado_em")
-  pecas    PecaCategoria[]
+  ativa     Boolean         @default(true)
+  criadoEm  DateTime        @default(now()) @map("criado_em")
+  pecas     PecaCategoria[]
+  propostas PecaProposta[]
 
   @@map("categorias")
 }
@@ -403,4 +425,223 @@ model ItemPedido {
   @@id([pedidoId, pecaId])
   @@index([pecaId])
   @@map("itens_pedido")
+}
+
+/// Etapas de quem quer ser fornecedora (página "Seja uma fornecedora").
+enum EtapaCandidatura {
+  /// Passo 1 enviado: aguardando a curadoria.
+  enviada
+  /// Curadoria aprovou: a pessoa tem acesso e faz o passo 2 na área dela.
+  aprovada
+  /// Passo 2 feito (peças e acordo): a Salty entra em contato para efetivar.
+  acordo_aceito
+  /// Passo 3: virou fornecedora (tem código F..).
+  efetivada
+  recusada
+}
+
+model Candidatura {
+  id             String           @id @default(cuid())
+  nome           String           @db.VarChar(160)
+  email          String           @db.VarChar(191)
+  telefone       String           @db.VarChar(40)
+  endereco       String           @db.VarChar(255)
+  cep            String?          @db.VarChar(15)
+  cidade         String?          @db.VarChar(100)
+  estado         String?          @db.VarChar(60)
+  etapa          EtapaCandidatura @default(enviada)
+  /// Anotação da curadoria (só o painel vê).
+  observacao     String?          @db.Text
+  acordoAceitoEm DateTime?        @map("acordo_aceito_em")
+  acordoVersao   String?          @map("acordo_versao") @db.VarChar(20)
+  usuarioId      String?          @unique @map("usuario_id")
+  fornecedoraId  String?          @unique @map("fornecedora_id")
+  criadoEm       DateTime         @default(now()) @map("criado_em")
+  atualizadoEm   DateTime         @updatedAt @map("atualizado_em")
+  usuario        Usuario?         @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  fornecedora    Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: SetNull)
+  pecas          PecaProposta[]
+
+  @@index([etapa])
+  @@map("candidaturas")
+}
+
+enum SituacaoProposta {
+  proposta
+  recusada
+  /// A Salty recebeu a peça e cadastrou no estoque.
+  recebida
+}
+
+/// Peça oferecida pela candidata ou fornecedora, antes de virar estoque. O
+/// preço final é sempre a Salty que define, ao cadastrar a peça.
+model PecaProposta {
+  id            String           @id @default(cuid())
+  candidaturaId String?          @map("candidatura_id")
+  fornecedoraId String?          @map("fornecedora_id")
+  descricao     String           @db.Text
+  /// Nome base da foto na pasta de fotos (como nas peças).
+  foto          String           @db.VarChar(191)
+  nome          String?          @db.VarChar(160)
+  tamanho       String?          @db.VarChar(20)
+  marca         String?          @db.VarChar(80)
+  genero        Genero?
+  conservacao   Conservacao?
+  categoriaId   String?          @map("categoria_id")
+  situacao      SituacaoProposta @default(proposta)
+  /// Peça do estoque criada quando a Salty recebeu esta.
+  pecaId        String?          @unique @map("peca_id")
+  criadoEm      DateTime         @default(now()) @map("criado_em")
+  candidatura   Candidatura?     @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+  fornecedora   Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: Cascade)
+  categoria     Categoria?       @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  peca          Peca?            @relation(fields: [pecaId], references: [id], onDelete: SetNull)
+
+  @@index([candidaturaId])
+  @@index([fornecedoraId])
+  @@map("pecas_propostas")
+}
+
+enum SituacaoDevolucao {
+  pedida
+  devolvida
+  cancelada
+}
+
+/// Pedido da fornecedora para ter a peça de volta (só 6 meses depois da entrada).
+model Devolucao {
+  id                 String            @id @default(cuid())
+  pecaId             String            @map("peca_id")
+  fornecedoraId      String            @map("fornecedora_id")
+  situacao           SituacaoDevolucao @default(pedida)
+  /// Status da peça antes do pedido, para voltar se a Salty cancelar.
+  statusAnterior     StatusPeca        @map("status_anterior")
+  naoListadaAnterior Boolean           @default(false) @map("nao_listada_anterior")
+  pedidaEm           DateTime          @default(now()) @map("pedida_em")
+  concluidaEm        DateTime?         @map("concluida_em")
+  peca               Peca              @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+  fornecedora        Fornecedora       @relation(fields: [fornecedoraId], references: [id], onDelete: Cascade)
+
+  @@index([situacao])
+  @@index([pecaId])
+  @@index([fornecedoraId])
+  @@map("devolucoes")
+}
+
+/// Link de primeiro acesso de uma fornecedora que ainda não tem conta (as
+/// importadas do Notion). Só o hash do código fica no banco.
+model ConviteFornecedora {
+  id            String      @id @default(cuid())
+  fornecedoraId String      @map("fornecedora_id")
+  codigoHash    String      @unique @map("codigo_hash") @db.VarChar(64)
+  expiraEm      DateTime    @map("expira_em")
+  usadoEm       DateTime?   @map("usado_em")
+  criadoEm      DateTime    @default(now()) @map("criado_em")
+  fornecedora   Fornecedora @relation(fields: [fornecedoraId], references: [id], onDelete: Cascade)
+
+  @@index([fornecedoraId])
+  @@map("convites_fornecedora")
+}
+
+/// Ligação com o Google Drive onde vão as cópias de segurança. Há uma só (id 1).
+/// A autorização do Google fica cifrada com a chave do servidor (AUTH_SECRET).
+model GoogleDrive {
+  id                 Int      @id
+  email              String?  @db.VarChar(191)
+  autorizacaoCifrada String   @map("autorizacao_cifrada") @db.Text
+  pastaId            String?  @map("pasta_id") @db.VarChar(191)
+  pastaFotosId       String?  @map("pasta_fotos_id") @db.VarChar(191)
+  conectadoEm        DateTime @default(now()) @map("conectado_em")
+
+  @@map("google_drive")
+}
+
+enum SituacaoBackup {
+  rodando
+  ok
+  erro
+}
+
+/// Cada cópia de segurança feita (pelo agendamento diário ou pelo botão do painel).
+model Backup {
+  id            String         @id @default(cuid())
+  situacao      SituacaoBackup @default(rodando)
+  origem        String         @db.VarChar(20)
+  arquivo       String?        @db.VarChar(191)
+  tamanho       Int?
+  noDrive       Boolean        @default(false) @map("no_drive")
+  fotosEnviadas Int            @default(0) @map("fotos_enviadas")
+  mensagem      String?        @db.Text
+  iniciadoEm    DateTime       @default(now()) @map("iniciado_em")
+  terminadoEm   DateTime?      @map("terminado_em")
+
+  @@index([iniciadoEm])
+  @@map("backups")
+}
+
+/// Fotos já copiadas para o Google Drive: só as novas são enviadas a cada dia.
+model BackupFoto {
+  caminho   String   @id @db.VarChar(191)
+  driveId   String   @map("drive_id") @db.VarChar(191)
+  enviadaEm DateTime @default(now()) @map("enviada_em")
+
+  @@map("backup_fotos")
+}
+
+/// Histórico de alterações: quem mudou o quê (preço, status, dados), quando e por quê.
+/// Sem chave estrangeira de propósito: o histórico fica mesmo se o registro sumir.
+model Alteracao {
+  id         String   @id @default(cuid())
+  /// "peca", "fornecedora" ou "cliente".
+  tabela     String   @db.VarChar(20)
+  registroId String   @map("registro_id") @db.VarChar(191)
+  /// Como o registro aparecia na hora (ex.: "F06-00001 · Macacão").
+  rotulo     String   @db.VarChar(191)
+  campo      String   @db.VarChar(80)
+  antes      String?  @db.Text
+  depois     String?  @db.Text
+  /// Só a administradora vê (custo, repasse, CPF/CNPJ, Pix).
+  restrito   Boolean  @default(false)
+  usuarioId  String?  @map("usuario_id") @db.VarChar(191)
+  /// Nome de quem mudou, como era na hora.
+  quem       String   @db.VarChar(191)
+  /// De onde veio a mudança (ex.: "Pedido nº 12 pago", "Edição no painel").
+  motivo     String?  @db.VarChar(191)
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  @@index([tabela, registroId, criadoEm])
+  @@index([criadoEm])
+  @@map("alteracoes")
+}
+
+/// Configurações da loja (uma linha só, id 1): marca, contato e regras. Com elas
+/// o mesmo sistema serve a outra loja; a migração já grava os dados da Salty Baby.
+model ConfiguracaoLoja {
+  id             Int      @id
+  nome           String   @db.VarChar(80)
+  /// Como os textos chamam a loja ("a Salty entra em contato").
+  nomeCurto      String   @map("nome_curto") @db.VarChar(40)
+  slogan         String?  @db.VarChar(120)
+  /// Uma linha sobre a loja, no rodapé e no aviso de privacidade (ex.: "Brechó infantil em Caraguatatuba-SP").
+  descricao      String?  @db.VarChar(160)
+  /// WhatsApp da loja só com números, com o 55 do Brasil (ex.: 5512981053623).
+  whatsapp       String   @db.VarChar(20)
+  instagram      String?  @db.VarChar(60)
+  /// Cores em #RRGGBB: destaque (ícones), principal (botões e links) e texto.
+  corDestaque    String   @map("cor_destaque") @db.VarChar(7)
+  corPrincipal   String   @map("cor_principal") @db.VarChar(7)
+  corTexto       String   @map("cor_texto") @db.VarChar(7)
+  /// Arquivos enviados no painel (pasta de fotos, em "loja/"). Vazio = os da pasta public/marca.
+  logo           String?  @db.VarChar(191)
+  icone          String?  @db.VarChar(191)
+  /// Prefixo do código das peças da própria loja (SB-00012). Só muda enquanto não há peça da loja.
+  prefixoLoja    String   @map("prefixo_loja") @db.VarChar(4)
+  /// Pontos-base (4000 = 40%): repasse de quem é cadastrada sem outro valor.
+  repassePadrao  Int      @map("repasse_padrao")
+  minutosReserva Int      @map("minutos_reserva")
+  /// A fornecedora pede a peça de volta só depois deste tempo da entrada.
+  mesesDevolucao Int      @map("meses_devolucao")
+  atualizadoEm   DateTime @updatedAt @map("atualizado_em")
+
+  @@map("configuracao_loja")
 }

@@ -21,10 +21,15 @@ export const CONSERVACOES = [
   { valor: "com_marcas_de_uso", nome: "Com marcas de uso" },
 ] as const;
 
-/** Situações que o cadastro pode escolher. As de venda só mudam pela venda. */
+/**
+ * Status que o cadastro pode escolher. Os de venda só mudam pela venda.
+ * "Não listado" é uma peça à venda que não aparece na vitrine: só quem tem o
+ * link vê (no banco, status publicada com `naoListada`).
+ */
 export const SITUACOES_DO_CADASTRO = [
-  { valor: "rascunho", nome: "Rascunho (não aparece na vitrine)" },
+  { valor: "rascunho", nome: "Rascunho (não aparece para ninguém)" },
   { valor: "publicada", nome: "À venda" },
+  { valor: "nao_listada", nome: "Não listado (só quem tem o link vê)" },
   { valor: "devolvida", nome: "Devolvida à fornecedora" },
   { valor: "doada", nome: "Doada" },
   { valor: "baixa", nome: "Baixa (avaria ou perda)" },
@@ -34,6 +39,60 @@ export type SituacaoDoCadastro = (typeof SITUACOES_DO_CADASTRO)[number]["valor"]
 
 export function situacaoEditavel(status: string): status is SituacaoDoCadastro {
   return SITUACOES_DO_CADASTRO.some((s) => s.valor === status);
+}
+
+/** Valor do campo Status no formulário, a partir do que está no banco. */
+export function statusNoFormulario(status: string, naoListada: boolean): string {
+  return status === "publicada" && naoListada ? "nao_listada" : status;
+}
+
+/** Depois da venda a peça só anda entre estes (entrega); voltar ao estoque exigiria desfazer a venda. */
+export const SITUACOES_DEPOIS_DA_VENDA = [
+  { valor: "vendida", nome: "Vendida" },
+  { valor: "na_sacolinha", nome: "Na sacolinha" },
+  { valor: "enviada", nome: "Enviada" },
+  { valor: "retirada", nome: "Retirada" },
+] as const;
+
+const NOMES_EM_ANDAMENTO: Record<string, string> = {
+  reservada: "Reservada (num pedido)",
+  devolucao_pedida: "Devolução pedida",
+};
+
+export type OpcaoDeStatus = { valor: string; nome: string };
+
+/**
+ * Status que a página da peça oferece, a partir do atual.
+ * - Reservada: qualquer status do cadastro (a peça sai do pedido).
+ * - Devolução pedida: "Devolvida" conclui o pedido de devolução; os outros cancelam.
+ * - Vendida e depois: só os passos da entrega.
+ */
+export function opcoesDeStatus(atual: string): OpcaoDeStatus[] {
+  if (SITUACOES_DEPOIS_DA_VENDA.some((s) => s.valor === atual)) return [...SITUACOES_DEPOIS_DA_VENDA];
+  if (situacaoEditavel(atual)) return [...SITUACOES_DO_CADASTRO];
+  return [{ valor: atual, nome: NOMES_EM_ANDAMENTO[atual] ?? atual }, ...SITUACOES_DO_CADASTRO];
+}
+
+/** O que acontece ao trocar o status de uma peça reservada ou com devolução pedida (dica na tela). */
+export function avisoDaTroca(atual: string): string | null {
+  if (atual === "reservada") return "Ao trocar, a peça sai do pedido em que está (se for a única, o pedido é cancelado).";
+  if (atual === "devolucao_pedida") {
+    return "Escolha \"Devolvida\" para concluir a devolução. Outro status cancela o pedido de devolução da fornecedora.";
+  }
+  if (SITUACOES_DEPOIS_DA_VENDA.some((s) => s.valor === atual)) {
+    return "Peça vendida: dá para marcar a entrega. Para ela voltar ao estoque, a venda precisa ser desfeita.";
+  }
+  return null;
+}
+
+/** Por que a peça não pode ser excluída (null = pode). */
+export function motivoParaNaoExcluir(peca: { status: string; vendas: number; pedidoAberto: number | null }): string | null {
+  if (peca.vendas > 0) {
+    return "Esta peça já foi vendida, e a venda guarda o repasse e o lucro dela. Para tirá-la do estoque, use o status \"Baixa\".";
+  }
+  if (peca.pedidoAberto !== null) return `Esta peça está no pedido nº ${peca.pedidoAberto}. Tire-a do pedido antes de excluir.`;
+  if (peca.status === "devolucao_pedida") return "A fornecedora pediu esta peça de volta. Resolva em Devoluções antes de excluir.";
+  return null;
 }
 
 /** Valor da fornecedora no formulário para as peças da própria loja. */
@@ -99,7 +158,7 @@ const campos = z.object({
     .string()
     .transform((t) => (t.trim() === "" ? 1 : Number(t)))
     .refine((n) => Number.isInteger(n) && n >= 0 && n <= 999, "A quantidade vai de 0 a 999."),
-  status: opcao(SITUACOES_DO_CADASTRO, "Escolha a situação."),
+  status: opcao(SITUACOES_DO_CADASTRO, "Escolha o status."),
   dataEntrada: z
     .string()
     .refine((t) => t === "" || /^\d{4}-\d{2}-\d{2}$/.test(t), "Confira a data de entrada.")
@@ -124,7 +183,9 @@ export type DadosPeca = {
   /** Pontos-base; só nas peças consignadas. */
   percentualRepasse: number | null;
   quantidade: number;
-  status: SituacaoDoCadastro;
+  status: Exclude<SituacaoDoCadastro, "nao_listada">;
+  /** À venda só pelo link (status publicada). */
+  naoListada: boolean;
   /** aaaa-mm-dd */
   dataEntrada: string;
 };
@@ -147,7 +208,9 @@ export function lerFormularioPeca(
   if (!lido.success) return { ok: false, erro: lido.error.issues[0]?.message ?? "Confira os campos." };
   const d = lido.data;
 
-  const status = d.status ?? "rascunho";
+  const escolhido = d.status ?? "rascunho";
+  const naoListada = escolhido === "nao_listada";
+  const status = naoListada ? "publicada" : escolhido;
   const preco = d.precoCentavos ?? 0;
   // Uma peça à venda precisa de preço (e nunca vende sem valor de venda).
   if (status === "publicada" && preco <= 0) return { ok: false, erro: "Para colocar à venda, escreva o preço." };
@@ -157,6 +220,7 @@ export function lerFormularioPeca(
     dados: {
       ...d,
       status,
+      naoListada,
       precoCentavos: preco,
       custoCentavos: consignada ? null : d.custoCentavos,
       percentualRepasse: consignada ? (d.percentualRepasse ?? repassePadrao) : null,

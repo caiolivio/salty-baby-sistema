@@ -9,8 +9,9 @@ import { minutosRestantes } from "@/lib/pedidos/regras";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { cancelarPedido } from "./acoes";
+import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Pedidos · Salty Baby" };
+export const metadata: Metadata = { title: "Pedidos" };
 
 const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 
@@ -26,7 +27,10 @@ export default async function Pedidos() {
 
   return (
     <>
-      <h1 className={estilos.titulo}>Pedidos do site</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>Pedidos do site</h1>
+        <BotoesExportar tabela="pedidos" />
+      </div>
       <p>
         Quando a cliente fecha o pedido no site, as peças ficam reservadas por 15 minutos e ela manda a mensagem no WhatsApp. Se
         a reserva vencer, as peças voltam sozinhas para a vitrine.
@@ -42,7 +46,7 @@ export default async function Pedidos() {
                 <th>Cliente</th>
                 <th>Peças</th>
                 <th className={estilos.numero}>Total</th>
-                <th>Situação</th>
+                <th>Status</th>
                 <th>Feito em</th>
               </tr>
             </thead>
@@ -71,7 +75,7 @@ export default async function Pedidos() {
                   <td className={estilos.numero} data-rotulo="Total">
                     {formatarReais(p.totalCentavos)}
                   </td>
-                  <td data-rotulo="Situação">
+                  <td data-rotulo="Status">
                     {NOMES[p.status]}
                     {(p.status === "reservado" || p.status === "expirado") && (
                       <Link href={`/painel/pedidos/${p.id}/confirmar`} className={estilos.antigo}>

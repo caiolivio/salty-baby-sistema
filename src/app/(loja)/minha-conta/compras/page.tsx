@@ -7,7 +7,7 @@ import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import estilos from "../../loja.module.css";
 
-export const metadata: Metadata = { title: "Minhas compras · Salty Baby" };
+export const metadata: Metadata = { title: "Minhas compras" };
 
 // Compras da cliente: só o que ela pagou. Nada de fornecedora, custo ou repasse.
 export default async function Compras() {

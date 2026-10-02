@@ -11,7 +11,7 @@ import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { CartaoPeca, SELECAO_CARTAO } from "../cartao-peca";
 import estilos from "../loja.module.css";
 
-export const metadata: Metadata = { title: "Minha conta · Salty Baby" };
+export const metadata: Metadata = { title: "Minha conta" };
 
 const nomes = (categorias: { categoria: { nome: string } }[]) => categorias.map((c) => c.categoria.nome);
 
@@ -35,7 +35,7 @@ export default async function MinhaConta() {
     }),
     prisma.crianca.findMany({ where: { clienteId: ficha.id, nascimento: { not: null } }, select: { nascimento: true } }),
     prisma.peca.findMany({
-      where: { status: "publicada", quantidade: { gt: 0 } },
+      where: { status: "publicada", naoListada: false, quantidade: { gt: 0 } },
       select: { ...SELECAO_CARTAO, marca: true, dataEntrada: true, categorias: doHistorico.categorias },
     }),
     prisma.pedido.findMany({

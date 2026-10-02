@@ -18,10 +18,10 @@ import {
   linkWhatsapp,
   mensagemDaPeca,
   mensagemParaAmiga,
-  WHATSAPP_LOJA,
 } from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
 import { Estrela } from "../../estrela";
+import { lerLoja } from "@/lib/loja/servidor";
 import estilos from "../../loja.module.css";
 import { quemVeALoja } from "../../quem-ve";
 
@@ -38,6 +38,7 @@ const buscarPeca = cache(async (codigo: string) =>
       codigo: true,
       nome: true,
       status: true,
+      naoListada: true,
       quantidade: true,
       tamanho: true,
       conservacao: true,
@@ -55,15 +56,18 @@ const buscarPeca = cache(async (codigo: string) =>
 
 export async function generateMetadata({ params }: PageProps<"/peca/[codigo]">): Promise<Metadata> {
   const peca = await buscarPeca((await params).codigo);
-  if (!peca) return { title: "Peça não encontrada · Salty Baby" };
-  const titulo = `${peca.nome} · ${formatarReais(peca.precoCentavos)} · Salty Baby`;
+  if (!peca) return { title: "Peça não encontrada" };
+  const loja = await lerLoja();
+  const titulo = `${peca.nome} · ${formatarReais(peca.precoCentavos)} · ${loja.nome}`;
   const foto = peca.fotos[0];
   return {
-    title: titulo,
+    title: { absolute: titulo },
     description:
-      [peca.tamanho && `Tamanho ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ") || "Brechó infantil Salty Baby",
+      [peca.tamanho && `Tamanho ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ") || loja.nome,
     // Imagem que aparece quando o link é compartilhado no WhatsApp.
     metadataBase: new URL(origemDaRequisicao(await headers())),
+    // Peça "Não listado": abre pelo link, mas não aparece no Google.
+    ...(peca.naoListada && { robots: { index: false } }),
     openGraph: {
       title: titulo,
       images: foto ? [enderecoDaFoto(foto.arquivo)] : undefined,
@@ -88,8 +92,9 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   const tamanho = TAMANHOS.find((t) => t.valor === peca.tamanho)?.nome ?? peca.tamanho;
   const conservacao = CONSERVACOES.find((c) => c.valor === peca.conservacao)?.nome;
   const categorias = peca.categorias.map((c) => c.categoria.nome).join(", ");
+  const loja = await lerLoja();
   const whatsapp = linkWhatsapp(
-    process.env.WHATSAPP_LOJA || WHATSAPP_LOJA,
+    loja.whatsapp,
     mensagemDaPeca(
       {
         codigo: peca.codigo,
@@ -105,6 +110,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
     mensagemParaAmiga(
       { codigo: peca.codigo, nome: peca.nome, tamanho: peca.tamanho, preco: formatarReais(peca.precoCentavos) },
       origemDaRequisicao(await headers()),
+      loja.nome,
     ),
   );
   const detalhes: [string, string | null | undefined][] = [
