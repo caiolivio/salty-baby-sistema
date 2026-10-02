@@ -880,3 +880,144 @@
   font-size: 1.5rem;
   margin: 0 0 8px;
 }
+
+.filtroPeriodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.filtroPeriodo label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filtroPeriodo select,
+.filtroPeriodo input {
+  font: inherit;
+  padding: 9px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+}
+
+.saldos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.saldo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: var(--fundo);
+}
+
+.saldo strong {
+  font-size: 1.4rem;
+  color: var(--petroleo);
+}
+
+.saldo span {
+  font-size: 0.85rem;
+  color: #4a5a64;
+}
+
+.saldoDestaque {
+  background: var(--fundo-suave);
+  border-color: var(--turquesa);
+}
+
+.tabelaArea {
+  overflow-x: auto;
+}
+
+.tabelaArea table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tabelaArea th,
+.tabelaArea td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabelaArea .numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.miniaturaArea {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--fundo-suave);
+  display: block;
+}
+
+.indisponivel {
+  font-size: 0.82rem;
+  color: #4a5a64;
+}
+
+.listaPecasArea {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listaPecasArea li {
+  display: grid;
+  grid-template-columns: 24px 56px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.listaPecasArea input {
+  width: 20px;
+  height: 20px;
+}
+
+.listaPecasArea .miniaturaArea {
+  width: 56px;
+  height: 56px;
+}
+
+.listaVendasArea {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listaVendasArea li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.numero {
+  text-align: right;
+  white-space: nowrap;
+}

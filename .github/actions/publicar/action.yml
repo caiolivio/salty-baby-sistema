@@ -1,0 +1,124 @@
+name: Publicar na VPS
+description: Aplica as migrações, grava o .env e liga a nova versão num site da VPS.
+
+inputs:
+  ssh-usuario: { description: Usuário SSH do site na VPS, required: true }
+  nome-processo: { description: Nome do processo no PM2, required: true }
+  porta: { description: Porta do site no CloudPanel, required: true }
+  endereco: { description: Endereço público do site, required: true }
+  db-nome: { description: Nome do banco, required: true }
+  db-usuario: { description: Usuário do banco, required: true }
+  db-senha: { description: Senha do banco, required: true }
+  importacao-pode-apagar: { description: '"sim" só no site de teste', default: nao }
+  ssh-chave: { description: Chave SSH de publicação, required: true }
+  codigo-primeiro-acesso: { description: Código para criar a primeira administradora, default: "" }
+  google-client-id: { description: Chave do Google Drive, default: "" }
+  google-client-secret: { description: Chave do Google Drive, default: "" }
+
+runs:
+  using: composite
+  steps:
+    - name: Conferir os segredos
+      shell: bash
+      env:
+        DB_SENHA: ${{ inputs.db-senha }}
+        DB_USUARIO: ${{ inputs.db-usuario }}
+        SSH_CHAVE: ${{ inputs.ssh-chave }}
+      run: |
+        falta=""
+        [ -n "$DB_USUARIO" ] || falta="$falta usuário do banco;"
+        [ -n "$DB_SENHA" ] || falta="$falta senha do banco;"
+        [ -n "$SSH_CHAVE" ] || falta="$falta chave SSH;"
+        if [ -n "$falta" ]; then
+          echo "::error::Falta cadastrar nos segredos do GitHub:$falta"
+          exit 1
+        fi
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    # Só para ter o Prisma, que aplica as migrações do banco.
+    - run: npm ci
+      shell: bash
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: pacote
+
+    - name: Preparar o acesso à VPS
+      shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh-chave }}
+        SSH_USUARIO: ${{ inputs.ssh-usuario }}
+      run: |
+        install -m 700 -d ~/.ssh
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+        echo "DESTINO=$SSH_USUARIO@$VPS_HOST" >> "$GITHUB_ENV"
+
+    - name: Atualizar a estrutura do banco (migrações)
+      shell: bash
+      env:
+        DB_USUARIO: ${{ inputs.db-usuario }}
+        DB_SENHA: ${{ inputs.db-senha }}
+        DB_NOME: ${{ inputs.db-nome }}
+      run: |
+        limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+        codificar() { node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$1"; }
+        # O MySQL só aceita conexões de dentro da VPS: um túnel SSH leva a
+        # porta 3307 daqui até a 3306 de lá enquanto as migrações rodam.
+        ssh -f -N -o ExitOnForwardFailure=yes -L 3307:127.0.0.1:3306 "$DESTINO"
+        DATABASE_URL="mysql://$(codificar "$(limpar "$DB_USUARIO")"):$(codificar "$(limpar "$DB_SENHA")")@127.0.0.1:3307/$DB_NOME"
+        echo "::add-mask::$DATABASE_URL"
+        DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
+
+    - name: Gravar as configurações no servidor
+      shell: bash
+      env:
+        DB_USUARIO: ${{ inputs.db-usuario }}
+        DB_SENHA: ${{ inputs.db-senha }}
+        DB_NOME: ${{ inputs.db-nome }}
+        PORTA: ${{ inputs.porta }}
+        ENDERECO: ${{ inputs.endereco }}
+        IMPORTACAO_PODE_APAGAR: ${{ inputs.importacao-pode-apagar }}
+        CODIGO_PRIMEIRO_ACESSO: ${{ inputs.codigo-primeiro-acesso }}
+        GOOGLE_CLIENT_ID: ${{ inputs.google-client-id }}
+        GOOGLE_CLIENT_SECRET: ${{ inputs.google-client-secret }}
+      run: |
+        # Remove espaços e quebras de linha que às vezes entram ao colar o segredo.
+        limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+        DB_USUARIO="$(limpar "$DB_USUARIO")"
+        DB_SENHA="$(limpar "$DB_SENHA")"
+        {
+          echo "NODE_ENV=production"
+          echo "PORT=$PORTA"
+          echo "HOSTNAME=127.0.0.1"
+          echo "DB_HOST=127.0.0.1"
+          echo "DB_PORT=3306"
+          echo "DB_NOME=$DB_NOME"
+          printf 'DB_USUARIO=`%s`\n' "$DB_USUARIO"
+          printf 'DB_SENHA=`%s`\n' "$DB_SENHA"
+          echo "AUTH_URL=$ENDERECO"
+          if [ "$IMPORTACAO_PODE_APAGAR" = "sim" ]; then echo "IMPORTACAO_PODE_APAGAR=sim"; fi
+          if [ -n "$CODIGO_PRIMEIRO_ACESSO" ]; then
+            printf 'CODIGO_PRIMEIRO_ACESSO=`%s`\n' "$(limpar "$CODIGO_PRIMEIRO_ACESSO")"
+          fi
+          echo "VERSAO=$GITHUB_SHA"
+          # Chave do Google para as cópias no Drive (só se já foi cadastrada).
+          if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
+            printf 'GOOGLE_CLIENT_ID=`%s`\n' "$(limpar "$GOOGLE_CLIENT_ID")"
+            printf 'GOOGLE_CLIENT_SECRET=`%s`\n' "$(limpar "$GOOGLE_CLIENT_SECRET")"
+          fi
+        } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'
+
+    - name: Enviar e ligar a nova versão
+      shell: bash
+      env:
+        NOME_PROCESSO: ${{ inputs.nome-processo }}
+        PORTA: ${{ inputs.porta }}
+      run: |
+        scp app.tgz "$DESTINO:saltybaby/upload/app.tgz"
+        ssh "$DESTINO" bash -s -- "$NOME_PROCESSO" "$PORTA" "$GITHUB_SHA" < scripts/servidor/publicar.sh

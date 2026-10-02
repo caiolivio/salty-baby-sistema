@@ -1,0 +1,77 @@
+.grafico {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--fundo);
+}
+
+.grafico figcaption {
+  font-weight: 700;
+  color: var(--tinta);
+  margin-bottom: 8px;
+}
+
+.grafico {
+  overflow-x: auto;
+  /* Começa mostrando os meses mais recentes (à direita). */
+  direction: rtl;
+}
+
+.grafico > * {
+  direction: ltr;
+}
+
+/* No celular o gráfico rola para o lado em vez de ficar ilegível. */
+.grafico svg {
+  min-width: 520px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.eixo {
+  stroke: var(--borda);
+  stroke-width: 1;
+}
+
+.barra {
+  fill: var(--petroleo);
+}
+
+.coluna:hover .barra {
+  fill: var(--turquesa);
+}
+
+.valor {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--tinta);
+}
+
+.mes {
+  font-size: 11px;
+  fill: #4a5a64;
+}
+
+.tabela {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.tabela table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tabela th,
+.tabela td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+}
+
+.tabela td:last-child,
+.tabela th:last-child {
+  text-align: right;
+}

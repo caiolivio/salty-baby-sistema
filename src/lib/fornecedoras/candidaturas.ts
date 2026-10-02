@@ -7,6 +7,8 @@ import { adicionarFotos, criarPeca } from "../pecas/gravar";
 import { VERSAO_ACORDO } from "./acordo";
 import type { DadosInscricao, DadosProposta } from "./candidatura";
 import { criarFornecedoraNaTransacao } from "./gravar";
+import type { Autor } from "../historico/regras";
+import { lerLoja } from "../loja/servidor";
 
 // "Seja uma fornecedora": inscrição (passo 1), curadoria no painel, peças e
 // acordo (passo 2) e efetivação da parceria (passo 3).
@@ -114,11 +116,12 @@ export type ResultadoEfetivacao =
   | { ok: false; motivo: "nao-encontrada" | "sem-acordo" | "ja-efetivada" };
 
 /**
- * Passo 3: a Salty efetiva a parceria. Cria a fornecedora com o próximo
+ * Passo 3: a loja efetiva a parceria. Cria a fornecedora com o próximo
  * código (F48, F49…), ligada à conta da candidata, e as peças propostas passam
  * a ser dela.
  */
 export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivacao> {
+  const { repassePadrao } = await lerLoja();
   return prisma.$transaction(async (tx) => {
     const c = await tx.candidatura.findUnique({ where: { id } });
     if (!c) return { ok: false as const, motivo: "nao-encontrada" as const };
@@ -135,6 +138,7 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
       usuarioId: c.usuarioId,
       termosAceitosEm: c.acordoAceitoEm,
       termosVersao: c.acordoVersao,
+      percentualRepassePadrao: repassePadrao,
     });
     await tx.candidatura.update({ where: { id }, data: { etapa: "efetivada", fornecedoraId } });
     await tx.pecaProposta.updateMany({ where: { candidaturaId: id }, data: { fornecedoraId } });
@@ -153,10 +157,15 @@ export async function situacaoNaArea(usuarioId: string) {
       email: true,
       telefone: true,
       endereco: true,
+      cep: true,
+      cidade: true,
+      estado: true,
+      pix: true,
       termosAceitosEm: true,
       termosVersao: true,
       boasVindasEm: true,
       ativa: true,
+      candidatura: { select: { id: true } },
     },
   });
   if (fornecedora) return { tipo: "fornecedora" as const, fornecedora };
@@ -182,7 +191,7 @@ export type ResultadoRecebimento =
  * código da fornecedora, os dados e a foto da proposta. O preço a Salty põe
  * depois, na página da peça.
  */
-export async function receberProposta(id: string, hoje: string): Promise<ResultadoRecebimento> {
+export async function receberProposta(id: string, hoje: string, autor: Autor): Promise<ResultadoRecebimento> {
   const proposta = await prisma.pecaProposta.findUnique({
     where: { id },
     include: { fornecedora: { select: { id: true, codigo: true, percentualRepassePadrao: true, ativa: true } } },
@@ -216,6 +225,8 @@ export async function receberProposta(id: string, hoje: string): Promise<Resulta
       },
       proposta.fornecedora,
       proposta.categoriaId ? [proposta.categoriaId] : [],
+      autor,
+      "Peça proposta pela fornecedora, recebida na loja",
     );
     await prisma.pecaProposta.update({ where: { id }, data: { pecaId: peca.id } });
     const foto = await lerFotoGuardada(proposta.foto);

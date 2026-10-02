@@ -20,7 +20,7 @@ const campos = {
   telefone: z.string().transform((t, ctx) => {
     const lido = lerTelefoneCliente(t);
     if (!lido) {
-      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (12) 98105-3623." });
+      ctx.addIssue({ code: "custom", message: "Escreva o WhatsApp com DDD, por exemplo (11) 98765-4321." });
       return z.NEVER;
     }
     return lido;
@@ -92,10 +92,10 @@ export function fimDoLink(agora: Date): Date {
 }
 
 /** Mensagem que a loja manda no WhatsApp com o link de criar senha. */
-export function mensagemDoLink(nome: string, link: string, novaConta: boolean): string {
+export function mensagemDoLink(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby"): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
-    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da Salty Baby 💛`,
+    `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
     novaConta
       ? "Criamos sua conta no nosso site. Nela você vê suas compras, seus favoritos e peças escolhidas para você."
       : "Aqui está o link para você criar uma nova senha no nosso site.",

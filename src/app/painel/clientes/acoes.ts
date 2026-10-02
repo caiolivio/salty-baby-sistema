@@ -14,6 +14,9 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { podeAcessar } from "@/lib/permissoes";
 import { normalizarEmail } from "@/lib/senha";
+import { registrar, registrarCadastro } from "@/lib/historico/gravar";
+import { CAMPOS_CLIENTE, autorDe, compararParcial } from "@/lib/historico/regras";
+import { lerLoja } from "@/lib/loja/servidor";
 
 export type EstadoCliente = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -40,6 +43,7 @@ export async function novaCliente(_estado: EstadoCliente, dados: FormData): Prom
   if (repetida) return { erro: `${repetida.nome} já está cadastrada com este WhatsApp.`, valores };
 
   const { id } = await prisma.cliente.create({ data: lido.dados });
+  await registrarCadastro(prisma, { tabela: "cliente", id, rotulo: lido.dados.nome }, "Cadastrada no painel", autorDe(usuario));
   redirect(`/painel/clientes/${id}?criada=1`);
 }
 
@@ -47,14 +51,23 @@ export async function salvarCliente(_estado: EstadoCliente, dados: FormData): Pr
   const usuario = await exigirAcesso("painel");
   const valores = valoresDigitados(dados);
   const id = valores.id ?? "";
-  const atual = await prisma.cliente.findUnique({ where: { id }, select: { telefone: true, cpf: true } });
+  const atual = await prisma.cliente.findUnique({ where: { id } });
   if (!atual) return { erro: "Esta cliente não existe mais.", valores };
   const lido = lerFormularioCliente(valores, atual, podeAcessar(usuario.perfis, "painel-administracao"));
   if (!lido.ok) return { erro: lido.erro, valores };
   const repetida = lido.dados.telefone !== atual.telefone ? await mesmoWhatsapp(lido.dados.telefone, id) : undefined;
   if (repetida) return { erro: `${repetida.nome} já está cadastrada com este WhatsApp.`, valores };
 
-  await prisma.cliente.update({ where: { id }, data: lido.dados });
+  await prisma.$transaction(async (tx) => {
+    await tx.cliente.update({ where: { id }, data: lido.dados });
+    await registrar(
+      tx,
+      { tabela: "cliente", id, rotulo: lido.dados.nome },
+      compararParcial(CAMPOS_CLIENTE, atual, lido.dados),
+      autorDe(usuario),
+      "Edição no painel",
+    );
+  });
   redirect(`/painel/clientes/${id}?salva=1`);
 }
 
@@ -108,7 +121,7 @@ export async function liberarAcesso(_estado: EstadoAcesso, dados: FormData): Pro
   const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
   const tel = lerTelefoneCliente(cliente.telefone);
   const whatsapp = tel
-    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta))}`
+    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta, (await lerLoja()).nome))}`
     : undefined;
   refresh();
   return { link, whatsapp, novaConta: r.novaConta };

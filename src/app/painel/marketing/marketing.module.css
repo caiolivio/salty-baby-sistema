@@ -32,7 +32,7 @@
 
 .peca:has(input:checked) {
   border-color: var(--petroleo);
-  background: #e6f5f5;
+  background: color-mix(in srgb, var(--turquesa) 12%, #ffffff);
 }
 
 .peca img,

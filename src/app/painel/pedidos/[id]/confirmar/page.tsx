@@ -13,7 +13,7 @@ import estilos from "../../../painel.module.css";
 import { cancelarPedido } from "../../acoes";
 import { ConfirmarPagamento } from "../formulario-confirmar";
 
-export const metadata: Metadata = { title: "Confirmar pagamento · Salty Baby" };
+export const metadata: Metadata = { title: "Confirmar pagamento" };
 
 const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: "Cancelado", pago: "Pago" } as const;
 

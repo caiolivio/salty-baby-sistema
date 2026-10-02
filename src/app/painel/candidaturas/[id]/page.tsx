@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Passos } from "@/componentes/passos";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { formatarData, formatarDataHora } from "@/lib/datas";
+import { formatarDia, formatarDataHora } from "@/lib/datas";
 import { NOMES_ETAPA, PASSOS, passoDaEtapa, situacaoDosPassos } from "@/lib/fornecedoras/candidatura";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import proprios from "../../formulario.module.css";
@@ -14,7 +14,7 @@ import { Aprovar } from "../aprovar";
 import visual from "../candidaturas.module.css";
 import { PropostasNoPainel } from "../propostas";
 
-export const metadata: Metadata = { title: "Inscrição de fornecedora · Salty Baby" };
+export const metadata: Metadata = { title: "Inscrição de fornecedora" };
 
 const ERROS: Record<string, string> = {
   "sem-acordo": "Ela ainda não aceitou o acordo (passo 2).",
@@ -104,7 +104,7 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
         <dt>Endereço</dt>
         <dd>{[c.endereco, c.cidade, c.estado, c.cep].filter(Boolean).join(" · ")}</dd>
         <dt>Inscrição</dt>
-        <dd>{formatarData(c.criadoEm)}</dd>
+        <dd>{formatarDia(c.criadoEm)}</dd>
         {c.acordoAceitoEm && (
           <>
             <dt>Acordo aceito</dt>
