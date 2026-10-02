@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import estilos from "@/componentes/formulario.module.css";
@@ -7,8 +6,9 @@ import { usuarioAtual } from "@/lib/acesso";
 import { novoDesafio } from "@/lib/desafio/servidor";
 import { destinoInicial, enderecoDeVoltaSeguro } from "@/lib/permissoes";
 import { FormularioCadastro } from "./formulario-cadastro";
+import { LogoDaLoja } from "@/componentes/logo-da-loja";
 
-export const metadata: Metadata = { title: "Criar conta · Salty Baby" };
+export const metadata: Metadata = { title: "Criar conta" };
 
 export default async function Cadastro({ searchParams }: PageProps<"/cadastro">) {
   const voltar = enderecoDeVoltaSeguro((await searchParams).voltar);
@@ -19,7 +19,7 @@ export default async function Cadastro({ searchParams }: PageProps<"/cadastro">)
     <main className={estilos.pagina}>
       <div className={estilos.cartao}>
         <Link href="/" className={estilos.logo}>
-          <Image src="/marca/logo-salty-baby-400px.png" alt="Salty Baby · início" width={400} height={218} priority />
+          <LogoDaLoja alt="Voltar ao início" />
         </Link>
         <h1 className={estilos.titulo}>Criar conta</h1>
         <p className={estilos.explicacao}>

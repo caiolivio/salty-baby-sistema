@@ -641,3 +641,383 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Seja uma fornecedora */
+
+.paginaFornecedora {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.explicacao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  line-height: 1.55;
+}
+
+.listaPassos {
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grupoForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.grupoForm legend {
+  padding: 0 6px;
+  font-weight: 700;
+  color: var(--petroleo);
+}
+
+.linhaCampos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.formConta textarea,
+.formConta select {
+  font: inherit;
+  font-weight: 400;
+  padding: 11px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+}
+
+.pecasInscricao {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pecasInscricao > li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--borda);
+}
+
+.fotoInscricao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fotoInscricao img,
+.fotoInscricao .semFoto {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.botaoFoto,
+.botaoContorno {
+  display: inline-block;
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 14px;
+  border: 1px solid var(--petroleo);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--petroleo);
+  cursor: pointer;
+  text-align: center;
+  align-self: flex-start;
+}
+
+.escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.formLargo {
+  max-width: 640px;
+}
+
+.formConta .marcarLinha {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.formConta .marcarLinha input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex: none;
+}
+
+.linkTirar {
+  align-self: flex-start;
+  font: inherit;
+  font-size: 0.9rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--erro);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linksRodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.sucesso {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e6f4ec;
+  color: var(--sucesso);
+  font-weight: 600;
+}
+
+.ola {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--petroleo);
+  margin: 0;
+}
+
+.secaoArea {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.secaoArea h2 {
+  color: var(--petroleo);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.minhasPropostas {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.minhasPropostas li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.minhasPropostas img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--fundo-suave);
+}
+
+.seloProposta {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--fundo-suave);
+  color: var(--petroleo);
+}
+
+.acordo {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: var(--fundo-suave);
+  line-height: 1.5;
+}
+
+.acordo h3 {
+  font-size: 1rem;
+  margin: 12px 0 4px;
+  color: var(--petroleo);
+}
+
+.acordo p {
+  margin: 0;
+}
+
+.parabens {
+  text-align: center;
+  padding: 20px 14px;
+  border-radius: 16px;
+  background: var(--fundo-suave);
+}
+
+.parabens h1 {
+  color: var(--petroleo);
+  font-size: 1.5rem;
+  margin: 0 0 8px;
+}
+
+.filtroPeriodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.filtroPeriodo label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filtroPeriodo select,
+.filtroPeriodo input {
+  font: inherit;
+  padding: 9px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--tinta);
+}
+
+.saldos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.saldo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: var(--fundo);
+}
+
+.saldo strong {
+  font-size: 1.4rem;
+  color: var(--petroleo);
+}
+
+.saldo span {
+  font-size: 0.85rem;
+  color: #4a5a64;
+}
+
+.saldoDestaque {
+  background: var(--fundo-suave);
+  border-color: var(--turquesa);
+}
+
+.tabelaArea {
+  overflow-x: auto;
+}
+
+.tabelaArea table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tabelaArea th,
+.tabelaArea td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabelaArea .numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.miniaturaArea {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--fundo-suave);
+  display: block;
+}
+
+.indisponivel {
+  font-size: 0.82rem;
+  color: #4a5a64;
+}
+
+.listaPecasArea {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listaPecasArea li {
+  display: grid;
+  grid-template-columns: 24px 56px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.listaPecasArea input {
+  width: 20px;
+  height: 20px;
+}
+
+.listaPecasArea .miniaturaArea {
+  width: 56px;
+  height: 56px;
+}
+
+.listaVendasArea {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listaVendasArea li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.numero {
+  text-align: right;
+  white-space: nowrap;
+}

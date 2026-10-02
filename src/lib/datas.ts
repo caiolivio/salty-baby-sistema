@@ -25,3 +25,8 @@ export function formatarHora(momento: Date): string {
 export function formatarDataHora(momento: Date): string {
   return dataEHora.format(momento).replace(",", "");
 }
+
+/** Dia de um momento (data e hora) no fuso de São Paulo: "30/09/2026". */
+export function formatarDia(momento: Date): string {
+  return formatarDataHora(momento).slice(0, 10);
+}

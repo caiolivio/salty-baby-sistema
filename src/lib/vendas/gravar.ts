@@ -1,5 +1,7 @@
 import "server-only";
 import { prisma } from "../banco";
+import { registrar, rotuloDaPeca } from "../historico/gravar";
+import { mudancaDeStatus, type Autor, type Mudanca } from "../historico/regras";
 import { calcularItens, type DadosConfirmacao, type DadosVendaDireta, type ItemCalculado } from "./regras";
 
 export type ResultadoConfirmar = { ok: true; vendaId: string } | { ok: false; erro: string };
@@ -19,12 +21,17 @@ async function venderPecas(
   itens: { pecaId: string; precoCentavos: number }[],
   statusAceito: "publicada" | "reservada",
   dados: DadosConfirmacao,
+  autor: Autor,
+  motivo: string,
 ): Promise<ItemCalculado[]> {
   const pecas = await tx.peca.findMany({
     where: { id: { in: itens.map((i) => i.pecaId) } },
     select: {
       id: true,
       codigo: true,
+      nome: true,
+      status: true,
+      naoListada: true,
       tipo: true,
       quantidade: true,
       percentualRepasse: true,
@@ -38,13 +45,21 @@ async function venderPecas(
     return { item, peca };
   });
   for (const { peca } of lista) {
-    const sobra = peca.quantidade - 1;
+    const sobra = Math.max(0, peca.quantidade - 1);
+    const novoStatus = sobra > 0 ? "publicada" : dados.destino;
     // A condição no próprio UPDATE impede vender a mesma peça duas vezes.
     const r = await tx.peca.updateMany({
       where: { id: peca.id, status: statusAceito, quantidade: { gt: 0 } },
-      data: { quantidade: Math.max(0, sobra), status: sobra > 0 ? "publicada" : dados.destino },
+      data: { quantidade: sobra, status: novoStatus },
     });
     if (r.count === 0) throw new Recusa(`A peça ${peca.codigo} não está mais disponível.`);
+    const mudancas: Mudanca[] = [];
+    const status = mudancaDeStatus({ status: statusAceito, naoListada: peca.naoListada }, { status: novoStatus, naoListada: peca.naoListada });
+    if (status) mudancas.push(status);
+    if (sobra !== peca.quantidade) {
+      mudancas.push({ campo: "Quantidade", antes: String(peca.quantidade), depois: String(sobra), restrito: false });
+    }
+    await registrar(tx, { tabela: "peca", id: peca.id, rotulo: rotuloDaPeca(peca) }, mudancas, autor, motivo);
   }
   return calcularItens(
     lista.map(({ item, peca }) => ({
@@ -64,7 +79,12 @@ async function venderPecas(
  * de cada peça, tira as peças da vitrine e marca o pedido como pago. Um pedido
  * cuja reserva venceu também pode ser confirmado, se as peças ainda estiverem à venda.
  */
-export async function confirmarPagamento(pedidoId: string, dados: DadosConfirmacao, hoje: string): Promise<ResultadoConfirmar> {
+export async function confirmarPagamento(
+  pedidoId: string,
+  dados: DadosConfirmacao,
+  hoje: string,
+  autor: Autor,
+): Promise<ResultadoConfirmar> {
   try {
     const vendaId = await prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.findUnique({
@@ -77,7 +97,8 @@ export async function confirmarPagamento(pedidoId: string, dados: DadosConfirmac
       }
       // Reservada por este pedido, ou de volta à venda depois que a reserva venceu.
       const statusAceito = pedido.status === "reservado" ? "reservada" : "publicada";
-      const itens = await venderPecas(tx, pedido.itens, statusAceito, dados).catch((erro) => {
+      const motivo = `Pedido nº ${pedido.numero} pago`;
+      const itens = await venderPecas(tx, pedido.itens, statusAceito, dados, autor, motivo).catch((erro) => {
         throw erro instanceof Recusa ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`) : erro;
       });
       const venda = await tx.venda.create({
@@ -116,6 +137,7 @@ export async function registrarVendaDireta(
   pecaIds: string[],
   dados: DadosVendaDireta,
   cliente: ClienteDaVenda,
+  autor: Autor,
 ): Promise<ResultadoConfirmar> {
   if (pecaIds.length === 0) return { ok: false, erro: "Inclua pelo menos uma peça na venda." };
   try {
@@ -127,7 +149,7 @@ export async function registrarVendaDireta(
       }));
       const subtotal = itensDaVenda.reduce((s, i) => s + i.precoCentavos, 0);
       if (dados.descontoCentavos > subtotal) throw new Recusa("O desconto não pode ser maior que o total.");
-      const itens = await venderPecas(tx, itensDaVenda, "publicada", dados);
+      const itens = await venderPecas(tx, itensDaVenda, "publicada", dados, autor, "Venda registrada no painel");
       // A nova cliente só entra no cadastro se a venda der certo.
       const clienteId = !cliente ? null : "id" in cliente ? cliente.id : (await tx.cliente.create({ data: cliente.nova })).id;
       const venda = await tx.venda.create({

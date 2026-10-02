@@ -6,16 +6,19 @@ import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "./painel.module.css";
 
-export const metadata: Metadata = { title: "Painel · Salty Baby" };
+export const metadata: Metadata = { title: "Painel" };
 
 export default async function Painel() {
   const usuario = await exigirAcesso("painel", "/painel");
   const primeiroNome = usuario.nome.split(" ")[0];
   await liberarReservasVencidas();
-  const [aVenda, fornecedoras, reservados] = await Promise.all([
+  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const [aVenda, fornecedoras, reservados, devolucoes, inscricoes] = await Promise.all([
     prisma.peca.count({ where: { status: "publicada" } }),
     prisma.fornecedora.count(),
     prisma.pedido.count({ where: { status: "reservado" } }),
+    prisma.devolucao.count({ where: { situacao: "pedida" } }),
+    administradora ? prisma.candidatura.count({ where: { etapa: { in: ["enviada", "acordo_aceito"] } } }) : 0,
   ]);
 
   return (
@@ -34,7 +37,19 @@ export default async function Painel() {
           <strong>{fornecedoras}</strong>
           fornecedoras
         </Link>
-        {podeAcessar(usuario.perfis, "painel-administracao") && fornecedoras === 0 && (
+        {devolucoes > 0 && (
+          <Link href="/painel/devolucoes" className={estilos.cartao}>
+            <strong>{devolucoes}</strong>
+            {devolucoes === 1 ? "peça para devolver" : "peças para devolver"}
+          </Link>
+        )}
+        {inscricoes > 0 && (
+          <Link href="/painel/candidaturas" className={estilos.cartao}>
+            <strong>{inscricoes}</strong>
+            {inscricoes === 1 ? "inscrição de fornecedora esperando você" : "inscrições de fornecedora esperando você"}
+          </Link>
+        )}
+        {administradora && fornecedoras === 0 && (
           <Link href="/painel/importar" className={estilos.cartao}>
             <strong>Notion</strong>
             importar as peças e fornecedoras

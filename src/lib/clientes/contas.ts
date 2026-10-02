@@ -5,6 +5,8 @@ import { prisma } from "../banco";
 import { lerTelefoneCliente } from "../pedidos/regras";
 import { conferirSenha, gerarHash } from "../senha";
 import { fimDoLink, gerarCodigoDoLink, hashDoCodigo, type DadosCadastro, type DadosPerfil } from "./conta";
+import { registrar } from "../historico/gravar";
+import { CAMPOS_CLIENTE, compararParcial } from "../historico/regras";
 
 // Contas das clientes no site. Cada conta (usuário com perfil "cliente") fica
 // ligada a uma ficha da tabela clientes, a mesma que a loja usa no painel.
@@ -128,13 +130,43 @@ export async function criarAcessoPelaLoja(clienteId: string, email: string, agor
         }
         await tx.cliente.update({ where: { id: cliente.id }, data: { usuarioId, email: cliente.email ?? email } });
       }
-      // Um link novo cancela os anteriores que ainda não foram usados.
-      await tx.linkDeSenha.updateMany({ where: { usuarioId, usadoEm: null }, data: { usadoEm: agora } });
-      await tx.linkDeSenha.create({ data: { usuarioId, codigoHash: hashDoCodigo(codigo), expiraEm: fimDoLink(agora) } });
+      await gravarLinkDeSenha(tx, usuarioId, codigo, agora);
       return { ok: true as const, codigo, novaConta };
     },
     { isolationLevel: "Serializable" },
   );
+}
+
+/** Grava um link de criar senha. Um link novo cancela os anteriores que ainda não foram usados. */
+export async function gravarLinkDeSenha(tx: Prisma.TransactionClient, usuarioId: string, codigo: string, agora: Date) {
+  await tx.linkDeSenha.updateMany({ where: { usuarioId, usadoEm: null }, data: { usadoEm: agora } });
+  await tx.linkDeSenha.create({ data: { usuarioId, codigoHash: hashDoCodigo(codigo), expiraEm: fimDoLink(agora) } });
+}
+
+/**
+ * Conta para um e-mail com o perfil pedido: usa a que já existe (somando o
+ * perfil) ou cria uma com senha impossível de adivinhar, até a pessoa criar a
+ * dela pelo link.
+ */
+export async function contaComPerfil(
+  tx: Prisma.TransactionClient,
+  dados: { nome: string; email: string },
+  perfil: "cliente" | "fornecedora",
+): Promise<{ id: string; nova: boolean }> {
+  const existente = await tx.usuario.findUnique({ where: { email: dados.email } });
+  if (existente) {
+    await tx.usuarioPerfil.upsert({
+      where: { usuarioId_perfil: { usuarioId: existente.id, perfil } },
+      create: { usuarioId: existente.id, perfil },
+      update: {},
+    });
+    return { id: existente.id, nova: false };
+  }
+  const senhaHash = await gerarHash(randomBytes(24).toString("base64url"));
+  const criado = await tx.usuario.create({
+    data: { nome: dados.nome, email: dados.email, senhaHash, perfis: { create: { perfil } } },
+  });
+  return { id: criado.id, nova: true };
 }
 
 /** Link de criar senha ainda válido: devolve de quem é. */
@@ -176,7 +208,17 @@ export async function atualizarPerfil(usuarioId: string, clienteId: string, dado
       const outroWhats = await fichaPeloWhatsapp(tx, dados.telefone, clienteId);
       if (outroWhats) return { ok: false as const, motivo: "whatsapp-em-uso" as const };
       await tx.usuario.update({ where: { id: usuarioId }, data: { nome: dados.nome, email: dados.email } });
+      const antes = await tx.cliente.findUnique({ where: { id: clienteId } });
       await tx.cliente.update({ where: { id: clienteId }, data: dados });
+      if (antes) {
+        await registrar(
+          tx,
+          { tabela: "cliente", id: clienteId, rotulo: dados.nome },
+          compararParcial(CAMPOS_CLIENTE, antes, dados),
+          { usuarioId, nome: `${dados.nome} (cliente)` },
+          "A cliente atualizou os dados na conta dela",
+        );
+      }
       return { ok: true as const };
     },
     { isolationLevel: "Serializable" },

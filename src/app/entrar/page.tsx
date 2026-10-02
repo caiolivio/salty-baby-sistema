@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import estilos from "@/componentes/formulario.module.css";
 import { usuarioAtual } from "@/lib/acesso";
 import { destinoInicial, enderecoDeVoltaSeguro } from "@/lib/permissoes";
 import { existeAdministradora } from "@/lib/usuarios";
-import { linkWhatsapp, WHATSAPP_LOJA } from "@/lib/vitrine";
+import { linkWhatsapp } from "@/lib/vitrine";
 import { FormularioEntrar } from "./formulario-entrar";
+import { LogoDaLoja } from "@/componentes/logo-da-loja";
+import { lerLoja } from "@/lib/loja/servidor";
 
-export const metadata: Metadata = { title: "Entrar · Salty Baby" };
+export const metadata: Metadata = { title: "Entrar" };
 
 export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
   const voltar = enderecoDeVoltaSeguro((await searchParams).voltar);
@@ -18,15 +19,16 @@ export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
   if (usuario) redirect(voltar ?? destinoInicial(usuario.perfis));
   if (!(await existeAdministradora())) redirect("/primeiro-acesso");
   // Sem envio de e-mail no sistema: a loja manda um link de nova senha pelo WhatsApp.
+  const loja = await lerLoja();
   const esqueci = linkWhatsapp(
-    process.env.WHATSAPP_LOJA || WHATSAPP_LOJA,
-    "Oi! Esqueci a senha da minha conta no site da Salty Baby. Pode me mandar um link para criar uma nova?",
+    loja.whatsapp,
+    `Oi! Esqueci a senha da minha conta no site da ${loja.nome}. Pode me mandar um link para criar uma nova?`,
   );
 
   return (
     <main className={estilos.pagina}>
       <div className={estilos.cartao}>
-        <Image className={estilos.logo} src="/marca/logo-salty-baby-400px.png" alt="Salty Baby" width={400} height={400} priority />
+        <LogoDaLoja className={estilos.logo} largura={400} altura={400} />
         <h1 className={estilos.titulo}>Entrar</h1>
         <FormularioEntrar voltar={voltar} />
         <p className={estilos.rodape}>

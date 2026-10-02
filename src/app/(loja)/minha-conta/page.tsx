@@ -11,7 +11,7 @@ import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { CartaoPeca, SELECAO_CARTAO } from "../cartao-peca";
 import estilos from "../loja.module.css";
 
-export const metadata: Metadata = { title: "Minha conta · Salty Baby" };
+export const metadata: Metadata = { title: "Minha conta" };
 
 const nomes = (categorias: { categoria: { nome: string } }[]) => categorias.map((c) => c.categoria.nome);
 

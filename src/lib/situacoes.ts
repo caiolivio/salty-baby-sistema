@@ -8,6 +8,7 @@ export const NOMES_SITUACAO: Record<string, string> = {
   enviada: "Enviada",
   retirada: "Retirada",
   devolvida: "Devolvida",
+  devolucao_pedida: "Devolução pedida",
   doada: "Doada",
   baixa: "Baixa",
 };

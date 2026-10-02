@@ -116,7 +116,7 @@ export function FormularioVenda({
               </label>
               <label className={estilos.campo}>
                 WhatsApp
-                <input name="novaTelefone" type="tel" inputMode="tel" defaultValue={v.novaTelefone} maxLength={20} placeholder="(12) 98105-3623" />
+                <input name="novaTelefone" type="tel" inputMode="tel" defaultValue={v.novaTelefone} maxLength={20} placeholder="(11) 98765-4321" />
               </label>
             </>
           )}

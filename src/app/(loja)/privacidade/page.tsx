@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import estilos from "../loja.module.css";
+import { lerLoja } from "@/lib/loja/servidor";
+import { whatsappNaTela } from "@/lib/loja/regras";
 
-export const metadata: Metadata = { title: "Aviso de privacidade · Salty Baby" };
+export const metadata: Metadata = { title: "Aviso de privacidade" };
 
 // Aviso de privacidade do cadastro (LGPD). Texto simples, revisado pela loja.
-export default function Privacidade() {
+export default async function Privacidade() {
+  const loja = await lerLoja();
   return (
     <article className={estilos.texto}>
       <h1 className={estilos.tituloPagina}>Aviso de privacidade</h1>
       <p>
-        A Salty Baby, brechó infantil de Caraguatatuba-SP, guarda os dados do seu cadastro só para atender você. Este aviso
+        A {loja.nome}
+        {loja.descricao && `, ${loja.descricao.charAt(0).toLowerCase()}${loja.descricao.slice(1)},`} guarda os dados do seu cadastro só para atender você. Este aviso
         explica quais dados são esses e o que fazemos com eles.
       </p>
       <h2>Quais dados guardamos</h2>
@@ -32,7 +36,7 @@ export default function Privacidade() {
       <h2>Seus direitos</h2>
       <p>
         Você pode ver e corrigir seus dados na sua conta a qualquer momento. Para pedir uma cópia dos seus dados ou a
-        exclusão do cadastro, fale com a loja pelo WhatsApp (12) 98105-3623.
+        exclusão do cadastro, fale com a loja pelo WhatsApp {whatsappNaTela(loja.whatsapp)}.
       </p>
     </article>
   );
