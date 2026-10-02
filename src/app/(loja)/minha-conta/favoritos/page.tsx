@@ -7,7 +7,7 @@ import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { CartaoPeca, SELECAO_CARTAO } from "../../cartao-peca";
 import estilos from "../../loja.module.css";
 
-export const metadata: Metadata = { title: "Meus favoritos · Salty Baby" };
+export const metadata: Metadata = { title: "Meus favoritos" };
 
 export default async function Favoritos() {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/favoritos");

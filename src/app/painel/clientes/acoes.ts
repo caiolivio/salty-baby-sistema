@@ -16,6 +16,7 @@ import { podeAcessar } from "@/lib/permissoes";
 import { normalizarEmail } from "@/lib/senha";
 import { registrar, registrarCadastro } from "@/lib/historico/gravar";
 import { CAMPOS_CLIENTE, autorDe, compararParcial } from "@/lib/historico/regras";
+import { lerLoja } from "@/lib/loja/servidor";
 
 export type EstadoCliente = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -120,7 +121,7 @@ export async function liberarAcesso(_estado: EstadoAcesso, dados: FormData): Pro
   const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
   const tel = lerTelefoneCliente(cliente.telefone);
   const whatsapp = tel
-    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta))}`
+    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta, (await lerLoja()).nome))}`
     : undefined;
   refresh();
   return { link, whatsapp, novaConta: r.novaConta };

@@ -46,7 +46,7 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   const nome = lerNomeCliente(dados.get("nome"));
   if (!nome) return { erro: "Escreva seu nome para a loja saber de quem é o pedido.", ...digitado };
   const telefone = lerTelefoneCliente(dados.get("telefone"));
-  if (!telefone) return { erro: "Escreva seu WhatsApp com DDD, por exemplo (12) 98105-3623.", ...digitado };
+  if (!telefone) return { erro: "Escreva seu WhatsApp com DDD, por exemplo (11) 98765-4321.", ...digitado };
   const ids = await carrinhoAtual();
   if (ids.length === 0) return { erro: "Seu carrinho está vazio.", ...digitado };
 

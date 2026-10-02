@@ -14,6 +14,7 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { registrarCadastro } from "@/lib/historico/gravar";
 import { autorDe } from "@/lib/historico/regras";
+import { lerLoja } from "@/lib/loja/servidor";
 
 export type EstadoFornecedora = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -23,7 +24,7 @@ const valoresDigitados = (dados: FormData) =>
 export async function novaFornecedora(_estado: EstadoFornecedora, dados: FormData): Promise<EstadoFornecedora> {
   const usuario = await exigirAcesso("painel-administracao");
   const valores = valoresDigitados(dados);
-  const lido = lerFormularioFornecedora(valores);
+  const lido = lerFormularioFornecedora(valores, undefined, (await lerLoja()).repassePadrao);
   if (!lido.ok) return { erro: lido.erro, valores };
 
   const { id, codigo } = await criarFornecedora(lido.dados);
@@ -37,7 +38,7 @@ export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormD
   const id = valores.id ?? "";
   const atual = await prisma.fornecedora.findUnique({ where: { id }, select: { documento: true } });
   if (!atual) return { erro: "Esta fornecedora não existe mais.", valores };
-  const lido = lerFormularioFornecedora(valores, atual.documento);
+  const lido = lerFormularioFornecedora(valores, atual.documento, (await lerLoja()).repassePadrao);
   if (!lido.ok) return { erro: lido.erro, valores };
 
   const ok = await atualizarFornecedora(id, { ...lido.dados, ativa: valores.ativa === "sim" }, autorDe(usuario));
@@ -57,7 +58,8 @@ export async function gerarAcesso(_estado: EstadoAcesso, dados: FormData): Promi
   const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
   const link = `${origem}/${r.tipo === "convite" ? "convite" : "criar-senha"}/${r.codigo}`;
   const tel = lerTelefoneCliente(f.telefone);
-  const texto = r.tipo === "convite" ? mensagemDoConvite(f.nome, link) : mensagemDoLink(f.nome, link, false);
+  const { nome: nomeLoja } = await lerLoja();
+  const texto = r.tipo === "convite" ? mensagemDoConvite(f.nome, link, nomeLoja) : mensagemDoLink(f.nome, link, false, nomeLoja);
   refresh();
   return { link, tipo: r.tipo, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
 }

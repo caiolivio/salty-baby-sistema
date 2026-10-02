@@ -6,7 +6,7 @@ import estilos from "../../painel.module.css";
 import { novaCliente } from "../acoes";
 import { FormularioCliente } from "../formulario-cliente";
 
-export const metadata: Metadata = { title: "Nova cliente · Salty Baby" };
+export const metadata: Metadata = { title: "Nova cliente" };
 
 export default async function NovaCliente() {
   const usuario = await exigirAcesso("painel", "/painel/clientes/nova");

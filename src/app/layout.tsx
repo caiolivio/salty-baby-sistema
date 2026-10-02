@@ -1,18 +1,32 @@
 import type { Metadata, Viewport } from "next";
+import { cssDasCores, nomeComSlogan } from "@/lib/loja/regras";
+import { imagensDaLoja, lerLoja } from "@/lib/loja/servidor";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Salty Baby · Moda Sustentável",
-  description: "Brechó infantil consignado de Caraguatatuba-SP.",
-};
+// Nome, cores e ícone vêm das configurações da loja (/painel/configuracoes).
+// Cada página escreve só o próprio título ("Peças"); o nome da loja entra aqui.
+export async function generateMetadata(): Promise<Metadata> {
+  const loja = await lerLoja();
+  const { icone } = imagensDaLoja(loja);
+  return {
+    title: { default: nomeComSlogan(loja), template: `%s · ${loja.nome}` },
+    description: loja.descricao ?? loja.nome,
+    icons: { icon: icone, apple: icone },
+  };
+}
 
-export const viewport: Viewport = {
-  themeColor: "#13506E",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const loja = await lerLoja();
+  return { themeColor: loja.corPrincipal };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const loja = await lerLoja();
   return (
     <html lang="pt-BR">
+      <head>
+        <style>{cssDasCores(loja)}</style>
+      </head>
       <body>
         {children}
         {/* Crédito do desenvolvimento, em todas as páginas do sistema (fica de fora na impressão). */}

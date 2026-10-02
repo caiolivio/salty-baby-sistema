@@ -78,7 +78,7 @@ export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): P
     const nome = lerNomeCliente(valores.novaNome);
     if (!nome) return { erro: "Escreva o nome da nova cliente.", valores };
     const telefone = valores.novaTelefone.trim() ? lerTelefoneCliente(valores.novaTelefone) : null;
-    if (telefone === undefined) return { erro: "O WhatsApp precisa ter DDD, por exemplo (12) 98105-3623.", valores };
+    if (telefone === undefined) return { erro: "O WhatsApp precisa ter DDD, por exemplo (11) 98765-4321.", valores };
     cliente = { nova: { nome, telefone } };
   } else if (valores.clienteId) {
     const existe = await prisma.cliente.findUnique({ where: { id: valores.clienteId }, select: { id: true } });
