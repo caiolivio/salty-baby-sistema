@@ -8,7 +8,7 @@ import estilos from "../painel.module.css";
 import proprios from "../formulario.module.css";
 import { BotoesExportar } from "../exportar/botoes";
 
-export const metadata: Metadata = { title: "Fornecedoras · Salty Baby" };
+export const metadata: Metadata = { title: "Fornecedoras" };
 
 export default async function Fornecedoras({ searchParams }: PageProps<"/painel/fornecedoras">) {
   const usuario = await exigirAcesso("painel", "/painel/fornecedoras");

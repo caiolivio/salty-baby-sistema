@@ -16,7 +16,7 @@ const telefone = z.string().transform((t, ctx) => {
   if (!t.trim()) return null;
   const lido = lerTelefoneCliente(t);
   if (!lido) {
-    ctx.addIssue({ code: "custom", message: "O WhatsApp precisa ter DDD, por exemplo (12) 98105-3623." });
+    ctx.addIssue({ code: "custom", message: "O WhatsApp precisa ter DDD, por exemplo (11) 98765-4321." });
     return z.NEVER;
   }
   return lido;

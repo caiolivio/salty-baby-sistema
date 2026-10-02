@@ -8,12 +8,13 @@ import { formatarReais } from "@/lib/dinheiro";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { mensagemDoPedido, minutosRestantes } from "@/lib/pedidos/regras";
-import { enderecoDaPeca, linkWhatsapp, WHATSAPP_LOJA } from "@/lib/vitrine";
+import { enderecoDaPeca, linkWhatsapp } from "@/lib/vitrine";
 import estilos from "../../loja.module.css";
 import { AbrirWhatsapp } from "./abrir-whatsapp";
+import { lerLoja } from "@/lib/loja/servidor";
 
 export const metadata: Metadata = {
-  title: "Pedido · Salty Baby",
+  title: "Pedido",
   robots: { index: false },
 };
 
@@ -43,8 +44,9 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
   if (!pedido) notFound();
 
   const total = formatarReais(pedido.totalCentavos);
+  const loja = await lerLoja();
   const link = linkWhatsapp(
-    process.env.WHATSAPP_LOJA || WHATSAPP_LOJA,
+    loja.whatsapp,
     mensagemDoPedido(
       {
         numero: pedido.numero,
@@ -56,6 +58,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
         })),
       },
       origemDaRequisicao(await headers()),
+      loja.minutosReserva,
     ),
   );
   const reservado = pedido.status === "reservado";

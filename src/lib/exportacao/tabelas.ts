@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "../banco";
 import { NOMES_ETAPA } from "../fornecedoras/candidatura";
+import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
 import type { Area } from "../permissoes";
@@ -47,7 +48,7 @@ async function pecas(administradora: boolean) {
       { titulo: "Código antigo", valor: (p) => p.codigoAntigo },
       { titulo: "Nome", valor: (p) => p.nome },
       { titulo: "Status", valor: (p) => nomeDoStatus(p.status, p.naoListada) },
-      { titulo: "Fornecedora", valor: (p) => (p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Salty (loja)") },
+      { titulo: "Fornecedora", valor: (p) => (p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Peça da loja") },
       { titulo: "Categorias", valor: (p) => p.categorias.map((c) => c.categoria.nome).join(", ") },
       { titulo: "Tamanho", valor: (p) => nomeDe(TAMANHOS, p.tamanho) },
       { titulo: "Gênero", valor: (p) => nomeDe(GENEROS, p.genero) },
@@ -197,7 +198,7 @@ async function vendas() {
       { titulo: "Cliente", valor: (i) => i.venda.cliente?.nome ?? null },
       { titulo: "Peça", valor: (i) => i.peca.codigo },
       { titulo: "Nome da peça", valor: (i) => i.peca.nome },
-      { titulo: "Fornecedora", valor: (i) => (i.peca.fornecedora ? `${i.peca.fornecedora.codigo} · ${i.peca.fornecedora.nome}` : "Salty (loja)") },
+      { titulo: "Fornecedora", valor: (i) => (i.peca.fornecedora ? `${i.peca.fornecedora.codigo} · ${i.peca.fornecedora.nome}` : "Peça da loja") },
       { titulo: "Quantidade", tipo: "numero", valor: (i) => i.quantidade },
       { titulo: "Preço", tipo: "reais", valor: (i) => i.precoUnitarioCentavos },
       { titulo: "Desconto", tipo: "reais", valor: (i) => i.descontoCentavos },
@@ -277,6 +278,25 @@ async function devolucoes() {
   );
 }
 
+async function historico() {
+  // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
+  const linhas = await prisma.alteracao.findMany({ orderBy: [{ criadoEm: "desc" }, { id: "asc" }], take: 50_000 });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Quando", tipo: "datahora", valor: (a) => a.criadoEm },
+      { titulo: "Onde", valor: (a) => NOMES_TABELA[a.tabela as TabelaDoHistorico] ?? a.tabela },
+      { titulo: "Registro", valor: (a) => a.rotulo },
+      { titulo: "O que mudou", valor: (a) => a.campo },
+      { titulo: "Antes", valor: (a) => a.antes },
+      { titulo: "Depois", valor: (a) => a.depois },
+      { titulo: "Quem", valor: (a) => a.quem },
+      { titulo: "Por quê", valor: (a) => a.motivo },
+    ],
+    linhas,
+  );
+}
+
 export const TABELAS: Record<string, TabelaExportavel> = {
   pecas: { titulo: "Peças", arquivo: "pecas", area: "painel", carregar: pecas },
   fornecedoras: { titulo: "Fornecedoras", arquivo: "fornecedoras", area: "painel", carregar: fornecedoras },
@@ -286,4 +306,5 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   categorias: { titulo: "Categorias", arquivo: "categorias", area: "painel-administracao", carregar: categorias },
   candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", area: "painel-administracao", carregar: candidaturas },
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", area: "painel", carregar: devolucoes },
+  historico: { titulo: "Histórico de alterações", arquivo: "historico", area: "painel-administracao", carregar: historico },
 };

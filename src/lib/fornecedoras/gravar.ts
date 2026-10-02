@@ -3,6 +3,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { CHAVE_SEQUENCIA_FORNECEDORA, codigoFornecedora } from "../codigos";
 import { numeroSeguro, type DadosFornecedora } from "./dados";
+import { registrar, rotuloDaFornecedora } from "../historico/gravar";
+import { CAMPOS_FORNECEDORA, compararParcial, type Autor } from "../historico/regras";
 
 /**
  * Cria a fornecedora com o próximo código (F48, F49…). A linha da sequência fica
@@ -31,7 +33,22 @@ export async function criarFornecedoraNaTransacao(
 }
 
 /** O código não muda nunca; só os dados. */
-export async function atualizarFornecedora(id: string, dados: DadosFornecedora & { ativa: boolean }): Promise<boolean> {
-  const { count } = await prisma.fornecedora.updateMany({ where: { id }, data: dados });
-  return count === 1;
+export async function atualizarFornecedora(
+  id: string,
+  dados: DadosFornecedora & { ativa: boolean },
+  autor: Autor,
+): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const antes = await tx.fornecedora.findUnique({ where: { id } });
+    if (!antes) return false;
+    await tx.fornecedora.update({ where: { id }, data: dados });
+    await registrar(
+      tx,
+      { tabela: "fornecedora", id, rotulo: rotuloDaFornecedora({ codigo: antes.codigo, nome: dados.nome }) },
+      compararParcial(CAMPOS_FORNECEDORA, antes, dados),
+      autor,
+      "Edição no painel",
+    );
+    return true;
+  });
 }

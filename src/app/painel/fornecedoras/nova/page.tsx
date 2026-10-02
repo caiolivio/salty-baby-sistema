@@ -6,9 +6,11 @@ import { CHAVE_SEQUENCIA_FORNECEDORA, codigoFornecedora } from "@/lib/codigos";
 import { numeroSeguro } from "@/lib/fornecedoras/dados";
 import estilos from "../../painel.module.css";
 import { novaFornecedora } from "../acoes";
+import { lerLoja } from "@/lib/loja/servidor";
+import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { FormularioFornecedora } from "../formulario-fornecedora";
 
-export const metadata: Metadata = { title: "Nova fornecedora · Salty Baby" };
+export const metadata: Metadata = { title: "Nova fornecedora" };
 
 export default async function NovaFornecedora() {
   await exigirAcesso("painel-administracao", "/painel/fornecedoras/nova");
@@ -28,7 +30,12 @@ export default async function NovaFornecedora() {
       <p>
         Ela vai receber o código <strong>{previsto}</strong>.
       </p>
-      <FormularioFornecedora acao={novaFornecedora} iniciais={{}} textoBotao="Cadastrar fornecedora" voltar="/painel/fornecedoras" />
+      <FormularioFornecedora
+        acao={novaFornecedora}
+        iniciais={{ percentualRepassePadrao: mostrarPercentual((await lerLoja()).repassePadrao) }}
+        textoBotao="Cadastrar fornecedora"
+        voltar="/painel/fornecedoras"
+      />
     </>
   );
 }

@@ -5,6 +5,8 @@ import { prisma } from "../banco";
 import { lerTelefoneCliente } from "../pedidos/regras";
 import { conferirSenha, gerarHash } from "../senha";
 import { fimDoLink, gerarCodigoDoLink, hashDoCodigo, type DadosCadastro, type DadosPerfil } from "./conta";
+import { registrar } from "../historico/gravar";
+import { CAMPOS_CLIENTE, compararParcial } from "../historico/regras";
 
 // Contas das clientes no site. Cada conta (usuário com perfil "cliente") fica
 // ligada a uma ficha da tabela clientes, a mesma que a loja usa no painel.
@@ -206,7 +208,17 @@ export async function atualizarPerfil(usuarioId: string, clienteId: string, dado
       const outroWhats = await fichaPeloWhatsapp(tx, dados.telefone, clienteId);
       if (outroWhats) return { ok: false as const, motivo: "whatsapp-em-uso" as const };
       await tx.usuario.update({ where: { id: usuarioId }, data: { nome: dados.nome, email: dados.email } });
+      const antes = await tx.cliente.findUnique({ where: { id: clienteId } });
       await tx.cliente.update({ where: { id: clienteId }, data: dados });
+      if (antes) {
+        await registrar(
+          tx,
+          { tabela: "cliente", id: clienteId, rotulo: dados.nome },
+          compararParcial(CAMPOS_CLIENTE, antes, dados),
+          { usuarioId, nome: `${dados.nome} (cliente)` },
+          "A cliente atualizou os dados na conta dela",
+        );
+      }
       return { ok: true as const };
     },
     { isolationLevel: "Serializable" },

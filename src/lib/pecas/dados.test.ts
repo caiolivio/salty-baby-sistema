@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { escolherCategorias, hojeEmSaoPaulo, moverNaLista, lerFormularioPeca, reaisNoCampo, situacaoEditavel, statusNoFormulario } from "./dados";
+import {
+  avisoDaTroca,
+  escolherCategorias,
+  hojeEmSaoPaulo,
+  lerFormularioPeca,
+  motivoParaNaoExcluir,
+  moverNaLista,
+  opcoesDeStatus,
+  reaisNoCampo,
+  situacaoEditavel,
+  statusNoFormulario,
+} from "./dados";
 import { nomeDoStatus } from "../situacoes";
 
 const consignada = { consignada: true, repassePadrao: 4000, hoje: "2026-09-30" };
@@ -135,5 +146,54 @@ describe("moverNaLista (ordem das fotos)", () => {
     expect(moverNaLista(fotos, "a", -1)).toEqual(fotos);
     expect(moverNaLista(fotos, "d", 9)).toEqual(fotos);
     expect(moverNaLista(fotos, "x", 0)).toEqual(fotos);
+  });
+});
+
+describe("opcoesDeStatus (página da peça)", () => {
+  const valores = (atual: string) => opcoesDeStatus(atual).map((o) => o.valor);
+
+  it("peça no estoque: os status do cadastro", () => {
+    expect(valores("publicada")).toEqual(["rascunho", "publicada", "nao_listada", "devolvida", "doada", "baixa"]);
+    expect(valores("baixa")).toContain("publicada");
+  });
+
+  it("reservada e devolução pedida: o atual primeiro, e depois os do cadastro", () => {
+    expect(valores("reservada")[0]).toBe("reservada");
+    expect(valores("reservada")).toContain("publicada");
+    expect(valores("devolucao_pedida")[0]).toBe("devolucao_pedida");
+    expect(valores("devolucao_pedida")).toContain("devolvida");
+  });
+
+  it("vendida: só os passos da entrega, nunca de volta ao estoque", () => {
+    for (const atual of ["vendida", "na_sacolinha", "enviada", "retirada"]) {
+      expect(valores(atual)).toEqual(["vendida", "na_sacolinha", "enviada", "retirada"]);
+    }
+  });
+
+  it("explica a troca quando ela mexe em pedido, devolução ou venda", () => {
+    expect(avisoDaTroca("reservada")).toMatch(/sai do pedido/);
+    expect(avisoDaTroca("devolucao_pedida")).toMatch(/Devolvida/);
+    expect(avisoDaTroca("enviada")).toMatch(/venda precisa ser desfeita/);
+    expect(avisoDaTroca("publicada")).toBeNull();
+  });
+});
+
+describe("motivoParaNaoExcluir", () => {
+  const livre = { status: "publicada", vendas: 0, pedidoAberto: null };
+
+  it("peça sem venda e fora de pedido pode ser excluída", () => {
+    expect(motivoParaNaoExcluir(livre)).toBeNull();
+    expect(motivoParaNaoExcluir({ ...livre, status: "baixa" })).toBeNull();
+  });
+
+  it("peça vendida não pode, e sugere a baixa", () => {
+    expect(motivoParaNaoExcluir({ ...livre, status: "vendida", vendas: 1 })).toMatch(/Baixa/);
+    // Mesmo que alguém tenha mudado o status depois, a venda continua valendo.
+    expect(motivoParaNaoExcluir({ ...livre, vendas: 1 })).toMatch(/já foi vendida/);
+  });
+
+  it("peça num pedido aberto ou com devolução pedida não pode", () => {
+    expect(motivoParaNaoExcluir({ ...livre, status: "reservada", pedidoAberto: 12 })).toMatch(/pedido nº 12/);
+    expect(motivoParaNaoExcluir({ ...livre, status: "devolucao_pedida" })).toMatch(/Devoluções/);
   });
 });

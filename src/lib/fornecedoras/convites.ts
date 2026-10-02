@@ -5,6 +5,8 @@ import { gravarLinkDeSenha } from "../clientes/contas";
 import { conferirSenha, gerarHash } from "../senha";
 import { VERSAO_ACORDO } from "./acordo";
 import type { DadosDaFornecedora } from "./conta";
+import { registrar, rotuloDaFornecedora } from "../historico/gravar";
+import { CAMPOS_FORNECEDORA, compararParcial } from "../historico/regras";
 
 // Acesso das fornecedoras à área delas. As que já eram parceiras (importadas
 // do Notion) recebem um link de primeiro acesso: terminam o cadastro, criam a
@@ -128,7 +130,17 @@ export async function salvarDadosDaFornecedora(
     const outro = await tx.usuario.findFirst({ where: { email: dados.email, id: { not: usuarioId } } });
     if (outro) return { ok: false as const, motivo: "email-em-uso" as const };
     await tx.usuario.update({ where: { id: usuarioId }, data: { nome: dados.nome, email: dados.email } });
+    const antes = await tx.fornecedora.findUnique({ where: { id: fornecedoraId } });
     await tx.fornecedora.update({ where: { id: fornecedoraId }, data: dados });
+    if (antes) {
+      await registrar(
+        tx,
+        { tabela: "fornecedora", id: fornecedoraId, rotulo: rotuloDaFornecedora({ codigo: antes.codigo, nome: dados.nome }) },
+        compararParcial(CAMPOS_FORNECEDORA, antes, dados),
+        { usuarioId, nome: `${dados.nome} (fornecedora ${antes.codigo})` },
+        "A fornecedora atualizou os dados na área dela",
+      );
+    }
     return { ok: true as const };
   });
 }
