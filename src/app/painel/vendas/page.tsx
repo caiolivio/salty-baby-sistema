@@ -5,7 +5,7 @@ import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
-import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
+import { FORMAS_PAGAMENTO, motivoParaNaoCorrigir } from "@/lib/vendas/regras";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
@@ -26,6 +26,7 @@ const CANAIS: Record<string, string> = {
 export default async function Vendas({ searchParams }: PageProps<"/painel/vendas">) {
   const { acesso } = await exigirPagina("vendas", "ver", "/painel/vendas");
   const valores = temExtra(acesso, "valores");
+  const podeCorrigir = podeAlterar(acesso, "vendas");
   const aviso = await searchParams;
   const pagina = Math.max(1, Number(aviso.pagina) || 1);
   const [total, vendas, somas] = await Promise.all([
@@ -62,6 +63,11 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
       {aviso.registrada && (
         <p className={proprios.aviso} role="status">
           Venda registrada. As peças saíram da vitrine.
+        </p>
+      )}
+      {aviso.corrigida && (
+        <p className={proprios.aviso} role="status">
+          Venda corrigida. Repasse e lucro foram recalculados, e a correção ficou no histórico das peças.
         </p>
       )}
       <div className={estilos.cartoes}>
@@ -120,6 +126,11 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
                 <td className={estilos.numero} data-rotulo="Total">
                   {formatarReais(v.totalCentavos)}
                   {v.descontoCentavos > 0 && <span className={estilos.antigo}>desc. {formatarReais(v.descontoCentavos)}</span>}
+                  {podeCorrigir && !motivoParaNaoCorrigir(v.itens) && (
+                    <span className={estilos.antigo}>
+                      <Link href={`/painel/vendas/${v.id}/corrigir`}>Corrigir</Link>
+                    </span>
+                  )}
                 </td>
                 {valores && (
                   <td className={estilos.numero} data-rotulo="Repasse">

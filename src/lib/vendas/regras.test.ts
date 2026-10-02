@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { SEM_DESCONTO, type PlanoDeDesconto } from "./descontos";
-import { calcularItens, lerConfirmacao, lerVendaDireta, type PecaParaVender } from "./regras";
+import {
+  calcularItens,
+  lerConfirmacao,
+  lerCorrecao,
+  lerVendaDireta,
+  motivoParaNaoCorrigir,
+  valoresDaVenda,
+  type PecaParaVender,
+} from "./regras";
 
 const consignada = (id: string, preco: number, percentual: number | null = null): PecaParaVender => ({
   id,
@@ -257,6 +265,72 @@ describe("venda direta no painel", () => {
     expect(lerVendaDireta({ canal: "loja", forma: "pix", data: "30/09/2026" }, pecas, hoje, grupos)).toEqual({
       ok: false,
       erro: "A data da venda não é válida.",
+    });
+  });
+});
+
+describe("corrigir venda", () => {
+  const pecas = [
+    { id: "a", codigo: "F01-00001", precoCentavos: 5000 },
+    { id: "b", codigo: "SB-00001", precoCentavos: 1000 },
+  ];
+
+  it("só corrige enquanto nenhum repasse foi pago", () => {
+    expect(motivoParaNaoCorrigir([{ repasseRecebido: false }, { repasseRecebido: false }])).toBeNull();
+    expect(motivoParaNaoCorrigir([{ repasseRecebido: false }, { repasseRecebido: true }])).toContain("já foi pago");
+  });
+
+  it("preenche o formulário com a venda como está", () => {
+    expect(
+      valoresDaVenda({
+        formaPagamento: "pix",
+        data: "2026-10-01",
+        motivoDesconto: "cliente fiel",
+        itens: [
+          { pecaId: "a", descontoCentavos: 1050, descontoPorConta: "loja" },
+          { pecaId: "b", descontoCentavos: 0, descontoPorConta: null },
+          { pecaId: "c", descontoCentavos: 5, descontoPorConta: "misto" },
+        ],
+      }),
+    ).toEqual({
+      forma: "pix",
+      data: "2026-10-01",
+      desconto_motivo: "cliente fiel",
+      "peca_desconto:a": "10,50",
+      "peca_tipo:a": "reais",
+      "peca_quem:a": "loja",
+      "peca_desconto:c": "0,05",
+      "peca_tipo:c": "reais",
+      "peca_quem:c": "dividido",
+    });
+  });
+
+  it("salvar sem mudar nada dá o mesmo resultado da venda", () => {
+    const venda = valoresDaVenda({
+      formaPagamento: "pix",
+      data: "2026-10-01",
+      motivoDesconto: null,
+      itens: [{ pecaId: "a", descontoCentavos: 1000, descontoPorConta: "fornecedora" }],
+    });
+    const lido = lerCorrecao(venda, [pecas[0]], "2026-10-02");
+    expect(lido.ok).toBe(true);
+    if (!lido.ok) return;
+    const [item] = itensDe([consignada("a", 5000)], lido.dados.desconto);
+    expect(item).toMatchObject({ valorPagoCentavos: 4000, repasseCentavos: 1000, descontoPorConta: "fornecedora" });
+  });
+
+  it("lê forma, data e desconto, e recusa data no futuro", () => {
+    expect(lerCorrecao({ forma: "cartao", data: "2026-09-30", desconto: "6" }, pecas, "2026-10-02")).toEqual({
+      ok: true,
+      dados: {
+        forma: "cartao",
+        data: "2026-09-30",
+        desconto: { carrinho: { modo: "reais", valor: 600, quem: "dividido" }, porPeca: {}, motivo: null },
+      },
+    });
+    expect(lerCorrecao({ forma: "pix", data: "2026-10-03" }, pecas, "2026-10-02")).toEqual({
+      ok: false,
+      erro: "A data da venda não pode ser no futuro.",
     });
   });
 });

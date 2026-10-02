@@ -7,10 +7,10 @@ import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
-import { podeAcessar, podeVer, temExtra } from "@/lib/permissoes";
+import { podeAcessar, podeAlterar, podeVer, temExtra } from "@/lib/permissoes";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente, minutosRestantes } from "@/lib/pedidos/regras";
-import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
+import { FORMAS_PAGAMENTO, motivoParaNaoCorrigir } from "@/lib/vendas/regras";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { cancelarPedido } from "../acoes";
@@ -251,6 +251,12 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
         )}
         {pedido.venda?.formaPagamento && ` · ${FORMAS_PAGAMENTO.find((f) => f.valor === pedido.venda?.formaPagamento)?.nome}`}
         {pedido.venda?.motivoDesconto && ` · motivo do desconto: ${pedido.venda.motivoDesconto}`}
+        {pedido.venda && podeAlterar(usuario.acesso, "vendas") && !motivoParaNaoCorrigir(pedido.venda.itens) && (
+          <>
+            {" · "}
+            <Link href={`/painel/vendas/${pedido.venda.id}/corrigir`}>Corrigir venda</Link>
+          </>
+        )}
       </p>
       {aberto && <IncluirPeca id={pedido.id} />}
     </>
