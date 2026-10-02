@@ -1,10 +1,19 @@
 import "server-only";
 import { prisma } from "../banco";
 import { registrar, rotuloDaPeca } from "../historico/gravar";
+import { formatarData } from "../datas";
 import { formatarReais } from "../dinheiro";
 import { mudancaDeStatus, type Autor, type Mudanca } from "../historico/regras";
 import { NOMES_QUEM_PAGA } from "./descontos";
-import { calcularItens, type DadosConfirmacao, type DadosVendaDireta, type ItemCalculado } from "./regras";
+import {
+  calcularItens,
+  FORMAS_PAGAMENTO,
+  motivoParaNaoCorrigir,
+  type DadosConfirmacao,
+  type DadosCorrecao,
+  type DadosVendaDireta,
+  type ItemCalculado,
+} from "./regras";
 
 export type ResultadoConfirmar = { ok: true; vendaId: string } | { ok: false; erro: string };
 
@@ -186,6 +195,105 @@ export async function registrarVendaDireta(
         },
       });
       return venda.id;
+    });
+    return { ok: true, vendaId };
+  } catch (erro) {
+    if (erro instanceof Recusa) return { ok: false, erro: erro.message };
+    throw erro;
+  }
+}
+
+/**
+ * Corrige uma venda já confirmada (valor, descontos, forma de pagamento e data),
+ * recalculando repasse e lucro de cada item com o % gravado na venda. Só vale
+ * enquanto nenhum repasse dela foi pago. Cada mudança entra no histórico da peça.
+ */
+export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor: Autor): Promise<ResultadoConfirmar> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const venda = await tx.venda.findUnique({
+        where: { id: vendaId },
+        include: { itens: { include: { peca: { select: { id: true, codigo: true, nome: true, tipo: true } } } } },
+      });
+      if (!venda) throw new Recusa("Venda não encontrada.");
+      const bloqueio = motivoParaNaoCorrigir(venda.itens);
+      if (bloqueio) throw new Recusa(bloqueio);
+
+      const calculo = calcularItens(
+        venda.itens.map((i) => ({
+          id: i.pecaId,
+          codigo: i.peca.codigo,
+          tipo: i.peca.tipo,
+          // Vendas antigas do Notion podem ter quantidade maior que 1.
+          precoCentavos: i.precoUnitarioCentavos * i.quantidade,
+          // O % e o custo do dia da venda, não os de hoje.
+          percentualRepasse: i.percentualRepasse,
+          percentualPadraoFornecedora: null,
+          custoCentavos: i.custoCentavos,
+        })),
+        dados.desconto,
+      );
+      if (!calculo.ok) throw new Recusa(calculo.erro);
+
+      const nomeForma = (f: string | null) => FORMAS_PAGAMENTO.find((x) => x.valor === f)?.nome ?? null;
+      const dataAntiga = venda.data.toISOString().slice(0, 10);
+      const descricao = (centavos: number, porConta: string | null) =>
+        centavos > 0 ? `${formatarReais(centavos)} (${NOMES_QUEM_PAGA[(porConta ?? "dividido") as keyof typeof NOMES_QUEM_PAGA]})` : "sem desconto";
+
+      for (const [indice, antigo] of venda.itens.entries()) {
+        const novo = calculo.itens[indice];
+        await tx.itemVenda.update({
+          where: { id: antigo.id },
+          data: {
+            descontoCentavos: novo.descontoCentavos,
+            descontoPorConta: novo.descontoPorConta,
+            valorPagoCentavos: novo.valorPagoCentavos,
+            repasseCentavos: novo.repasseCentavos,
+            lucroCentavos: novo.lucroCentavos,
+          },
+        });
+        const mudancas: Mudanca[] = [];
+        if (antigo.valorPagoCentavos !== novo.valorPagoCentavos) {
+          mudancas.push({
+            campo: "Valor pago na venda",
+            antes: formatarReais(antigo.valorPagoCentavos),
+            depois: formatarReais(novo.valorPagoCentavos),
+            restrito: false,
+          });
+        }
+        const descontoAntes = descricao(antigo.descontoCentavos, antigo.descontoPorConta);
+        const descontoDepois = descricao(novo.descontoCentavos, novo.descontoPorConta);
+        if (descontoAntes !== descontoDepois) {
+          mudancas.push({ campo: "Desconto na venda", antes: descontoAntes, depois: descontoDepois, restrito: false });
+        }
+        if (antigo.repasseCentavos !== novo.repasseCentavos) {
+          mudancas.push({
+            campo: "Repasse da venda",
+            antes: formatarReais(antigo.repasseCentavos),
+            depois: formatarReais(novo.repasseCentavos),
+            restrito: true,
+          });
+        }
+        if (venda.formaPagamento !== dados.forma) {
+          mudancas.push({ campo: "Forma de pagamento da venda", antes: nomeForma(venda.formaPagamento), depois: nomeForma(dados.forma), restrito: false });
+        }
+        if (dataAntiga !== dados.data) {
+          mudancas.push({ campo: "Data da venda", antes: formatarData(venda.data), depois: formatarData(data(dados.data)), restrito: false });
+        }
+        const rotulo = rotuloDaPeca(antigo.peca);
+        await registrar(tx, { tabela: "peca", id: antigo.pecaId, rotulo }, mudancas, autor, "Venda corrigida");
+      }
+
+      await tx.venda.update({
+        where: { id: venda.id },
+        data: {
+          data: data(dados.data),
+          formaPagamento: dados.forma,
+          descontoCentavos: calculo.descontoCentavos,
+          totalCentavos: venda.subtotalCentavos - calculo.descontoCentavos,
+          motivoDesconto: calculo.descontoCentavos > 0 ? dados.desconto.motivo : null,
+        },
+      });
     });
     return { ok: true, vendaId };
   } catch (erro) {

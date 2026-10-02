@@ -153,12 +153,69 @@ export function lerVendaDireta(
   if (!canal) return { ok: false, erro: "Escolha o canal da venda." };
   const grupo = canal === "grupo_whatsapp" ? grupos.find((g) => g.id === valores.grupo) : null;
   if (grupo === undefined) return { ok: false, erro: "Escolha o grupo de WhatsApp." };
-  const data = typeof valores.data === "string" && valores.data.trim() ? valores.data.trim() : hoje;
+  const data = lerDataDaVenda(valores.data, hoje);
+  if (!data.ok) return data;
+  const lido = lerConfirmacao(valores, pecas);
+  if (!lido.ok) return lido;
+  return { ok: true, dados: { ...lido.dados, canal, grupo: grupo?.nome ?? null, grupoId: grupo?.id ?? null, data: data.dados } };
+}
+
+/** Data da venda (aaaa-mm-dd): vazia vira hoje, e não pode ser no futuro. */
+function lerDataDaVenda(valor: unknown, hoje: string): { ok: true; dados: string } | { ok: false; erro: string } {
+  const data = typeof valor === "string" && valor.trim() ? valor.trim() : hoje;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || Number.isNaN(Date.parse(`${data}T00:00:00Z`))) {
     return { ok: false, erro: "A data da venda não é válida." };
   }
   if (data > hoje) return { ok: false, erro: "A data da venda não pode ser no futuro." };
+  return { ok: true, dados: data };
+}
+
+// Corrigir venda: para acertar uma venda confirmada com valor, desconto, forma
+// de pagamento ou data errados, enquanto nenhum repasse dela foi pago.
+
+export type DadosCorrecao = { forma: FormaPagamento; data: string; desconto: PlanoDeDesconto };
+
+/** Lê o formulário "Corrigir venda": forma, data e os descontos (como na confirmação). */
+export function lerCorrecao(
+  valores: Record<string, unknown>,
+  pecas: readonly PecaComPreco[],
+  hoje: string,
+): { ok: true; dados: DadosCorrecao } | { ok: false; erro: string } {
+  const data = lerDataDaVenda(valores.data, hoje);
+  if (!data.ok) return data;
   const lido = lerConfirmacao(valores, pecas);
   if (!lido.ok) return lido;
-  return { ok: true, dados: { ...lido.dados, canal, grupo: grupo?.nome ?? null, grupoId: grupo?.id ?? null, data } };
+  return { ok: true, dados: { forma: lido.dados.forma, data: data.dados, desconto: lido.dados.desconto } };
 }
+
+/** Uma venda só pode ser corrigida enquanto nenhum repasse dela foi pago à fornecedora. */
+export function motivoParaNaoCorrigir(itens: readonly { repasseRecebido: boolean }[]): string | null {
+  return itens.some((i) => i.repasseRecebido)
+    ? "O repasse desta venda já foi pago à fornecedora, então ela não pode mais ser corrigida."
+    : null;
+}
+
+/**
+ * Campos do formulário preenchidos com a venda como está: o desconto de cada
+ * item vira um desconto por peça em R$, com quem pagou. ("Misto" vira
+ * "dividido", porque não dá para separar as partes depois.)
+ */
+export function valoresDaVenda(venda: {
+  formaPagamento: string | null;
+  data: string;
+  motivoDesconto: string | null;
+  itens: readonly { pecaId: string; descontoCentavos: number; descontoPorConta: DescontoPorConta | null }[];
+}): Record<string, string> {
+  const valores: Record<string, string> = { forma: venda.formaPagamento ?? "", data: venda.data };
+  if (venda.motivoDesconto) valores.desconto_motivo = venda.motivoDesconto;
+  for (const i of venda.itens) {
+    if (i.descontoCentavos <= 0) continue;
+    valores[`peca_desconto:${i.pecaId}`] = reaisNoCampo(i.descontoCentavos);
+    valores[`peca_tipo:${i.pecaId}`] = "reais";
+    valores[`peca_quem:${i.pecaId}`] = !i.descontoPorConta || i.descontoPorConta === "misto" ? "dividido" : i.descontoPorConta;
+  }
+  return valores;
+}
+
+/** 1050 → "10,50" (como se digita no campo). */
+const reaisNoCampo = (centavos: number) => `${Math.floor(centavos / 100)},${String(centavos % 100).padStart(2, "0")}`;
