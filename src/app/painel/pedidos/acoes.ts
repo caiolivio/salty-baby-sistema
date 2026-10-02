@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { autorDe } from "@/lib/historico/regras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { encerrarPedido, incluirPecaNoPedido, tirarPecaDoPedido } from "@/lib/pedidos/gravar";
 import { lerCodigoPeca, lerNomeCliente, lerTelefoneCliente } from "@/lib/pedidos/regras";
@@ -12,9 +13,9 @@ import { lerConfirmacao } from "@/lib/vendas/regras";
 
 /** Cancela um pedido reservado: as peças voltam na hora para a vitrine. */
 export async function cancelarPedido(dados: FormData): Promise<void> {
-  await exigirAcesso("painel");
+  const usuario = await exigirAcesso("painel");
   const id = String(dados.get("id") ?? "");
-  await encerrarPedido(id, "cancelado");
+  await encerrarPedido(id, "cancelado", autorDe(usuario));
   revalidatePath("/painel/pedidos");
   revalidatePath(`/painel/pedidos/${id}`);
 }
@@ -23,7 +24,7 @@ export type EstadoConfirmar = { erro?: string; forma?: string; desconto?: string
 
 /** Confirmar pagamento: só a administradora (CLAUDE.md, "Pedido, reserva e pagamento"). */
 export async function confirmar(_anterior: EstadoConfirmar, dados: FormData): Promise<EstadoConfirmar> {
-  await exigirAcesso("painel-administracao");
+  const usuario = await exigirAcesso("painel-administracao");
   const id = String(dados.get("id") ?? "");
   const pedido = await prisma.pedido.findUnique({ where: { id }, select: { totalCentavos: true } });
   if (!pedido) return { erro: "Pedido não encontrado." };
@@ -38,7 +39,7 @@ export async function confirmar(_anterior: EstadoConfirmar, dados: FormData): Pr
     destino: String(dados.get("destino") ?? ""),
   };
   if (!lido.ok) return { erro: lido.erro, ...digitado };
-  const resultado = await confirmarPagamento(id, lido.dados, hojeEmSaoPaulo());
+  const resultado = await confirmarPagamento(id, lido.dados, hojeEmSaoPaulo(), autorDe(usuario));
   if (!resultado.ok) return { erro: resultado.erro, ...digitado };
   revalidatePath("/painel/pedidos");
   revalidatePath("/painel/vendas");
@@ -55,12 +56,12 @@ function atualizar(id: string) {
 
 /** Inclui uma peça no pedido pelo código (novo ou antigo). */
 export async function incluirPeca(_anterior: EstadoEdicao, dados: FormData): Promise<EstadoEdicao> {
-  await exigirAcesso("painel");
+  const usuario = await exigirAcesso("painel");
   const id = String(dados.get("id") ?? "");
   const digitado = String(dados.get("codigo") ?? "");
   const codigo = lerCodigoPeca(digitado);
   if (!codigo) return { erro: "Escreva o código da peça, por exemplo F06-00001.", codigo: digitado };
-  const r = await incluirPecaNoPedido(id, codigo);
+  const r = await incluirPecaNoPedido(id, codigo, autorDe(usuario));
   if (!r.ok) return { erro: r.erro, codigo: digitado };
   atualizar(id);
   return { ok: `Peça ${codigo} incluída.` };
@@ -68,9 +69,9 @@ export async function incluirPeca(_anterior: EstadoEdicao, dados: FormData): Pro
 
 /** Tira uma peça do pedido (ela volta para a vitrine se estava reservada). */
 export async function tirarPeca(_anterior: EstadoEdicao, dados: FormData): Promise<EstadoEdicao> {
-  await exigirAcesso("painel");
+  const usuario = await exigirAcesso("painel");
   const id = String(dados.get("id") ?? "");
-  const r = await tirarPecaDoPedido(id, String(dados.get("pecaId") ?? ""));
+  const r = await tirarPecaDoPedido(id, String(dados.get("pecaId") ?? ""), autorDe(usuario));
   if (!r.ok) return { erro: r.erro };
   atualizar(id);
   return { ok: "Peça tirada do pedido." };

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { escolherCategorias, FORNECEDORA_LOJA, hojeEmSaoPaulo, lerFormularioPeca, situacaoEditavel } from "@/lib/pecas/dados";
+import { autorDe } from "@/lib/historico/regras";
 import { adicionarFotos, atualizarPeca, criarPeca, duplicarPeca, LIMITE_FOTOS, moverFoto, removerFoto } from "@/lib/pecas/gravar";
 
 export type EstadoPeca =
@@ -36,7 +37,7 @@ async function fotosDoFormulario(dados: FormData): Promise<Buffer[] | string> {
 const avisoFotos = (recusadas: number) => (recusadas > 0 ? `&fotosRecusadas=${recusadas}` : "");
 
 export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
-  await exigirAcesso("painel");
+  const usuario = await exigirAcesso("painel");
   const valores = valoresDigitados(dados);
   const categorias = await categoriasMarcadas(dados);
   const erro = (mensagem: string): EstadoPeca => ({ erro: mensagem, valores, categorias });
@@ -61,13 +62,13 @@ export async function novaPeca(_estado: EstadoPeca, dados: FormData): Promise<Es
   const fotos = await fotosDoFormulario(dados);
   if (typeof fotos === "string") return erro(fotos);
 
-  const { id } = await criarPeca(lido.dados, fornecedora, categorias);
+  const { id } = await criarPeca(lido.dados, fornecedora, categorias, autorDe(usuario));
   const { recusadas } = await adicionarFotos(id, fotos);
   redirect(`/painel/pecas/${id}?criada=1${avisoFotos(recusadas)}`);
 }
 
 export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<EstadoPeca> {
-  await exigirAcesso("painel");
+  const usuario = await exigirAcesso("painel");
   const valores = valoresDigitados(dados);
   const id = valores.id ?? "";
   const peca = await prisma.peca.findUnique({
@@ -86,13 +87,13 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
   });
   if (!lido.ok) return { erro: lido.erro, valores, categorias };
 
-  await atualizarPeca(id, lido.dados, categorias, editavel ? undefined : peca.status);
+  await atualizarPeca(id, lido.dados, categorias, autorDe(usuario), editavel ? undefined : peca.status);
   redirect(`/painel/pecas/${id}?salva=1`);
 }
 
 export async function duplicar(dados: FormData): Promise<void> {
-  await exigirAcesso("painel");
-  const copia = await duplicarPeca(String(dados.get("id") ?? ""), hojeEmSaoPaulo());
+  const usuario = await exigirAcesso("painel");
+  const copia = await duplicarPeca(String(dados.get("id") ?? ""), hojeEmSaoPaulo(), autorDe(usuario));
   if (!copia) redirect("/painel/pecas");
   redirect(`/painel/pecas/${copia.id}?duplicada=1`);
 }

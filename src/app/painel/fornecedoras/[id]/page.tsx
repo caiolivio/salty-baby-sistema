@@ -11,6 +11,7 @@ import { FormularioFornecedora } from "../formulario-fornecedora";
 import { AcessoDaFornecedora } from "../acesso-da-fornecedora";
 import { formatarDataHora } from "@/lib/datas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
+import { HistoricoDoRegistro } from "../../historico/do-registro";
 
 export const metadata: Metadata = { title: "Fornecedora · Salty Baby" };
 
@@ -96,6 +97,7 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
           ativa: f.ativa,
         }}
       />
+      <HistoricoDoRegistro tabela="fornecedora" registroId={id} administradora />
     </>
   );
 }

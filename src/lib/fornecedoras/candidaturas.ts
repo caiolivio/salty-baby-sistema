@@ -7,6 +7,7 @@ import { adicionarFotos, criarPeca } from "../pecas/gravar";
 import { VERSAO_ACORDO } from "./acordo";
 import type { DadosInscricao, DadosProposta } from "./candidatura";
 import { criarFornecedoraNaTransacao } from "./gravar";
+import type { Autor } from "../historico/regras";
 
 // "Seja uma fornecedora": inscrição (passo 1), curadoria no painel, peças e
 // acordo (passo 2) e efetivação da parceria (passo 3).
@@ -187,7 +188,7 @@ export type ResultadoRecebimento =
  * código da fornecedora, os dados e a foto da proposta. O preço a Salty põe
  * depois, na página da peça.
  */
-export async function receberProposta(id: string, hoje: string): Promise<ResultadoRecebimento> {
+export async function receberProposta(id: string, hoje: string, autor: Autor): Promise<ResultadoRecebimento> {
   const proposta = await prisma.pecaProposta.findUnique({
     where: { id },
     include: { fornecedora: { select: { id: true, codigo: true, percentualRepassePadrao: true, ativa: true } } },
@@ -221,6 +222,8 @@ export async function receberProposta(id: string, hoje: string): Promise<Resulta
       },
       proposta.fornecedora,
       proposta.categoriaId ? [proposta.categoriaId] : [],
+      autor,
+      "Peça proposta pela fornecedora, recebida na loja",
     );
     await prisma.pecaProposta.update({ where: { id }, data: { pecaId: peca.id } });
     const foto = await lerFotoGuardada(proposta.foto);

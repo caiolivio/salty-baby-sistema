@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "../banco";
 import { NOMES_ETAPA } from "../fornecedoras/candidatura";
+import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
 import type { Area } from "../permissoes";
@@ -277,6 +278,25 @@ async function devolucoes() {
   );
 }
 
+async function historico() {
+  // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
+  const linhas = await prisma.alteracao.findMany({ orderBy: [{ criadoEm: "desc" }, { id: "asc" }], take: 50_000 });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Quando", tipo: "datahora", valor: (a) => a.criadoEm },
+      { titulo: "Onde", valor: (a) => NOMES_TABELA[a.tabela as TabelaDoHistorico] ?? a.tabela },
+      { titulo: "Registro", valor: (a) => a.rotulo },
+      { titulo: "O que mudou", valor: (a) => a.campo },
+      { titulo: "Antes", valor: (a) => a.antes },
+      { titulo: "Depois", valor: (a) => a.depois },
+      { titulo: "Quem", valor: (a) => a.quem },
+      { titulo: "Por quê", valor: (a) => a.motivo },
+    ],
+    linhas,
+  );
+}
+
 export const TABELAS: Record<string, TabelaExportavel> = {
   pecas: { titulo: "Peças", arquivo: "pecas", area: "painel", carregar: pecas },
   fornecedoras: { titulo: "Fornecedoras", arquivo: "fornecedoras", area: "painel", carregar: fornecedoras },
@@ -286,4 +306,5 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   categorias: { titulo: "Categorias", arquivo: "categorias", area: "painel-administracao", carregar: categorias },
   candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", area: "painel-administracao", carregar: candidaturas },
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", area: "painel", carregar: devolucoes },
+  historico: { titulo: "Histórico de alterações", arquivo: "historico", area: "painel-administracao", carregar: historico },
 };

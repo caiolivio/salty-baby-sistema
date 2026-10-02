@@ -109,5 +109,6 @@ export async function apagarDadosImportados(): Promise<void> {
     prisma.peca.deleteMany(),
     prisma.fornecedora.deleteMany(),
     prisma.sequencia.deleteMany(),
+    prisma.alteracao.deleteMany(),
   ]);
 }

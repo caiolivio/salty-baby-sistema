@@ -17,6 +17,7 @@ import {
 import { prisma } from "@/lib/banco";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
+import { autorDe } from "@/lib/historico/regras";
 
 // Curadoria das candidatas a fornecedora. Só a administradora decide.
 
@@ -75,8 +76,8 @@ export async function efetivar(dados: FormData): Promise<void> {
 export async function receber(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
   const voltar = textoDe(dados, "voltar") || "/painel/candidaturas";
-  await exigirAcesso("painel-administracao", voltar);
-  const r = await receberProposta(id, hojeEmSaoPaulo());
+  const usuario = await exigirAcesso("painel-administracao", voltar);
+  const r = await receberProposta(id, hojeEmSaoPaulo(), autorDe(usuario));
   if (r.ok) redirect(`/painel/pecas/${r.pecaId}?criada=1`);
   redirect(`${voltar}?erro=${r.motivo}`);
 }

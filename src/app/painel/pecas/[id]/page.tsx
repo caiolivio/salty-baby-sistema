@@ -24,6 +24,7 @@ import { venderPeca } from "../../vendas/nova/acoes";
 import { DivulgarNoGrupo } from "../divulgar-no-grupo";
 import { AdicionarFotos } from "../fotos-peca";
 import { FormularioPeca } from "../formulario-peca";
+import { HistoricoDoRegistro } from "../../historico/do-registro";
 
 export const metadata: Metadata = { title: "Peça · Salty Baby" };
 
@@ -241,6 +242,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           dataEntrada: p.dataEntrada.toISOString().slice(0, 10),
         }}
       />
+      <HistoricoDoRegistro tabela="peca" registroId={p.id} administradora={podeAcessar(usuario.perfis, "painel-administracao")} />
     </>
   );
 }

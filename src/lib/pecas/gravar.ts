@@ -3,6 +3,9 @@ import type { Prisma, StatusPeca } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { chaveSequenciaPeca, codigoPeca, numeroSeguro, PREFIXO_LOJA } from "../codigos";
 import { apagarFoto, guardarFotoDePeca } from "../fotos";
+import { registrar, registrarCadastro, rotuloDaPeca } from "../historico/gravar";
+import { compararPeca, type Autor, type EstadoPeca } from "../historico/regras";
+import { nomeDoStatus } from "../situacoes";
 import { moverNaLista, type DadosPeca } from "./dados";
 
 type Transacao = Prisma.TransactionClient;
@@ -36,11 +39,41 @@ function camposDoBanco(dados: DadosPeca) {
   return { ...dados, dataEntrada: data(dados.dataEntrada) };
 }
 
+/** O que o histórico compara antes e depois de salvar. */
+const SELECAO_HISTORICO = {
+  codigo: true,
+  nome: true,
+  status: true,
+  naoListada: true,
+  precoCentavos: true,
+  custoCentavos: true,
+  percentualRepasse: true,
+  quantidade: true,
+  tamanho: true,
+  genero: true,
+  conservacao: true,
+  nota: true,
+  variacao: true,
+  marca: true,
+  cor: true,
+  medidas: true,
+  descricao: true,
+  dataEntrada: true,
+  categorias: { select: { categoria: { select: { nome: true } } } },
+} as const;
+
+async function estadoParaHistorico(tx: Transacao, id: string): Promise<(EstadoPeca & { codigo: string }) | null> {
+  const p = await tx.peca.findUnique({ where: { id }, select: SELECAO_HISTORICO });
+  return p ? { ...p, categorias: p.categorias.map((c) => c.categoria.nome) } : null;
+}
+
 /** Cadastra a peça com o próximo código. `fornecedora` vazia = peça da loja. */
 export async function criarPeca(
   dados: DadosPeca,
   fornecedora: { id: string; codigo: string } | null,
   categoriaIds: string[],
+  autor: Autor,
+  motivo?: string,
 ): Promise<{ id: string; codigo: string }> {
   return prisma.$transaction(async (tx) => {
     const codigo = await reservarCodigo(tx, fornecedora?.codigo ?? PREFIXO_LOJA);
@@ -54,6 +87,8 @@ export async function criarPeca(
       },
       select: { id: true },
     });
+    const situacao = nomeDoStatus(dados.status, dados.naoListada);
+    await registrarCadastro(tx, { tabela: "peca", id: criada.id, rotulo: rotuloDaPeca({ codigo, nome: dados.nome }) }, `Cadastrada: ${situacao}`, autor, motivo);
     return { id: criada.id, codigo };
   });
 }
@@ -67,21 +102,29 @@ export async function atualizarPeca(
   id: string,
   dados: DadosPeca,
   categoriaIds: string[],
+  autor: Autor,
   manterSituacao?: StatusPeca,
 ): Promise<void> {
   const campos = camposDoBanco(dados);
-  await prisma.peca.update({
-    where: { id },
-    data: {
-      ...campos,
-      status: manterSituacao ?? campos.status,
-      categorias: { deleteMany: {}, create: categoriaIds.map((categoriaId) => ({ categoriaId })) },
-    },
+  await prisma.$transaction(async (tx) => {
+    const antes = await estadoParaHistorico(tx, id);
+    await tx.peca.update({
+      where: { id },
+      data: {
+        ...campos,
+        status: manterSituacao ?? campos.status,
+        categorias: { deleteMany: {}, create: categoriaIds.map((categoriaId) => ({ categoriaId })) },
+      },
+    });
+    const depois = await estadoParaHistorico(tx, id);
+    if (antes && depois) {
+      await registrar(tx, { tabela: "peca", id, rotulo: rotuloDaPeca(depois) }, compararPeca(antes, depois), autor, "Edição no painel");
+    }
   });
 }
 
 /** Cria uma peça igual, com código novo, como rascunho e sem fotos. */
-export async function duplicarPeca(id: string, hoje: string): Promise<{ id: string; codigo: string } | null> {
+export async function duplicarPeca(id: string, hoje: string, autor: Autor): Promise<{ id: string; codigo: string } | null> {
   return prisma.$transaction(async (tx) => {
     const original = await tx.peca.findUnique({
       where: { id },
@@ -115,6 +158,12 @@ export async function duplicarPeca(id: string, hoje: string): Promise<{ id: stri
       },
       select: { id: true },
     });
+    await registrarCadastro(
+      tx,
+      { tabela: "peca", id: copia.id, rotulo: rotuloDaPeca({ codigo, nome: original.nome }) },
+      `Cadastrada: Rascunho (cópia da ${original.codigo})`,
+      autor,
+    );
     return { id: copia.id, codigo };
   });
 }

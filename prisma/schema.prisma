@@ -587,3 +587,29 @@ model BackupFoto {
 
   @@map("backup_fotos")
 }
+
+/// Histórico de alterações: quem mudou o quê (preço, status, dados), quando e por quê.
+/// Sem chave estrangeira de propósito: o histórico fica mesmo se o registro sumir.
+model Alteracao {
+  id         String   @id @default(cuid())
+  /// "peca", "fornecedora" ou "cliente".
+  tabela     String   @db.VarChar(20)
+  registroId String   @map("registro_id") @db.VarChar(191)
+  /// Como o registro aparecia na hora (ex.: "F06-00001 · Macacão").
+  rotulo     String   @db.VarChar(191)
+  campo      String   @db.VarChar(80)
+  antes      String?  @db.Text
+  depois     String?  @db.Text
+  /// Só a administradora vê (custo, repasse, CPF/CNPJ, Pix).
+  restrito   Boolean  @default(false)
+  usuarioId  String?  @map("usuario_id") @db.VarChar(191)
+  /// Nome de quem mudou, como era na hora.
+  quem       String   @db.VarChar(191)
+  /// De onde veio a mudança (ex.: "Pedido nº 12 pago", "Edição no painel").
+  motivo     String?  @db.VarChar(191)
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  @@index([tabela, registroId, criadoEm])
+  @@index([criadoEm])
+  @@map("alteracoes")
+}

@@ -29,6 +29,7 @@ import { FormularioCrianca } from "../criancas";
 import { EscolherPeriodo } from "../escolher-periodo";
 import { GraficoGasto } from "../grafico-gasto";
 import { FormularioCliente } from "../formulario-cliente";
+import { HistoricoDoRegistro } from "../../historico/do-registro";
 
 export const metadata: Metadata = { title: "Cliente · Salty Baby" };
 
@@ -303,6 +304,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         </div>
       )}
 
+      <HistoricoDoRegistro tabela="cliente" registroId={c.id} administradora={administradora} />
     </>
   );
 }

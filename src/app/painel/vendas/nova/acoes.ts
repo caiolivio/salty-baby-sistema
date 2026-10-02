@@ -10,6 +10,7 @@ import { type ClienteDaVenda, registrarVendaDireta } from "@/lib/vendas/gravar";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { lerVendaDireta } from "@/lib/vendas/regras";
 import { gravarPecas, pecasDaVenda } from "./pecas-da-venda";
+import { autorDe } from "@/lib/historico/regras";
 
 // Venda direta no painel: só a administradora (como "Confirmar pagamento").
 
@@ -62,7 +63,7 @@ export type EstadoVenda =
 const CAMPOS = ["canal", "grupo", "forma", "desconto", "destino", "data", "clienteId", "novaNome", "novaTelefone"] as const;
 
 export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): Promise<EstadoVenda> {
-  await exigirAcesso("painel-administracao");
+  const usuario = await exigirAcesso("painel-administracao");
   const valores = Object.fromEntries(CAMPOS.map((c) => [c, String(dados.get(c) ?? "")]));
   const ids = await pecasDaVenda();
   if (ids.length === 0) return { erro: "Inclua pelo menos uma peça na venda.", valores };
@@ -85,7 +86,7 @@ export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): P
     cliente = { id: existe.id };
   }
 
-  const resultado = await registrarVendaDireta(ids, lido.dados, cliente);
+  const resultado = await registrarVendaDireta(ids, lido.dados, cliente, autorDe(usuario));
   if (!resultado.ok) return { erro: resultado.erro, valores };
   await gravarPecas([]);
   revalidatePath("/painel/vendas");
