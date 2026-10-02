@@ -2,7 +2,7 @@
 // provisório: a loja vai trocar pelo definitivo. Ao mudar o texto, mude
 // também a versão, para saber qual versão cada fornecedora aceitou.
 
-export const VERSAO_ACORDO = "2026-10-v1";
+export const VERSAO_ACORDO = "2026-10-v2";
 
 type DadosDoAcordo = { nome: string; nomeCurto: string; repassePadrao: number; mesesDevolucao: number };
 
@@ -24,7 +24,7 @@ export function acordoDaLoja(loja: DadosDoAcordo): { titulo: string; secoes: { t
       },
       {
         titulo: "3. Repasse",
-        texto: `Quando a peça é vendida, a fornecedora recebe a parte combinada do valor pago pela cliente (o repasse, normalmente ${porcento(loja.repassePadrao)}). Se houver desconto ou cupom, o repasse é calculado sobre o valor com desconto, ou seja, o desconto é dividido entre a ${nomeCurto} e a fornecedora.`,
+        texto: `Quando a peça é vendida, a fornecedora recebe a parte combinada do valor pago pela cliente (o repasse, normalmente ${porcento(loja.repassePadrao)}). Se houver desconto ou cupom, em regra o repasse é calculado sobre o valor com desconto, ou seja, o desconto é dividido entre a ${nomeCurto} e a fornecedora. A ${nomeCurto} pode assumir um desconto sozinha, sem mudar o repasse. Um desconto só por conta da fornecedora acontece apenas com a autorização dela, e nunca passa do repasse da peça. Cada venda mostra, na área da fornecedora, o desconto e quanto ele mudou o repasse.`,
       },
       {
         titulo: "4. Pagamento",
