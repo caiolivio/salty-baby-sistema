@@ -4,14 +4,15 @@ import { NOMES_ETAPA } from "../fornecedoras/candidatura";
 import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
-import type { Area } from "../permissoes";
+import type { Pagina } from "../permissoes";
 import { nomeDoStatus } from "../situacoes";
 import { TAMANHOS } from "../tamanhos";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "../vendas/regras";
 import type { Coluna } from "./planilha";
 
-// O que cada tabela do painel exporta. Quem não é administradora não recebe
-// as colunas de dinheiro interno (custo, repasse, lucro) nem CPF/CNPJ.
+// O que cada tabela do painel exporta. CPF/CNPJ e Pix só vão para a
+// administradora; custo, repasse e lucro, só para quem pode ver esses valores;
+// quanto cada cliente gastou, só para quem vê Vendas.
 
 type Exportacao = { colunas: Coluna<never>[]; linhas: unknown[] };
 
@@ -19,21 +20,24 @@ export type TabelaExportavel = {
   titulo: string;
   arquivo: string;
   /** Quem pode exportar: as mesmas pessoas que veem a lista no painel. */
-  area: Area;
-  carregar: (administradora: boolean) => Promise<Exportacao>;
+  pagina: Pagina;
+  carregar: (ver: Visao) => Promise<Exportacao>;
 };
 
 const nomeDe = (lista: readonly { valor: string; nome: string }[], valor: string | null | undefined) =>
   valor ? (lista.find((o) => o.valor === valor)?.nome ?? valor) : null;
 const telefone = (t: string | null) => (t ? formatarTelefone(t) : null);
 const canal = (c: string) => (c === "site" ? "Site" : nomeDe(CANAIS_DIRETOS, c));
-const so = <T,>(administradora: boolean, colunas: Coluna<T>[]) => (administradora ? colunas : []);
+const so = <T,>(pode: boolean, colunas: Coluna<T>[]) => (pode ? colunas : []);
+
+/** Quais colunas protegidas a pessoa recebe. */
+export type Visao = { documentos: boolean; valores: boolean; vendas: boolean };
 
 function exportacao<T>(colunas: Coluna<T>[], linhas: T[]): Exportacao {
   return { colunas: colunas as Coluna<never>[], linhas };
 }
 
-async function pecas(administradora: boolean) {
+async function pecas(ver: Visao) {
   const linhas = await prisma.peca.findMany({
     orderBy: { codigo: "asc" },
     include: {
@@ -61,7 +65,7 @@ async function pecas(administradora: boolean) {
       { titulo: "Descrição", valor: (p) => p.descricao },
       { titulo: "Preço", tipo: "reais", valor: (p) => p.precoCentavos },
       { titulo: "Quantidade", tipo: "numero", valor: (p) => p.quantidade },
-      ...so<L>(administradora, [
+      ...so<L>(ver.valores, [
         { titulo: "Custo (peça da loja)", tipo: "reais", valor: (p) => p.custoCentavos },
         { titulo: "% repasse", tipo: "numero", valor: (p) => (p.percentualRepasse === null ? null : p.percentualRepasse / 100) },
       ]),
@@ -72,7 +76,7 @@ async function pecas(administradora: boolean) {
   );
 }
 
-async function fornecedoras(administradora: boolean) {
+async function fornecedoras(ver: Visao) {
   const linhas = await prisma.fornecedora.findMany({
     orderBy: { numero: "asc" },
     include: { usuario: { select: { email: true } } },
@@ -96,7 +100,7 @@ async function fornecedoras(administradora: boolean) {
       { titulo: "WhatsApp", valor: (f) => telefone(f.telefone) },
       { titulo: "E-mail", valor: (f) => f.email },
       // A chave Pix muitas vezes é o CPF, então segue a mesma regra.
-      ...so<L>(administradora, [
+      ...so<L>(ver.documentos, [
         { titulo: "CPF/CNPJ", valor: (f) => f.documento },
         { titulo: "Pix", valor: (f) => f.pix },
       ]),
@@ -104,11 +108,13 @@ async function fornecedoras(administradora: boolean) {
       { titulo: "CEP", valor: (f) => f.cep },
       { titulo: "Cidade", valor: (f) => f.cidade },
       { titulo: "Estado", valor: (f) => f.estado },
-      { titulo: "% repasse padrão", tipo: "numero", valor: (f) => f.percentualRepassePadrao / 100 },
+      ...so<L>(ver.valores, [
+        { titulo: "% repasse padrão", tipo: "numero", valor: (f) => f.percentualRepassePadrao / 100 },
+      ]),
       { titulo: "Ativa", valor: (f) => f.ativa },
       { titulo: "Acesso ao site", valor: (f) => f.usuario?.email ?? null },
       { titulo: "Acordo aceito em", tipo: "datahora", valor: (f) => f.termosAceitosEm },
-      ...so<L>(administradora, [
+      ...so<L>(ver.valores, [
         { titulo: "A receber", tipo: "reais", valor: (f) => aReceber.get(f.id) ?? 0 },
         { titulo: "Acumulado", tipo: "reais", valor: (f) => acumulado.get(f.id) ?? 0 },
       ]),
@@ -117,7 +123,7 @@ async function fornecedoras(administradora: boolean) {
   );
 }
 
-async function clientes(administradora: boolean) {
+async function clientes(ver: Visao) {
   const linhas = await prisma.cliente.findMany({
     orderBy: { nome: "asc" },
     include: { usuario: { select: { email: true } }, _count: { select: { vendas: true, criancas: true } } },
@@ -130,7 +136,7 @@ async function clientes(administradora: boolean) {
       { titulo: "Nome", valor: (c) => c.nome },
       { titulo: "WhatsApp", valor: (c) => telefone(c.telefone) },
       { titulo: "E-mail", valor: (c) => c.email },
-      ...so<L>(administradora, [{ titulo: "CPF", valor: (c) => c.cpf }]),
+      ...so<L>(ver.documentos, [{ titulo: "CPF", valor: (c) => c.cpf }]),
       { titulo: "Endereço", valor: (c) => c.endereco },
       { titulo: "CEP", valor: (c) => c.cep },
       { titulo: "Cidade", valor: (c) => c.cidade },
@@ -139,7 +145,7 @@ async function clientes(administradora: boolean) {
       { titulo: "Conta no site", valor: (c) => c.usuario?.email ?? null },
       { titulo: "Crianças cadastradas", tipo: "numero", valor: (c) => c._count.criancas },
       { titulo: "Compras", tipo: "numero", valor: (c) => c._count.vendas },
-      ...so<L>(administradora, [
+      ...so<L>(ver.vendas, [
         { titulo: "Total comprado", tipo: "reais", valor: (c) => porCliente.get(c.id)?._sum.totalCentavos ?? 0 },
       ]),
       { titulo: "Última compra", tipo: "data", valor: (c) => porCliente.get(c.id)?._max.data ?? null },
@@ -179,7 +185,7 @@ async function pedidos() {
 }
 
 /** Uma linha por peça vendida, com repasse, desconto e lucro gravados na venda. */
-async function vendas() {
+async function vendas(ver: Visao) {
   const linhas = await prisma.itemVenda.findMany({
     orderBy: [{ venda: { data: "desc" } }, { venda: { criadoEm: "desc" } }],
     include: {
@@ -203,12 +209,14 @@ async function vendas() {
       { titulo: "Preço", tipo: "reais", valor: (i) => i.precoUnitarioCentavos },
       { titulo: "Desconto", tipo: "reais", valor: (i) => i.descontoCentavos },
       { titulo: "Valor pago", tipo: "reais", valor: (i) => i.valorPagoCentavos },
-      { titulo: "% repasse", tipo: "numero", valor: (i) => (i.percentualRepasse === null ? null : i.percentualRepasse / 100) },
-      { titulo: "Repasse", tipo: "reais", valor: (i) => i.repasseCentavos },
-      { titulo: "Custo", tipo: "reais", valor: (i) => i.custoCentavos },
-      { titulo: "Lucro", tipo: "reais", valor: (i) => i.lucroCentavos },
-      { titulo: "Repasse pago", valor: (i) => (i.peca.tipo === "loja" ? null : i.repasseRecebido) },
-      { titulo: "Repasse pago em", tipo: "data", valor: (i) => i.repasseRecebidoEm },
+      ...so<L>(ver.valores, [
+        { titulo: "% repasse", tipo: "numero", valor: (i) => (i.percentualRepasse === null ? null : i.percentualRepasse / 100) },
+        { titulo: "Repasse", tipo: "reais", valor: (i) => i.repasseCentavos },
+        { titulo: "Custo", tipo: "reais", valor: (i) => i.custoCentavos },
+        { titulo: "Lucro", tipo: "reais", valor: (i) => i.lucroCentavos },
+        { titulo: "Repasse pago", valor: (i) => (i.peca.tipo === "loja" ? null : i.repasseRecebido) },
+        { titulo: "Repasse pago em", tipo: "data", valor: (i) => i.repasseRecebidoEm },
+      ]),
       { titulo: "Origem", valor: (i) => i.venda.origem },
     ],
     linhas,
@@ -278,9 +286,13 @@ async function devolucoes() {
   );
 }
 
-async function historico() {
+async function historico(ver: Visao) {
   // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
-  const linhas = await prisma.alteracao.findMany({ orderBy: [{ criadoEm: "desc" }, { id: "asc" }], take: 50_000 });
+  const linhas = await prisma.alteracao.findMany({
+    where: ver.valores ? {} : { restrito: false },
+    orderBy: [{ criadoEm: "desc" }, { id: "asc" }],
+    take: 50_000,
+  });
   type L = (typeof linhas)[number];
   return exportacao<L>(
     [
@@ -298,13 +310,13 @@ async function historico() {
 }
 
 export const TABELAS: Record<string, TabelaExportavel> = {
-  pecas: { titulo: "Peças", arquivo: "pecas", area: "painel", carregar: pecas },
-  fornecedoras: { titulo: "Fornecedoras", arquivo: "fornecedoras", area: "painel", carregar: fornecedoras },
-  clientes: { titulo: "Clientes", arquivo: "clientes", area: "painel", carregar: clientes },
-  pedidos: { titulo: "Pedidos", arquivo: "pedidos", area: "painel", carregar: pedidos },
-  vendas: { titulo: "Vendas", arquivo: "vendas", area: "painel-administracao", carregar: vendas },
-  categorias: { titulo: "Categorias", arquivo: "categorias", area: "painel-administracao", carregar: categorias },
-  candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", area: "painel-administracao", carregar: candidaturas },
-  devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", area: "painel", carregar: devolucoes },
-  historico: { titulo: "Histórico de alterações", arquivo: "historico", area: "painel-administracao", carregar: historico },
+  pecas: { titulo: "Peças", arquivo: "pecas", pagina: "pecas", carregar: pecas },
+  fornecedoras: { titulo: "Fornecedoras", arquivo: "fornecedoras", pagina: "fornecedoras", carregar: fornecedoras },
+  clientes: { titulo: "Clientes", arquivo: "clientes", pagina: "clientes", carregar: clientes },
+  pedidos: { titulo: "Pedidos", arquivo: "pedidos", pagina: "pedidos", carregar: pedidos },
+  vendas: { titulo: "Vendas", arquivo: "vendas", pagina: "vendas", carregar: vendas },
+  categorias: { titulo: "Categorias", arquivo: "categorias", pagina: "categorias", carregar: categorias },
+  candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", pagina: "candidaturas", carregar: candidaturas },
+  devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
+  historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
 };

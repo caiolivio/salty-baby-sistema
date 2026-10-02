@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { lerNomeCategoria } from "@/lib/categorias";
 
@@ -12,7 +12,7 @@ export type EstadoCategoria = { erro?: string; aviso?: string } | undefined;
 const nomeRepetido = (erro: unknown) => erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002";
 
 export async function novaCategoria(_estado: EstadoCategoria, dados: FormData): Promise<EstadoCategoria> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("categorias", "alterar");
   const lido = lerNomeCategoria(dados.get("nome"));
   if (!lido.ok) return { erro: lido.erro };
   const ultima = await prisma.categoria.aggregate({ _max: { ordem: true } });
@@ -27,7 +27,7 @@ export async function novaCategoria(_estado: EstadoCategoria, dados: FormData): 
 }
 
 export async function salvarCategoria(_estado: EstadoCategoria, dados: FormData): Promise<EstadoCategoria> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("categorias", "alterar");
   const id = String(dados.get("id") ?? "");
   const lido = lerNomeCategoria(dados.get("nome"));
   if (!lido.ok) return { erro: lido.erro };
@@ -53,7 +53,7 @@ export type CategoriaIncluida = { ok: true; id: string; nome: string } | { ok: f
  * coloca de volta no cadastro, para ela ser marcada.
  */
 export async function incluirCategoriaNoCadastro(nomeDigitado: string): Promise<CategoriaIncluida> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("categorias", "alterar");
   const lido = lerNomeCategoria(nomeDigitado);
   if (!lido.ok) return lido;
   const existente = await prisma.categoria.findFirst({ where: { nome: lido.nome } });

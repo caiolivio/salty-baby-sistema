@@ -4,7 +4,7 @@ import { refresh, revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirAcesso, exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { mensagemDoLink } from "@/lib/clientes/conta";
 import { criarAcessoPelaLoja } from "@/lib/clientes/contas";
@@ -35,7 +35,7 @@ async function mesmoWhatsapp(telefone: string | null, exceto?: string) {
 }
 
 export async function novaCliente(_estado: EstadoCliente, dados: FormData): Promise<EstadoCliente> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("clientes", "alterar");
   const valores = valoresDigitados(dados);
   const lido = lerFormularioCliente(valores, {}, podeAcessar(usuario.perfis, "painel-administracao"));
   if (!lido.ok) return { erro: lido.erro, valores };
@@ -48,7 +48,7 @@ export async function novaCliente(_estado: EstadoCliente, dados: FormData): Prom
 }
 
 export async function salvarCliente(_estado: EstadoCliente, dados: FormData): Promise<EstadoCliente> {
-  const usuario = await exigirAcesso("painel");
+  const usuario = await exigirPagina("clientes", "alterar");
   const valores = valoresDigitados(dados);
   const id = valores.id ?? "";
   const atual = await prisma.cliente.findUnique({ where: { id } });
@@ -75,7 +75,7 @@ export type EstadoCrianca = { erro?: string; ok?: string; valores?: Record<strin
 
 /** Inclui ou altera uma criança da cliente (sem id, inclui). */
 export async function gravarCrianca(_estado: EstadoCrianca, dados: FormData): Promise<EstadoCrianca> {
-  await exigirAcesso("painel");
+  await exigirPagina("clientes", "alterar");
   const valores = valoresDigitados(dados);
   const lido = lerCrianca(valores, hojeEmSaoPaulo());
   if (!lido.ok) return { erro: lido.erro, valores };
@@ -93,7 +93,7 @@ export async function gravarCrianca(_estado: EstadoCrianca, dados: FormData): Pr
 }
 
 export async function removerCrianca(dados: FormData): Promise<void> {
-  await exigirAcesso("painel");
+  await exigirPagina("clientes", "alterar");
   const clienteId = String(dados.get("clienteId") ?? "");
   await prisma.crianca.deleteMany({ where: { id: String(dados.get("id") ?? ""), clienteId } });
   revalidatePath(`/painel/clientes/${clienteId}`);

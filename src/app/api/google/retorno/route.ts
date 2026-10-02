@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirExtra } from "@/lib/acesso";
 import { COOKIE_ESTADO, ErroDoDrive, trocarCodigo } from "@/lib/backup/drive";
 import { guardarLigacao } from "@/lib/backup/executar";
 import { emailDoIdToken } from "@/lib/backup/regras";
 
 // O Google volta para cá depois que a administradora autoriza (ou recusa).
 export async function GET(pedido: Request) {
-  await exigirAcesso("painel-administracao", "/painel/backup");
+  await exigirExtra("backup", "/painel/backup");
   const parametros = new URL(pedido.url).searchParams;
   const potes = await cookies();
   const esperado = potes.get(COOKIE_ESTADO)?.value;

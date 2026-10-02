@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { listarOpcoesDeClientes } from "@/lib/clientes/opcoes";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAcessar, podeVer, temExtra } from "@/lib/permissoes";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente, minutosRestantes } from "@/lib/pedidos/regras";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
@@ -22,7 +22,7 @@ const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: 
 
 export default async function PedidoNoPainel({ params, searchParams }: PageProps<"/painel/pedidos/[id]">) {
   const { id } = await params;
-  const usuario = await exigirAcesso("painel", `/painel/pedidos/${id}`);
+  const usuario = await exigirPagina("pedidos", "ver", `/painel/pedidos/${id}`);
   const aviso = await searchParams;
   await liberarReservasVencidas();
   const pedido = await prisma.pedido.findUnique({
@@ -52,6 +52,8 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
   });
   if (!pedido) notFound();
   const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const confirma = temExtra(usuario.acesso, "confirmar_pagamento");
+  const valores = temExtra(usuario.acesso, "valores");
   const aberto = pedido.status === "reservado" || pedido.status === "expirado";
   const itemVendido = (pecaId: string) => pedido.venda?.itens.find((i) => i.pecaId === pecaId);
 
@@ -89,7 +91,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
       )}
       {aberto && (
         <div className={proprios.acoes}>
-          {administradora && (
+          {confirma && (
             <Link href={`/painel/pedidos/${pedido.id}/confirmar`} className={proprios.botao}>
               Confirmar pagamento
             </Link>
@@ -157,7 +159,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
               <th>Peça</th>
               <th>Fornecedora</th>
               <th className={estilos.numero}>Preço</th>
-              {pedido.venda && administradora && (
+              {pedido.venda && valores && (
                 <>
                   <th className={estilos.numero}>Pago</th>
                   <th className={estilos.numero}>Repasse</th>
@@ -199,7 +201,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                   <td data-rotulo="Fornecedora">
                     {i.peca.fornecedora ? (
                       <>
-                        {administradora ? (
+                        {podeVer(usuario.acesso, "fornecedoras") ? (
                           <Link href={`/painel/fornecedoras/${i.peca.fornecedora.id}`}>{i.peca.fornecedora.codigo}</Link>
                         ) : (
                           i.peca.fornecedora.codigo
@@ -213,7 +215,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                   <td className={estilos.numero} data-rotulo="Preço">
                     {formatarReais(i.precoCentavos)}
                   </td>
-                  {vendido && administradora && (
+                  {vendido && valores && (
                     <>
                       <td className={estilos.numero} data-rotulo="Pago">
                         {formatarReais(vendido.valorPagoCentavos)}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { EtapaCandidatura } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarDia } from "@/lib/datas";
 import { NOMES_ETAPA } from "@/lib/fornecedoras/candidatura";
@@ -22,7 +22,7 @@ const FILTROS: { valor: string; nome: string; etapas: EtapaCandidatura[] }[] = [
 ];
 
 export default async function Candidaturas({ searchParams }: PageProps<"/painel/candidaturas">) {
-  await exigirAcesso("painel-administracao", "/painel/candidaturas");
+  await exigirPagina("candidaturas", "ver", "/painel/candidaturas");
   const { etapa } = await searchParams;
   const filtro = FILTROS.find((f) => f.valor === etapa) ?? FILTROS[0];
 

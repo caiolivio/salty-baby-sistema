@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
@@ -9,7 +9,7 @@ import { BotoesExportar } from "../exportar/botoes";
 export const metadata: Metadata = { title: "Categorias" };
 
 export default async function Categorias() {
-  await exigirAcesso("painel-administracao", "/painel/categorias");
+  await exigirPagina("categorias", "ver", "/painel/categorias");
   const categorias = await prisma.categoria.findMany({
     orderBy: [{ ordem: "asc" }, { nome: "asc" }],
     include: { _count: { select: { pecas: true } } },

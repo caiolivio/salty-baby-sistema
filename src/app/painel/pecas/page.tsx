@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
+import { podeAlterar } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
@@ -18,7 +19,7 @@ export const metadata: Metadata = { title: "Peças" };
 const POR_PAGINA = 50;
 
 export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">) {
-  await exigirAcesso("painel", "/painel/pecas");
+  const { acesso } = await exigirPagina("pecas", "ver", "/painel/pecas");
   const loja = await lerLoja();
   const parametros = await searchParams;
   const excluida = typeof parametros.excluida === "string" ? parametros.excluida : "";
@@ -61,9 +62,11 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
         <h1 className={estilos.titulo}>Peças</h1>
         <span className={proprios.exportar}>
           <BotoesExportar tabela="pecas" />
-          <Link href="/painel/pecas/nova" className={proprios.botao}>
-            + Nova peça
-          </Link>
+          {podeAlterar(acesso, "pecas") && (
+            <Link href="/painel/pecas/nova" className={proprios.botao}>
+              + Nova peça
+            </Link>
+          )}
         </span>
       </div>
       {excluida && (

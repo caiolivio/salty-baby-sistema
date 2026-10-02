@@ -1,0 +1,56 @@
+.permissoes {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #d5e3e8;
+}
+
+.linha {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #d5e3e8;
+}
+
+.linha > span:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  flex: 1;
+}
+
+.niveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.alerta {
+  margin: 0;
+  padding: 12px;
+  border-left: 4px solid #b3261e;
+  background: #fdf0ef;
+  color: var(--tinta);
+}
+
+.risco {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #d5e3e8;
+}
+
+.risco input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.risco > span {
+  display: flex;
+  flex-direction: column;
+}

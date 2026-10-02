@@ -19,14 +19,14 @@ enum Perfil {
 }
 
 model Usuario {
-  id             String          @id @default(cuid())
-  nome           String          @db.VarChar(120)
-  email          String          @unique @db.VarChar(191)
-  senhaHash      String          @map("senha_hash") @db.VarChar(100)
-  ativo          Boolean         @default(true)
-  ultimoAcessoEm DateTime?       @map("ultimo_acesso_em")
-  criadoEm       DateTime        @default(now()) @map("criado_em")
-  atualizadoEm   DateTime        @updatedAt @map("atualizado_em")
+  id             String            @id @default(cuid())
+  nome           String            @db.VarChar(120)
+  email          String            @unique @db.VarChar(191)
+  senhaHash      String            @map("senha_hash") @db.VarChar(100)
+  ativo          Boolean           @default(true)
+  ultimoAcessoEm DateTime?         @map("ultimo_acesso_em")
+  criadoEm       DateTime          @default(now()) @map("criado_em")
+  atualizadoEm   DateTime          @updatedAt @map("atualizado_em")
   perfis         UsuarioPerfil[]
   /// Ficha de cliente ligada a esta conta (quem tem o perfil cliente).
   cliente        Cliente?
@@ -34,8 +34,24 @@ model Usuario {
   /// Ficha de fornecedora ligada a esta conta (quem tem o perfil fornecedora).
   fornecedora    Fornecedora?
   candidatura    Candidatura?
+  /// Só para o suporte (perfil ajudante): WhatsApp para mandar o link de senha.
+  whatsapp       String?           @db.VarChar(20)
+  /// Páginas e ações liberadas para o suporte em Painel > Equipe.
+  permissoes     PermissaoEquipe[]
 
   @@map("usuarios")
+}
+
+/// O que um suporte pode usar no painel. `chave` é uma página (nível "ver" ou
+/// "alterar") ou uma ação delicada (nível "sim"). Regras em src/lib/permissoes.ts.
+model PermissaoEquipe {
+  usuarioId String  @map("usuario_id")
+  chave     String  @db.VarChar(40)
+  nivel     String  @db.VarChar(10)
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, chave])
+  @@map("permissoes_equipe")
 }
 
 model UsuarioPerfil {

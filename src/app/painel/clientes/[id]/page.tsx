@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarCpf } from "@/lib/clientes/dados";
 import {
@@ -18,7 +18,7 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAcessar, podeVer, temExtra } from "@/lib/permissoes";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
@@ -38,8 +38,10 @@ const canal = (c: string) => (c === "site" ? "Site" : (CANAIS_DIRETOS.find((d) =
 
 export default async function Cliente({ params, searchParams }: PageProps<"/painel/clientes/[id]">) {
   const { id } = await params;
-  const usuario = await exigirAcesso("painel", `/painel/clientes/${id}`);
+  const usuario = await exigirPagina("clientes", "ver", `/painel/clientes/${id}`);
   const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  // Quanto a cliente gastou: para quem também vê Vendas.
+  const verGasto = podeVer(usuario.acesso, "vendas");
   const aviso = await searchParams;
 
   const cliente = await prisma.cliente.findUnique({
@@ -101,7 +103,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           </a>
         )}
         <span>{c.vendas.length} compra(s)</span>
-        {administradora && <span>{formatarReais(gasto)} no total</span>}
+        {verGasto && <span>{formatarReais(gasto)} no total</span>}
         {c.vendas[0] && <span>última em {formatarData(c.vendas[0].data)}</span>}
         {tamanhos.length > 0 && <span>tamanhos comprados: {tamanhos.join(", ")}</span>}
         {administradora && c.cpf && <span>CPF {formatarCpf(c.cpf)}</span>}
@@ -162,13 +164,13 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           <strong>{vendasDoPeriodo.length}</strong>
           compra(s) · {pecasDoPeriodo} peça(s)
         </div>
-        {administradora && (
+        {verGasto && (
           <div className={estilos.cartao}>
             <strong>{formatarReais(gastoDoPeriodo)}</strong>
             gasto no período
           </div>
         )}
-        {administradora && (
+        {verGasto && (
           <div className={estilos.cartao}>
             <strong>{formatarReais(ticketMedio)}</strong>
             ticket médio
@@ -181,7 +183,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           </div>
         )}
       </div>
-      {administradora && vendasDoPeriodo.length > 0 && (
+      {verGasto && vendasDoPeriodo.length > 0 && (
         <GraficoGasto
           barras={agruparGasto(c.vendas, periodo)}
           titulo={`Gasto por ${periodo.por === "dia" ? "dia" : "mês"} · ${periodo.rotulo}`}
@@ -270,7 +272,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
                 <th>Data</th>
                 <th>Canal</th>
                 <th>Peças</th>
-                {administradora && <th className={estilos.numero}>Total</th>}
+                {verGasto && <th className={estilos.numero}>Total</th>}
               </tr>
             </thead>
             <tbody>
@@ -291,7 +293,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
                       </span>
                     ))}
                   </td>
-                  {administradora && (
+                  {verGasto && (
                     <td className={estilos.numero} data-rotulo="Total">
                       {formatarReais(v.totalCentavos)}
                       {v.descontoCentavos > 0 && <span className={estilos.antigo}>desconto {formatarReais(v.descontoCentavos)}</span>}
@@ -304,7 +306,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         </div>
       )}
 
-      <HistoricoDoRegistro tabela="cliente" registroId={c.id} administradora={administradora} />
+      <HistoricoDoRegistro tabela="cliente" registroId={c.id} verRestritos={temExtra(usuario.acesso, "valores")} />
     </>
   );
 }

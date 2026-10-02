@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { gravarDivulgacao, pecasDaDivulgacao } from "./lista-da-divulgacao";
 
 // Monta a lista de peças da divulgação do WhatsApp Marketing.
 
 export async function incluirNaDivulgacao(dados: FormData) {
-  await exigirAcesso("painel");
+  await exigirPagina("marketing", "ver");
   const novas = dados.getAll("id").map(String);
   await gravarDivulgacao([...(await pecasDaDivulgacao()), ...novas]);
   revalidatePath("/painel/marketing");
@@ -17,14 +17,14 @@ export async function incluirNaDivulgacao(dados: FormData) {
 }
 
 export async function tirarDaDivulgacao(dados: FormData) {
-  await exigirAcesso("painel");
+  await exigirPagina("marketing", "ver");
   const id = String(dados.get("id") ?? "");
   await gravarDivulgacao((await pecasDaDivulgacao()).filter((x) => x !== id));
   revalidatePath("/painel/marketing");
 }
 
 export async function limparDivulgacao() {
-  await exigirAcesso("painel");
+  await exigirPagina("marketing", "ver");
   await gravarDivulgacao([]);
   revalidatePath("/painel/marketing");
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Genero, Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { origemDaRequisicao } from "@/lib/etiquetas";
@@ -11,7 +11,7 @@ import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { grupoMaisSugerido, LIMITE_DIVULGACAO } from "@/lib/grupos/regras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAlterar, podeVer } from "@/lib/permissoes";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { generosDoPublico, lerFiltros, PUBLICOS } from "@/lib/vitrine";
 import proprios from "../formulario.module.css";
@@ -33,8 +33,8 @@ const somar = (vendas: { totalCentavos: number }[]): Soma => ({
 });
 
 export default async function WhatsappMarketing({ searchParams }: PageProps<"/painel/marketing">) {
-  const usuario = await exigirAcesso("painel", "/painel/marketing");
-  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
+  const usuario = await exigirPagina("marketing", "ver", "/painel/marketing");
+  const verVendas = podeVer(usuario.acesso, "vendas");
   await liberarReservasVencidas();
   const f = lerFiltros(await searchParams);
   const buscou = Boolean(f.busca || f.categoria || f.tamanho || f.publico);
@@ -125,14 +125,14 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
                     {p.status !== "publicada" && <strong> · saiu da vitrine</strong>}
                     {p.status === "publicada" && p.naoListada && " · não listado (só pelo link)"}
                   </span>
-                  <form action={tirarDaDivulgacao}>
+                  <form action={tirarDaDivulgacao} data-consulta>
                     <input type="hidden" name="id" value={p.id} />
                     <button type="submit">Tirar</button>
                   </form>
                 </li>
               ))}
             </ul>
-            <form action={limparDivulgacao}>
+            <form action={limparDivulgacao} data-consulta>
               <button type="submit" className={proprios.botaoSecundario}>
                 Limpar lista
               </button>
@@ -208,7 +208,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
           As peças &quot;Não listado&quot; também aparecem aqui: não estão na vitrine, mas quem recebe o link pode comprar.
         </p>
         {encontradas.length > 0 && (
-          <form action={incluirNaDivulgacao}>
+          <form action={incluirNaDivulgacao} data-consulta>
             <div className={marketing.pecas}>
               {encontradas.map((p) => (
                 <div key={p.id} className={marketing.peca}>
@@ -244,12 +244,12 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
         )}
       </section>
 
-      {administradora && <VendasPorGrupo />}
+      {verVendas && <VendasPorGrupo editarGrupos={podeAlterar(usuario.acesso, "marketing")} />}
     </>
   );
 }
 
-async function VendasPorGrupo() {
+async function VendasPorGrupo({ editarGrupos }: { editarGrupos: boolean }) {
   const hoje = hojeEmSaoPaulo();
   const inicioDoMes = new Date(`${hoje.slice(0, 8)}01T00:00:00Z`);
   const [ano, mes] = hoje.split("-").map(Number);
@@ -267,9 +267,11 @@ async function VendasPorGrupo() {
     <section aria-labelledby="titulo-vendas">
       <div className={proprios.cabecalho}>
         <h2 id="titulo-vendas">Vendas por grupo</h2>
-        <Link href="/painel/marketing/grupos" className={proprios.botaoSecundario}>
-          Editar grupos
-        </Link>
+        {editarGrupos && (
+          <Link href="/painel/marketing/grupos" className={proprios.botaoSecundario}>
+            Editar grupos
+          </Link>
+        )}
       </div>
       <p className={proprios.dica}>
         Contam as vendas registradas no painel com o grupo escolhido e os pedidos do site que vieram pelo link do post.

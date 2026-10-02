@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { mensagemDeAprovacao } from "@/lib/fornecedoras/candidatura";
 import {
@@ -29,7 +29,7 @@ export type EstadoAprovacao = { erro?: string; link?: string; whatsapp?: string;
 /** Aprova o passo 1 (ou gera um link novo) e devolve o link para mandar no WhatsApp. */
 export async function aprovar(_estado: EstadoAprovacao, dados: FormData): Promise<EstadoAprovacao> {
   const id = textoDe(dados, "id");
-  await exigirAcesso("painel-administracao", `/painel/candidaturas/${id}`);
+  await exigirPagina("candidaturas", "alterar", `/painel/candidaturas/${id}`);
   const r = await aprovarCandidatura(id);
   if (!r.ok) {
     return {
@@ -53,14 +53,14 @@ export async function aprovar(_estado: EstadoAprovacao, dados: FormData): Promis
 
 export async function recusar(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
-  await exigirAcesso("painel-administracao", `/painel/candidaturas/${id}`);
+  await exigirPagina("candidaturas", "alterar", `/painel/candidaturas/${id}`);
   await recusarCandidatura(id, textoDe(dados, "observacao") || null);
   redirect(`/painel/candidaturas/${id}?recusada=1`);
 }
 
 export async function anotar(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
-  await exigirAcesso("painel-administracao", `/painel/candidaturas/${id}`);
+  await exigirPagina("candidaturas", "alterar", `/painel/candidaturas/${id}`);
   await anotarCandidatura(id, textoDe(dados, "observacao").slice(0, 2000) || null);
   redirect(`/painel/candidaturas/${id}?anotada=1`);
 }
@@ -68,7 +68,7 @@ export async function anotar(dados: FormData): Promise<void> {
 /** Passo 3: cria a fornecedora (com o próximo código) ligada à conta dela. */
 export async function efetivar(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
-  await exigirAcesso("painel-administracao", `/painel/candidaturas/${id}`);
+  await exigirPagina("candidaturas", "alterar", `/painel/candidaturas/${id}`);
   const r = await efetivarCandidatura(id);
   redirect(`/painel/candidaturas/${id}?${r.ok ? `efetivada=${r.codigo}` : `erro=${r.motivo}`}`);
 }
@@ -77,7 +77,7 @@ export async function efetivar(dados: FormData): Promise<void> {
 export async function receber(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
   const voltar = textoDe(dados, "voltar") || "/painel/candidaturas";
-  const usuario = await exigirAcesso("painel-administracao", voltar);
+  const usuario = await exigirPagina("candidaturas", "alterar", voltar);
   const r = await receberProposta(id, hojeEmSaoPaulo(), autorDe(usuario));
   if (r.ok) redirect(`/painel/pecas/${r.pecaId}?criada=1`);
   redirect(`${voltar}?erro=${r.motivo}`);
@@ -86,7 +86,7 @@ export async function receber(dados: FormData): Promise<void> {
 export async function recusarPeca(dados: FormData): Promise<void> {
   const id = textoDe(dados, "id");
   const voltar = textoDe(dados, "voltar") || "/painel/candidaturas";
-  await exigirAcesso("painel-administracao", voltar);
+  await exigirPagina("candidaturas", "alterar", voltar);
   await recusarProposta(id);
   refresh();
 }

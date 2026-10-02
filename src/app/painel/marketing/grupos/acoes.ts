@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { codigoDoGrupo, lerNomeGrupo, lerPapelGrupo } from "@/lib/grupos/regras";
 
@@ -11,7 +11,7 @@ export type EstadoGrupo = { erro?: string; aviso?: string } | undefined;
 const repetido = (erro: unknown) => erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002";
 
 export async function novoGrupo(_estado: EstadoGrupo, dados: FormData): Promise<EstadoGrupo> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("marketing", "alterar");
   const lido = lerNomeGrupo(dados.get("nome"));
   if (!lido.ok) return { erro: lido.erro };
   const ultimo = await prisma.grupoWhatsapp.aggregate({ _max: { ordem: true } });
@@ -32,7 +32,7 @@ export async function novoGrupo(_estado: EstadoGrupo, dados: FormData): Promise<
 }
 
 export async function salvarGrupo(_estado: EstadoGrupo, dados: FormData): Promise<EstadoGrupo> {
-  await exigirAcesso("painel-administracao");
+  await exigirPagina("marketing", "alterar");
   const id = String(dados.get("id") ?? "");
   const lido = lerNomeGrupo(dados.get("nome"));
   if (!lido.ok) return { erro: lido.erro };

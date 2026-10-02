@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../../painel.module.css";
 import { novaCliente } from "../acoes";
@@ -9,7 +9,7 @@ import { FormularioCliente } from "../formulario-cliente";
 export const metadata: Metadata = { title: "Nova cliente" };
 
 export default async function NovaCliente() {
-  const usuario = await exigirAcesso("painel", "/painel/clientes/nova");
+  const usuario = await exigirPagina("clientes", "alterar", "/painel/clientes/nova");
   return (
     <>
       <p>

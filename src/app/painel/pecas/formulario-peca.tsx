@@ -53,6 +53,7 @@ export function FormularioPeca({
   opcoesDeStatus = SITUACOES_DO_CADASTRO,
   avisoDoStatus,
   opcaoDaLoja = "Peça da própria loja",
+  mostrarValores = true,
 }: {
   acao: Acao;
   iniciais: ValoresPeca;
@@ -65,8 +66,10 @@ export function FormularioPeca({
   /** Categorias para marcar e as que já estão marcadas. */
   categorias: { id: string; nome: string }[];
   categoriasMarcadas?: string[];
-  /** Só a administradora cria categorias. */
+  /** Quem pode alterar Categorias cria uma nova direto daqui. */
   podeIncluirCategoria?: boolean;
+  /** Custo e repasse: só para quem pode ver custo, repasse e lucro. */
+  mostrarValores?: boolean;
   /** Status que dá para escolher (a peça reservada ou vendida tem outra lista: opcoesDeStatus). */
   opcoesDeStatus?: readonly { valor: string; nome: string }[];
   /** O que a troca de status faz, quando mexe em pedido, devolução ou venda. */
@@ -202,7 +205,7 @@ export function FormularioPeca({
             Preço (R$)
             <input name="precoCentavos" inputMode="decimal" defaultValue={v("precoCentavos")} placeholder="45,90" />
           </label>
-          {consignada ? (
+          {!mostrarValores ? null : consignada ? (
             <label className={estilos.campo}>
               Repasse (%)
               <input

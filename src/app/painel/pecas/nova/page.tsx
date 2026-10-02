@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { podeAcessar } from "@/lib/permissoes";
+import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import estilos from "../../painel.module.css";
@@ -14,7 +14,7 @@ import { lerLoja } from "@/lib/loja/servidor";
 export const metadata: Metadata = { title: "Nova peça" };
 
 export default async function NovaPeca({ searchParams }: PageProps<"/painel/pecas/nova">) {
-  const usuario = await exigirAcesso("painel", "/painel/pecas/nova");
+  const usuario = await exigirPagina("pecas", "alterar", "/painel/pecas/nova");
   const { fornecedora } = await searchParams;
   const [fornecedoras, categorias] = await Promise.all([
     prisma.fornecedora.findMany({
@@ -38,13 +38,14 @@ export default async function NovaPeca({ searchParams }: PageProps<"/painel/peca
         textoBotao="Cadastrar peça"
         voltar="/painel/pecas"
         categorias={categorias}
-        podeIncluirCategoria={podeAcessar(usuario.perfis, "painel-administracao")}
+        podeIncluirCategoria={podeAlterar(usuario.acesso, "categorias")}
+        mostrarValores={temExtra(usuario.acesso, "valores")}
         opcaoDaLoja={`${loja.nomeCurto} (peça da loja, código ${loja.prefixoLoja})`}
         fornecedoras={fornecedoras.map((f) => ({
           id: f.id,
           codigo: f.codigo,
           nome: f.nome,
-          repasse: mostrarPercentual(f.percentualRepassePadrao),
+          repasse: temExtra(usuario.acesso, "valores") ? mostrarPercentual(f.percentualRepassePadrao) : "",
         }))}
         iniciais={{
           fornecedoraId: typeof fornecedora === "string" ? fornecedora : "",

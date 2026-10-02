@@ -3,9 +3,10 @@
 import { refresh } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirAcesso, exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
-import { lerFormularioFornecedora } from "@/lib/fornecedoras/dados";
+import { lerFormularioFornecedora, mostrarPercentual } from "@/lib/fornecedoras/dados";
+import { temExtra, type Acesso } from "@/lib/permissoes";
 import { atualizarFornecedora, criarFornecedora } from "@/lib/fornecedoras/gravar";
 import { mensagemDoLink } from "@/lib/clientes/conta";
 import { mensagemDoConvite } from "@/lib/fornecedoras/conta";
@@ -21,10 +22,28 @@ export type EstadoFornecedora = { erro?: string; valores?: Record<string, string
 const valoresDigitados = (dados: FormData) =>
   Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
 
+/**
+ * O suporte não vê CPF/CNPJ e Pix (só a administradora) nem, sem "Ver custo,
+ * repasse e lucro", o repasse padrão: esses campos ficam como estavam.
+ */
+function manterProtegidos(
+  valores: Record<string, string>,
+  acesso: Acesso,
+  atual: { documento: string | null; pix: string | null; percentualRepassePadrao: number },
+) {
+  if (!acesso.administradora) {
+    valores.documento = atual.documento ?? "";
+    valores.pix = atual.pix ?? "";
+  }
+  if (!temExtra(acesso, "valores")) valores.percentualRepassePadrao = mostrarPercentual(atual.percentualRepassePadrao);
+}
+
 export async function novaFornecedora(_estado: EstadoFornecedora, dados: FormData): Promise<EstadoFornecedora> {
-  const usuario = await exigirAcesso("painel-administracao");
+  const usuario = await exigirPagina("fornecedoras", "alterar");
   const valores = valoresDigitados(dados);
-  const lido = lerFormularioFornecedora(valores, undefined, (await lerLoja()).repassePadrao);
+  const { repassePadrao } = await lerLoja();
+  manterProtegidos(valores, usuario.acesso, { documento: null, pix: null, percentualRepassePadrao: repassePadrao });
+  const lido = lerFormularioFornecedora(valores, undefined, repassePadrao);
   if (!lido.ok) return { erro: lido.erro, valores };
 
   const { id, codigo } = await criarFornecedora(lido.dados);
@@ -33,11 +52,15 @@ export async function novaFornecedora(_estado: EstadoFornecedora, dados: FormDat
 }
 
 export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormData): Promise<EstadoFornecedora> {
-  const usuario = await exigirAcesso("painel-administracao");
+  const usuario = await exigirPagina("fornecedoras", "alterar");
   const valores = valoresDigitados(dados);
   const id = valores.id ?? "";
-  const atual = await prisma.fornecedora.findUnique({ where: { id }, select: { documento: true } });
+  const atual = await prisma.fornecedora.findUnique({
+    where: { id },
+    select: { documento: true, pix: true, percentualRepassePadrao: true },
+  });
   if (!atual) return { erro: "Esta fornecedora não existe mais.", valores };
+  manterProtegidos(valores, usuario.acesso, atual);
   const lido = lerFormularioFornecedora(valores, atual.documento, (await lerLoja()).repassePadrao);
   if (!lido.ok) return { erro: lido.erro, valores };
 

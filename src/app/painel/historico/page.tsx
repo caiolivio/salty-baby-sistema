@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
+import { temExtra } from "@/lib/permissoes";
 import { formatarDataHora } from "@/lib/datas";
 import { buscarHistorico, type FiltroDoHistorico } from "@/lib/historico/consultar";
 import { descreverMudanca, NOMES_TABELA, type TabelaDoHistorico } from "@/lib/historico/regras";
@@ -16,6 +17,7 @@ const ENDERECOS: Record<string, string> = {
   peca: "/painel/pecas/",
   fornecedora: "/painel/fornecedoras/",
   cliente: "/painel/clientes/",
+  equipe: "/painel/equipe/",
 };
 const ENDERECO_FIXO: Record<string, string> = { loja: "/painel/configuracoes" };
 
@@ -23,7 +25,7 @@ const texto = (v: string | string[] | undefined) => (typeof v === "string" ? v.t
 const dia = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 
 export default async function Historico({ searchParams }: PageProps<"/painel/historico">) {
-  await exigirAcesso("painel-administracao", "/painel/historico");
+  const usuario = await exigirPagina("historico", "ver", "/painel/historico");
   const p = await searchParams;
   const tabela = texto(p.tabela);
   const filtro: FiltroDoHistorico = {
@@ -34,7 +36,7 @@ export default async function Historico({ searchParams }: PageProps<"/painel/his
     ate: dia(texto(p.ate)) || undefined,
   };
   const pagina = Math.max(1, Number(p.pagina) || 1);
-  const { total, linhas } = await buscarHistorico(filtro, pagina, POR_PAGINA);
+  const { total, linhas } = await buscarHistorico(filtro, pagina, temExtra(usuario.acesso, "valores"), POR_PAGINA);
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
   const parametros = Object.fromEntries(
     Object.entries({ q: filtro.busca, tabela: filtro.tabela, campo: filtro.campo, de: filtro.de, ate: filtro.ate }).filter(

@@ -9,7 +9,7 @@ import { TAMANHOS } from "../tamanhos";
 // Histórico de alterações (LGPD e controle da loja): quem mudou o quê, quando.
 // Aqui ficam só as regras, sem banco, para poder testar.
 
-export type TabelaDoHistorico = "peca" | "fornecedora" | "cliente" | "loja";
+export type TabelaDoHistorico = "peca" | "fornecedora" | "cliente" | "loja" | "equipe";
 
 /** Quem fez a mudança. `usuarioId` vazio = o próprio sistema ou alguém sem login. */
 export type Autor = { usuarioId: string | null; nome: string };
@@ -235,6 +235,7 @@ export const NOMES_TABELA: Record<TabelaDoHistorico, string> = {
   fornecedora: "Fornecedora",
   cliente: "Cliente",
   loja: "Configurações",
+  equipe: "Equipe",
 };
 
 /** "R$ 30,00 → R$ 25,00", "(vazio) → Azul". */

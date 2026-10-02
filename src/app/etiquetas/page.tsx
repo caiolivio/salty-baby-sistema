@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import QRCode from "qrcode";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaEtiqueta, FORMATOS, lerFormato, lerIds, origemDaRequisicao } from "@/lib/etiquetas";
@@ -18,7 +18,7 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
   const ids = lerIds(parametros.ids);
   const formato = lerFormato(parametros.formato);
   const voltar = typeof parametros.voltar === "string" && parametros.voltar.startsWith("/painel") ? parametros.voltar : "/painel/pecas";
-  await exigirAcesso("painel", `/etiquetas?${new URLSearchParams({ ids: ids.join(","), formato })}`);
+  await exigirPagina("pecas", "ver", `/etiquetas?${new URLSearchParams({ ids: ids.join(","), formato })}`);
 
   const loja = await lerLoja();
   const { logo } = imagensDaLoja(loja);

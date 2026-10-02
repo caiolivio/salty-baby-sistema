@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
@@ -9,7 +9,7 @@ import { EditarGrupo, NovoGrupo } from "./formularios";
 export const metadata: Metadata = { title: "Grupos de WhatsApp" };
 
 export default async function Grupos() {
-  await exigirAcesso("painel-administracao", "/painel/marketing/grupos");
+  await exigirPagina("marketing", "alterar", "/painel/marketing/grupos");
   const grupos = await prisma.grupoWhatsapp.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }] });
 
   return (

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { exigirAcesso } from "@/lib/acesso";
+import { exigirExtra } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
-import { podeAcessar } from "@/lib/permissoes";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { minutosRestantes } from "@/lib/pedidos/regras";
 import proprios from "../../../formulario.module.css";
@@ -20,7 +19,7 @@ const NOMES = { reservado: "Reservado", expirado: "Reserva vencida", cancelado: 
 /** Página enxuta para confirmar o pagamento direto da lista de pedidos. */
 export default async function ConfirmarPedido({ params }: PageProps<"/painel/pedidos/[id]/confirmar">) {
   const { id } = await params;
-  const usuario = await exigirAcesso("painel", `/painel/pedidos/${id}/confirmar`);
+  await exigirExtra("confirmar_pagamento", `/painel/pedidos/${id}/confirmar`);
   await liberarReservasVencidas();
   const pedido = await prisma.pedido.findUnique({
     where: { id },
@@ -29,7 +28,6 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
     },
   });
   if (!pedido) notFound();
-  const administradora = podeAcessar(usuario.perfis, "painel-administracao");
   const aberto = pedido.status === "reservado" || pedido.status === "expirado";
   if (!aberto) redirect(`/painel/pedidos/${id}`);
 
@@ -87,8 +85,7 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
       </p>
 
-      {aberto && administradora && <ConfirmarPagamento id={pedido.id} />}
-      {aberto && !administradora && <p>Só a administradora pode confirmar o pagamento.</p>}
+      {aberto && <ConfirmarPagamento id={pedido.id} />}
       {pedido.status === "reservado" && (
         <form action={cancelarPedido}>
           <input type="hidden" name="id" value={pedido.id} />

@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "./banco";
 import { criarLimitador } from "./limitador";
-import type { Perfil } from "./permissoes";
+import { acessoDaEquipe, type Acesso, type Perfil } from "./permissoes";
 import { conferirSenha, gerarHash, normalizarEmail } from "./senha";
 
 const limitador = criarLimitador();
@@ -31,17 +31,26 @@ export async function verificarCredenciais(emailDigitado: string, senha: string)
   return { ok: true, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email } };
 }
 
-export type UsuarioLogado = { id: string; nome: string; email: string; perfis: Perfil[] };
+export type UsuarioLogado = {
+  id: string;
+  nome: string;
+  email: string;
+  perfis: Perfil[];
+  /** Páginas e ações do painel que a pessoa pode usar (a administradora pode tudo). */
+  acesso: Acesso;
+};
 
 /** Lê o usuário direto do banco: quem for desativado perde o acesso na hora. */
 export async function buscarUsuarioAtivo(id: string): Promise<UsuarioLogado | null> {
-  const usuario = await prisma.usuario.findUnique({ where: { id }, include: { perfis: true } });
+  const usuario = await prisma.usuario.findUnique({ where: { id }, include: { perfis: true, permissoes: true } });
   if (!usuario?.ativo) return null;
+  const perfis = usuario.perfis.map((p) => p.perfil);
   return {
     id: usuario.id,
     nome: usuario.nome,
     email: usuario.email,
-    perfis: usuario.perfis.map((p) => p.perfil),
+    perfis,
+    acesso: acessoDaEquipe(perfis, usuario.permissoes),
   };
 }
 
