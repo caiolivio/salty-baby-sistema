@@ -164,6 +164,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
           )}
         </div>
         <div className={estilos.info}>
+          {(conservacao || peca.marca) && <p className="sobretitulo">{[conservacao, peca.marca].filter(Boolean).join(" · ")}</p>}
           <h1>{peca.nome}</h1>
           <div className={estilos.precoEEstrela}>
             <strong className={estilos.precoGrande}>{formatarReais(peca.precoCentavos)}</strong>

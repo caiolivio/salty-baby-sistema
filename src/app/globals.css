@@ -18,6 +18,8 @@
   --raio-p: 4px;
   --sombra: 0 1px 2px rgba(19, 33, 43, 0.06), 0 4px 16px rgba(19, 33, 43, 0.06);
   --fonte: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Títulos e nomes das peças: letra com mais personalidade, bem marcada. */
+  --fonte-titulo: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", var(--fonte);
   --altura-toque: 44px;
 }
 
@@ -48,9 +50,30 @@ body {
 h1,
 h2,
 h3 {
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Linha pequena em maiúsculas acima de um título (ex.: "SEMINOVA · CARTER'S"). */
+.sobretitulo {
+  font-family: var(--fonte);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--petroleo);
 }
 
 a {
@@ -90,6 +113,17 @@ textarea {
 .creditos a {
   color: var(--petroleo);
   font-weight: 600;
+}
+
+/* Embaixo do rodapé escuro da loja, os créditos acompanham o fundo escuro. */
+body:has([data-rodape-escuro]) .creditos {
+  background: var(--tinta);
+  color: rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body:has([data-rodape-escuro]) .creditos a {
+  color: #fff;
 }
 
 @media print {

@@ -78,14 +78,188 @@
   padding: 16px;
 }
 
+/* Rodapé escuro, com duas chamadas em destaque (como nas lojas grandes). */
 .rodape {
+  margin-top: 48px;
+  background: var(--tinta);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.rodapeConteudo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 16px 40px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 860px) {
+  .rodapeConteudo {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 36px;
+  }
+}
+
+.rodapeMarca {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 24px;
+}
+
+.rodapeMarca strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.rodapeMarca span {
+  color: var(--turquesa);
+  font-weight: 600;
+}
+
+.rodapeMarca p {
+  margin-top: 8px;
+  font-size: 0.92rem;
+}
+
+.redes {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   gap: 8px;
-  padding: 16px;
-  background: var(--fundo-suave);
-  font-size: 0.85rem;
+  margin-top: 16px;
+}
+
+.redes a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.redes a:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chamadaFornecedora,
+.chamadaArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.chamadaFornecedora {
+  background: var(--petroleo);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.chamadaArea {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chamadaFornecedora > :global(.icone),
+.chamadaArea > :global(.icone) {
+  width: 28px;
+  height: 28px;
+  color: var(--turquesa);
+  margin-bottom: 4px;
+}
+
+.chamadaFornecedora :global(.sobretitulo) {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.chamadaArea :global(.sobretitulo) {
+  color: var(--turquesa);
+}
+
+.chamadaFornecedora h2,
+.chamadaArea h2 {
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.chamadaFornecedora p:not(:global(.sobretitulo)),
+.chamadaArea p:not(:global(.sobretitulo)) {
+  font-size: 0.92rem;
+  margin-bottom: 8px;
+}
+
+/* Botões do rodapé: cheio (claro) e vazado, com seta. */
+.botaoClaro,
+.botaoVazado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin-top: auto;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.botaoClaro {
+  background: #fff;
+  color: var(--tinta);
+}
+
+.botaoClaro:hover {
+  background: var(--turquesa);
+}
+
+.botaoVazado {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.botaoVazado:hover {
+  background: #fff;
+  color: var(--tinta);
+}
+
+.botaoClaro:hover :global(.icone),
+.botaoVazado:hover :global(.icone) {
+  transform: translateX(3px);
+}
+
+.botaoClaro :global(.icone),
+.botaoVazado :global(.icone) {
+  transition: transform 0.15s ease;
+}
+
+/* Abertura da vitrine: título grande, como nas lojas grandes. */
+.abertura {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 0 28px;
+}
+
+.abertura h1 {
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  color: var(--tinta);
+}
+
+.abertura p:not(:global(.sobretitulo)) {
+  max-width: 560px;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--texto-suave);
 }
 
 /* Filtros */
@@ -244,11 +418,18 @@
   text-decoration: underline;
 }
 
+.sobreCartao {
+  margin-top: 8px;
+  font-size: 0.66rem;
+}
+
 .nome {
-  margin-top: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.3;
+  margin-top: 2px;
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -261,9 +442,10 @@
 }
 
 .preco {
+  margin-top: 4px;
   color: var(--tinta);
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .paginas {
@@ -335,14 +517,15 @@
 }
 
 .info h1 {
+  margin-top: -4px;
   color: var(--tinta);
-  font-size: 1.5rem;
-  line-height: 1.2;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  line-height: 1.08;
 }
 
 .precoGrande {
-  font-size: 1.5rem;
-  font-weight: 650;
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .reservada {
@@ -457,7 +640,7 @@
 
 .tituloPagina {
   color: var(--tinta);
-  font-size: 1.5rem;
+  font-size: clamp(1.75rem, 4.5vw, 2.5rem);
   margin: 8px 0 16px;
 }
 
@@ -802,8 +985,8 @@
 }
 
 .secao h2 {
-  color: var(--petroleo);
-  font-size: 1.2rem;
+  color: var(--tinta);
+  font-size: 1.4rem;
   margin-bottom: 4px;
 }
 
@@ -1027,12 +1210,6 @@
   cursor: pointer;
 }
 
-.linksRodape {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
 .sucesso {
   padding: 10px 12px;
   border-radius: var(--raio);
@@ -1077,7 +1254,7 @@
 
 .secaoArea h2 {
   color: var(--tinta);
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   margin: 0;
 }
 

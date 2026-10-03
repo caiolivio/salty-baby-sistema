@@ -16,6 +16,7 @@ import { CartaoPeca, SELECAO_CARTAO } from "./cartao-peca";
 import { FiltrosDaVitrine } from "./filtros-da-vitrine";
 import estilos from "./loja.module.css";
 import { quemVeALoja } from "./quem-ve";
+import { lerLoja } from "@/lib/loja/servidor";
 
 // Título e descrição: os da loja (layout raiz).
 export const metadata: Metadata = {};
@@ -70,9 +71,17 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA_VITRINE));
   const quem = await quemVeALoja(pecas.map((p) => p.id));
   const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.busca);
+  const loja = await lerLoja();
 
   return (
     <>
+      {!filtrando && f.pagina === 1 && (
+        <section className={estilos.abertura}>
+          {loja.descricao && <p className="sobretitulo">{loja.descricao}</p>}
+          <h1>{loja.slogan ?? loja.nome}</h1>
+          <p>Roupas e acessórios infantis escolhidos um a um, prontos para uma nova história.</p>
+        </section>
+      )}
       <FiltrosDaVitrine className={estilos.filtros}>
         <label>
           Tamanho
