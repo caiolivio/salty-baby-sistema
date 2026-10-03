@@ -19,7 +19,10 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
   const itens: ItemDoMenu[] = [
     { chave: "", nome: "Início" },
     ...PAGINAS.filter((p) => podeVer(acesso, p.chave)).map((p) => ({ chave: p.chave, nome: p.nome })),
-    ...(acesso.administradora ? [{ chave: "acertos", nome: "Contas a pagar" }] : []),
+    ...(acesso.administradora ? [
+          { chave: "acertos", nome: "Contas a pagar" },
+          { chave: "relatorios", nome: "Relatórios" },
+        ] : []),
     ...(temExtra(acesso, "backup") ? [{ chave: "backup", nome: "Backup" }] : []),
     ...(acesso.administradora
       ? [

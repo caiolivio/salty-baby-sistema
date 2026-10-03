@@ -1,0 +1,158 @@
+.relatorio {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.relatorio h3 {
+  margin: 8px 0 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.1rem;
+  color: var(--tinta);
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.numeros > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+}
+
+.numeros span,
+.numeros small {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.numeros strong {
+  font-size: 1.4rem;
+  font-weight: 650;
+  color: var(--tinta);
+  letter-spacing: -0.02em;
+}
+
+.numeros :global(.icone) {
+  color: var(--turquesa);
+  width: 22px;
+  height: 22px;
+  margin-bottom: 4px;
+}
+
+.numeros > .destaque {
+  border-color: var(--petroleo);
+  background: var(--fundo-marca);
+}
+
+@media (max-width: 480px) {
+  .numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .numeros > div {
+    padding: 12px;
+  }
+
+  .numeros > .destaque {
+    grid-column: 1 / -1;
+  }
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.lista small {
+  color: var(--texto-suave);
+}
+
+.valor {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Gráfico de barras deitadas, uma por semana: cabe no celular com o texto legível. */
+.grafico {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+}
+
+.grafico figcaption {
+  font-weight: 700;
+  color: var(--tinta);
+  margin-bottom: 12px;
+}
+
+.grafico ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grafico li {
+  display: grid;
+  grid-template-columns: 6.5em 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.semana {
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.trilho {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--fundo-suave);
+  overflow: hidden;
+}
+
+.trilho span {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--petroleo);
+}
+
+.valorSemana {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 6.5em;
+  font-weight: 600;
+  color: var(--tinta);
+  white-space: nowrap;
+}
+
+.valorSemana small {
+  font-weight: 400;
+}
