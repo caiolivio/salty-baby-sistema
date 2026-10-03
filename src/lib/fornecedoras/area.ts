@@ -42,6 +42,7 @@ export async function dadosDaFornecedora(fornecedoraId: string) {
         repasseCentavos: true,
         repasseRecebido: true,
         repasseRecebidoEm: true,
+        acerto: { select: { id: true, numero: true, canceladoEm: true } },
         venda: { select: { data: true } },
         peca: { select: { codigo: true, nome: true } },
       },

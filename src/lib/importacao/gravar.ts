@@ -105,6 +105,7 @@ export async function apagarDadosImportados(): Promise<void> {
     prisma.itemPedido.deleteMany(),
     prisma.pedido.deleteMany(),
     prisma.itemVenda.deleteMany(),
+    prisma.acerto.deleteMany(),
     prisma.venda.deleteMany(),
     prisma.cliente.deleteMany(),
     prisma.fotoPeca.deleteMany(),

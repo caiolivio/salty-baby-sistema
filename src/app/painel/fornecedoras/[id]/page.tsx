@@ -61,6 +61,7 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
         {f.ativa && <Link href={`/painel/pecas/nova?fornecedora=${f.id}`}>Cadastrar peça dela</Link>}
         <span>{aVenda} em estoque</span>
         <span>{vendidas} vendida(s)</span>
+        {acesso.administradora && <Link href={`/painel/acertos/pagar/${f.id}`}>Pagar repasses</Link>}
       </div>
       <section aria-labelledby="acesso">
         <h2 id="acesso">Área da fornecedora</h2>

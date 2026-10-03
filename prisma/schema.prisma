@@ -108,6 +108,7 @@ model Fornecedora {
   propostas               PecaProposta[]
   devolucoes              Devolucao[]
   convites                ConviteFornecedora[]
+  acertos                 Acerto[]
 
   @@map("fornecedoras")
 }
@@ -370,12 +371,47 @@ model ItemVenda {
   /// A fornecedora já recebeu o repasse deste item.
   repasseRecebido       Boolean           @default(false) @map("repasse_recebido")
   repasseRecebidoEm     DateTime?         @map("repasse_recebido_em") @db.Date
+  /// Pagamento (acerto) em que o repasse foi pago. Vazio nas vendas acertadas no Notion.
+  acertoId              String?           @map("acerto_id")
   venda                 Venda             @relation(fields: [vendaId], references: [id], onDelete: Cascade)
   peca                  Peca              @relation(fields: [pecaId], references: [id])
+  acerto                Acerto?           @relation(fields: [acertoId], references: [id], onDelete: SetNull)
 
   @@index([vendaId])
   @@index([pecaId])
+  @@index([acertoId])
   @@map("itens_venda")
+}
+
+enum FormaAcerto {
+  pix
+  dinheiro
+  transferencia
+  outro
+}
+
+/// Pagamento de repasses a uma fornecedora (acerto). Gera o comprovante que
+/// vai pelo WhatsApp e fica na área dela. Desfeito, continua aqui com canceladoEm.
+model Acerto {
+  id            String      @id @default(cuid())
+  /// Número do comprovante (tabela sequencias, chave "acerto").
+  numero        Int         @unique
+  fornecedoraId String      @map("fornecedora_id")
+  data          DateTime    @db.Date
+  forma         FormaAcerto
+  totalCentavos Int         @map("total_centavos")
+  pecas         Int
+  observacao    String?     @db.VarChar(200)
+  usuarioId     String?     @map("usuario_id")
+  quem          String      @db.VarChar(191)
+  criadoEm      DateTime    @default(now()) @map("criado_em")
+  canceladoEm   DateTime?   @map("cancelado_em")
+  canceladoPor  String?     @map("cancelado_por") @db.VarChar(191)
+  fornecedora   Fornecedora @relation(fields: [fornecedoraId], references: [id])
+  itens         ItemVenda[]
+
+  @@index([fornecedoraId, data])
+  @@map("acertos")
 }
 
 /// Lista de categorias que a administradora mantém no painel. Uma peça pode ter várias.

@@ -8,6 +8,7 @@ const ABAS = [
   { href: "/fornecedora", nome: "Resumo" },
   { href: "/fornecedora/pecas", nome: "Minhas peças" },
   { href: "/fornecedora/vendas", nome: "Vendas" },
+  { href: "/fornecedora/pagamentos", nome: "Pagamentos" },
   { href: "/fornecedora/enviar", nome: "Enviar peças" },
   { href: "/fornecedora/dados", nome: "Meus dados" },
 ];
@@ -17,7 +18,7 @@ export function AbasDaFornecedora() {
   return (
     <nav className={estilos.abas} aria-label="Área da fornecedora">
       {ABAS.map((a) => (
-        <Link key={a.href} href={a.href} aria-current={atual === a.href ? "page" : undefined}>
+        <Link key={a.href} href={a.href} aria-current={atual === a.href || (a.href !== "/fornecedora" && atual.startsWith(`${a.href}/`)) ? "page" : undefined}>
           {a.nome}
         </Link>
       ))}

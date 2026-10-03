@@ -143,7 +143,7 @@ export default async function Backup({ searchParams }: PageProps<"/painel/backup
           <table className={estilos.tabela}>
             <tbody>
               {Object.entries(TABELAS)
-                .filter(([, tabela]) => podeVer(acesso, tabela.pagina))
+                .filter(([, tabela]) => podeVer(acesso, tabela.pagina) && (!tabela.soAdministradora || acesso.administradora))
                 .map(([chave, tabela]) => (
                 <tr key={chave}>
                   <td>{tabela.titulo}</td>
