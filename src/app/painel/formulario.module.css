@@ -4,7 +4,7 @@
   gap: 16px;
   padding: 20px 16px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
 }
 
@@ -44,7 +44,7 @@
   font-weight: 400;
   padding: 10px 12px;
   border: 1px solid var(--borda);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--tinta);
   min-width: 0;
@@ -73,7 +73,7 @@
 .dica {
   font-weight: 400;
   font-size: 0.85rem;
-  color: #4a5a64;
+  color: var(--texto-suave);
 }
 
 .acoes {
@@ -83,12 +83,22 @@
   align-items: center;
 }
 
+.botao,
+.botaoSecundario,
+.botaoPerigo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+}
+
 .botao {
   font: inherit;
   font-weight: 600;
-  padding: 12px 20px;
+  padding: 10px 18px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--petroleo);
   color: #fff;
   cursor: pointer;
@@ -102,14 +112,14 @@
 
 .erro {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: #fdecea;
   color: var(--erro);
 }
 
 .aviso {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: color-mix(in srgb, var(--turquesa) 12%, #ffffff);
   color: var(--petroleo);
   font-weight: 600;
@@ -133,9 +143,9 @@
   display: inline-block;
   margin-left: 6px;
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--raio);
   background: var(--fundo-suave);
-  color: #4a5a64;
+  color: var(--texto-suave);
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -155,7 +165,7 @@
   font-weight: 600;
   padding: 10px 16px;
   border: 1px solid var(--petroleo);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--petroleo);
   cursor: pointer;
@@ -184,7 +194,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo-suave);
 }
 
@@ -212,7 +222,7 @@
   font: inherit;
   padding: 4px 8px;
   border: 1px solid var(--borda);
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: var(--fundo);
   color: var(--petroleo);
   cursor: pointer;
@@ -280,7 +290,7 @@ label.botaoSecundario:focus-within {
   gap: 6px;
   padding: 8px 12px;
   border: 1px solid var(--borda);
-  border-radius: 999px;
+  border-radius: var(--raio);
   background: var(--fundo);
   cursor: pointer;
 }
@@ -323,7 +333,7 @@ label.botaoSecundario:focus-within {
 .linkGerado {
   display: block;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo-suave);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
@@ -341,7 +351,7 @@ label.botaoSecundario:focus-within {
   font-weight: 600;
   padding: 10px 16px;
   border: 1px solid var(--erro);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--erro);
   cursor: pointer;
@@ -360,7 +370,7 @@ label.botaoSecundario:focus-within {
   margin-top: 24px;
   padding: 16px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
 }
 
 .previaLogo {
@@ -401,7 +411,7 @@ label.botaoSecundario:focus-within {
   align-items: center;
   padding: 12px;
   border: 1px dashed var(--borda);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: #fff;
 }
 

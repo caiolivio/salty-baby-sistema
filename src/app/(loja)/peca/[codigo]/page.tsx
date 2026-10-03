@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
+import { ArrowLeft, Check, MessageCircle, Share2, ShoppingBag } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { prisma } from "@/lib/banco";
@@ -127,7 +128,10 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   return (
     <>
       <p>
-        <Link href="/">← Ver todas as peças</Link>
+        <Link href="/" className={estilos.voltar}>
+          <ArrowLeft className="icone" aria-hidden />
+          Ver todas as peças
+        </Link>
       </p>
       <article className={estilos.peca}>
         <div className={estilos.galeria}>
@@ -187,28 +191,35 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
           {peca.descricao && <p className={estilos.descricao}>{peca.descricao}</p>}
           {disponivel &&
             (noCarrinho ? (
-              <div className={estilos.jaNoCarrinho}>
-                <span>✓ Esta peça está no seu carrinho.</span>
+              <div className={`${estilos.jaNoCarrinho} ${estilos.acaoFixa}`}>
+                <span>
+                  <Check className="icone" aria-hidden /> Esta peça está no seu carrinho.
+                </span>
                 <Link href="/carrinho" className={estilos.botaoWhats}>
+                  <ShoppingBag className="icone" aria-hidden />
                   Ver carrinho e fechar pedido
                 </Link>
               </div>
             ) : (
-              <form action={incluir}>
+              <form action={incluir} className={estilos.acaoFixa}>
                 <input type="hidden" name="id" value={peca.id} />
                 <input type="hidden" name="voltar" value={enderecoDaPeca(peca.codigo)} />
+                <strong className={estilos.precoNaBarra}>{formatarReais(peca.precoCentavos)}</strong>
                 <button type="submit" className={estilos.botaoWhats}>
+                  <ShoppingBag className="icone" aria-hidden />
                   Incluir no carrinho
                 </button>
               </form>
             ))}
           {disponivel && whatsapp && (
-            <a className={estilos.linkWhats} href={whatsapp} target="_blank" rel="noopener noreferrer">
-              Tirar uma dúvida sobre esta peça no WhatsApp
+            <a className={estilos.botaoContorno} href={whatsapp} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="icone" aria-hidden />
+              Tirar uma dúvida no WhatsApp
             </a>
           )}
           <a className={estilos.compartilhar} href={paraAmiga} target="_blank" rel="noopener noreferrer">
-            Compartilhar com alguém no WhatsApp
+            <Share2 className="icone" aria-hidden />
+            Compartilhar com alguém
           </a>
         </div>
       </article>

@@ -2,7 +2,7 @@
   margin: 6px 0 0;
   padding: 12px;
   border: 1px solid var(--borda);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: #e7f7ee;
   font: inherit;
   font-size: 0.92rem;
@@ -25,7 +25,7 @@
   gap: 4px;
   padding: 8px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
   font-size: 0.88rem;
 }
@@ -40,14 +40,14 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: var(--fundo-suave);
 }
 
 .semFoto {
   display: grid;
   place-items: center;
-  color: #4a5a64;
+  color: var(--texto-suave);
 }
 
 .peca label {
@@ -94,7 +94,7 @@
   gap: 10px;
   padding: 6px 8px;
   border: 1px solid var(--borda);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo);
   font-size: 0.9rem;
 }
@@ -106,7 +106,7 @@
   aspect-ratio: auto;
   flex: none;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--raio-p);
 }
 
 .lista li span {
@@ -118,7 +118,7 @@
   font: inherit;
   padding: 6px 10px;
   border: 1px solid var(--borda);
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: var(--fundo);
   color: var(--petroleo);
   cursor: pointer;
@@ -151,7 +151,7 @@
   width: 120px;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
 }
 
 .pecaDoPost .previa {
@@ -172,7 +172,7 @@
 .naoListada {
   align-self: flex-start;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--raio);
   background: #fff4e0;
   color: #6b4500;
   font-size: 0.75rem;

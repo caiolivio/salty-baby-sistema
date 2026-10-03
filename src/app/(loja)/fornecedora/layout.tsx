@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { podeAcessar } from "@/lib/permissoes";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
@@ -26,8 +27,9 @@ export default async function LayoutFornecedora({ children }: LayoutProps<"/forn
           )}
         </p>
         <form action={sair}>
-          <button type="submit" className={estilos.sair}>
-            Sair da conta
+          <button type="submit" className={estilos.sairIcone}>
+            <LogOut className="icone" aria-hidden />
+            Sair
           </button>
         </form>
       </div>

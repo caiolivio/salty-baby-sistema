@@ -18,7 +18,7 @@
   font-weight: 600;
   padding: 6px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: transparent;
   color: var(--petroleo);
   cursor: pointer;

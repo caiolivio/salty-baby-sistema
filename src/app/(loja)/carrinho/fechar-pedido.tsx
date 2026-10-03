@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Send } from "lucide-react";
 import { formatarReais } from "@/lib/dinheiro";
 import estilos from "../loja.module.css";
 import { fechar } from "./acoes";
@@ -18,38 +19,55 @@ export function FecharPedido({
   totalCentavos?: number;
 }) {
   const [estado, acao, enviando] = useActionState(fechar, undefined);
+  // O botão fica fora do formulário (ligado pelo `form`) para, no celular,
+  // ficar preso no rodapé da tela com o total enquanto a cliente rola as peças.
   return (
-    <form action={acao} className={estilos.fechar} key={JSON.stringify(estado ?? null)}>
-      {estado?.erro && (
-        <p className={estilos.erro} role="alert">
-          {estado.erro}
-        </p>
-      )}
-      <label>
-        Seu nome
-        <input name="nome" defaultValue={estado?.nome ?? nome} autoComplete="name" maxLength={120} required />
-      </label>
-      <label>
-        Seu WhatsApp (com DDD)
-        <input name="telefone" type="tel" defaultValue={estado?.telefone ?? telefone} autoComplete="tel" inputMode="tel" maxLength={20} required />
-      </label>
-      {saldoCentavos ? (
-        <label className={estilos.marcarLinha}>
-          <input type="checkbox" name="usar_saldo" value="sim" defaultChecked />
-          <span>
-            Pagar com o meu saldo de fornecedora ({formatarReais(saldoCentavos)} disponível)
-            {totalCentavos && totalCentavos > saldoCentavos
-              ? `. O saldo cobre ${formatarReais(saldoCentavos)}, e o resto (${formatarReais(totalCentavos - saldoCentavos)}) você combina com a loja.`
-              : "."}
-          </span>
+    <>
+      <form id="fechar-pedido" action={acao} className={estilos.fechar} key={JSON.stringify(estado ?? null)}>
+        {estado?.erro && (
+          <p className={estilos.erro} role="alert">
+            {estado.erro}
+          </p>
+        )}
+        <label>
+          Seu nome
+          <input name="nome" defaultValue={estado?.nome ?? nome} autoComplete="name" maxLength={120} required />
         </label>
-      ) : null}
-      <button type="submit" className={estilos.botaoWhats} disabled={enviando}>
-        {enviando ? "Reservando…" : "Fechar pedido e enviar no WhatsApp"}
-      </button>
-      <span className={estilos.dica}>
-        As peças ficam reservadas para você por 15 minutos, enquanto combina o pagamento com a loja.
-      </span>
-    </form>
+        <label>
+          Seu WhatsApp (com DDD)
+          <input
+            name="telefone"
+            type="tel"
+            defaultValue={estado?.telefone ?? telefone}
+            autoComplete="tel"
+            inputMode="tel"
+            maxLength={20}
+            required
+          />
+        </label>
+        {saldoCentavos ? (
+          <label className={estilos.marcarLinha}>
+            <input type="checkbox" name="usar_saldo" value="sim" defaultChecked />
+            <span>
+              Pagar com o meu saldo de fornecedora ({formatarReais(saldoCentavos)} disponível)
+              {totalCentavos && totalCentavos > saldoCentavos
+                ? `. O saldo cobre ${formatarReais(saldoCentavos)}, e o resto (${formatarReais(totalCentavos - saldoCentavos)}) você combina com a loja.`
+                : "."}
+            </span>
+          </label>
+        ) : null}
+        <span className={estilos.dica}>
+          Ao fechar o pedido, abrimos o WhatsApp da loja com a mensagem pronta. As peças ficam reservadas para você por 15 minutos, enquanto
+          combina o pagamento.
+        </span>
+      </form>
+      <div className={estilos.acaoFixa}>
+        {totalCentavos ? <strong className={estilos.precoNaBarra}>{formatarReais(totalCentavos)}</strong> : null}
+        <button type="submit" form="fechar-pedido" className={estilos.botaoWhats} disabled={enviando}>
+          <Send className="icone" aria-hidden />
+          {enviando ? "Reservando…" : "Fechar pedido"}
+        </button>
+      </div>
+    </>
   );
 }

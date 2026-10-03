@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { PAGINAS, podeVer, temExtra } from "@/lib/permissoes";
 import { sair } from "./acoes";
@@ -6,6 +7,7 @@ import estilos from "./painel.module.css";
 import { LogoDaLoja } from "@/componentes/logo-da-loja";
 import { lerLoja } from "@/lib/loja/servidor";
 import { ModoSoVer } from "./modo-so-ver";
+import { MenuDoPainel, type ItemDoMenu } from "./menu-do-painel";
 
 // Toda página dentro de /painel passa por aqui: sem login ou sem perfil de
 // administradora/suporte, a pessoa não vê nada. O suporte só vê no menu as
@@ -14,6 +16,19 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
   const usuario = await exigirAcesso("painel", "/painel");
   const { acesso } = usuario;
   const loja = await lerLoja();
+  const itens: ItemDoMenu[] = [
+    { chave: "", nome: "Início" },
+    ...PAGINAS.filter((p) => podeVer(acesso, p.chave)).map((p) => ({ chave: p.chave, nome: p.nome })),
+    ...(acesso.administradora ? [{ chave: "acertos", nome: "Contas a pagar" }] : []),
+    ...(temExtra(acesso, "backup") ? [{ chave: "backup", nome: "Backup" }] : []),
+    ...(acesso.administradora
+      ? [
+          { chave: "equipe", nome: "Equipe" },
+          { chave: "configuracoes", nome: "Configurações" },
+          { chave: "importar", nome: "Importar do Notion" },
+        ]
+      : []),
+  ];
 
   return (
     <div className={estilos.estrutura}>
@@ -25,29 +40,20 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
         <div className={estilos.usuario}>
           <span className={estilos.nomeUsuario}>{usuario.nome}</span>
           <form action={sair}>
-            <button type="submit" className={estilos.sair}>
-              Sair
+            <button type="submit" className={estilos.sair} aria-label="Sair">
+              <LogOut className="icone" aria-hidden />
+              <span>Sair</span>
             </button>
           </form>
         </div>
       </header>
-      <nav className={estilos.menu} aria-label="Painel">
-        <Link href="/painel">Início</Link>
-        {PAGINAS.filter((p) => podeVer(acesso, p.chave)).map((p) => (
-          <Link key={p.chave} href={`/painel/${p.chave}`} className={p.chave === "pecas" ? estilos.destaque : undefined}>
-            {p.nome}
-          </Link>
-        ))}
-        {acesso.administradora && <Link href="/painel/acertos">Contas a pagar</Link>}
-        {temExtra(acesso, "backup") && <Link href="/painel/backup">Backup</Link>}
-        {acesso.administradora && <Link href="/painel/equipe">Equipe</Link>}
-        {acesso.administradora && <Link href="/painel/configuracoes">Configurações</Link>}
-        {acesso.administradora && <Link href="/painel/importar">Importar do Notion</Link>}
-      </nav>
-      <main className={estilos.conteudo}>
-        <ModoSoVer paginas={acesso.administradora ? {} : acesso.paginas} />
-        {children}
-      </main>
+      <div className={estilos.corpo}>
+        <MenuDoPainel itens={itens} />
+        <main className={estilos.conteudo}>
+          <ModoSoVer paginas={acesso.administradora ? {} : acesso.paginas} />
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { ShoppingBag, UserRound } from "lucide-react";
 import { usuarioAtual } from "@/lib/acesso";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { destinoInicial } from "@/lib/permissoes";
@@ -21,17 +22,22 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
         </Link>
         <nav className={estilos.atalhos} aria-label="Sua conta">
           {usuario ? (
-            <Link href={destinoInicial(usuario.perfis)} className={estilos.linkConta}>
-              {{ "/minha-conta": "Minha conta", "/fornecedora": "Minha área" }[destinoInicial(usuario.perfis)] ?? "Painel"}
+            <Link href={destinoInicial(usuario.perfis)} className={estilos.atalho}>
+              <UserRound className="icone" aria-hidden />
+              <span>{{ "/minha-conta": "Minha conta", "/fornecedora": "Minha área" }[destinoInicial(usuario.perfis)] ?? "Painel"}</span>
             </Link>
           ) : (
-            <Link href="/entrar" className={estilos.linkConta}>
-              Entrar
+            <Link href="/entrar" className={estilos.atalho}>
+              <UserRound className="icone" aria-hidden />
+              <span>Entrar</span>
             </Link>
           )}
-          <Link href="/carrinho" className={estilos.linkCarrinho}>
-            Carrinho
-            {noCarrinho > 0 && <span className={estilos.contador}>{noCarrinho}</span>}
+          <Link href="/carrinho" className={estilos.atalho} aria-label={`Carrinho${noCarrinho ? `, ${noCarrinho} peça(s)` : ""}`}>
+            <span className={estilos.comContador}>
+              <ShoppingBag className="icone" aria-hidden />
+              {noCarrinho > 0 && <span className={estilos.contador}>{noCarrinho}</span>}
+            </span>
+            <span>Carrinho</span>
           </Link>
         </nav>
       </header>

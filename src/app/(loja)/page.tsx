@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import type { Genero, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
@@ -12,6 +13,7 @@ import {
   tamanhosDisponiveis,
 } from "@/lib/vitrine";
 import { CartaoPeca, SELECAO_CARTAO } from "./cartao-peca";
+import { FiltrosDaVitrine } from "./filtros-da-vitrine";
 import estilos from "./loja.module.css";
 import { quemVeALoja } from "./quem-ve";
 
@@ -71,7 +73,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
 
   return (
     <>
-      <form className={estilos.filtros} role="search">
+      <FiltrosDaVitrine className={estilos.filtros}>
         <label>
           Tamanho
           <select name="tamanho" defaultValue={f.tamanho ?? ""}>
@@ -107,12 +109,14 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
             </select>
           </label>
         )}
-        <label className={estilos.buscaCampo}>
-          Buscar
-          <input name="q" defaultValue={f.busca ?? ""} placeholder="Nome, marca ou código" />
-        </label>
-        <button type="submit">Ver peças</button>
-      </form>
+        <div className={estilos.campoBusca}>
+          <Search className="icone" aria-hidden />
+          <input name="q" defaultValue={f.busca ?? ""} placeholder="Buscar por nome, marca ou código" aria-label="Buscar" type="search" />
+          <button type="submit" aria-label="Ver peças">
+            Buscar
+          </button>
+        </div>
+      </FiltrosDaVitrine>
 
       <p className={estilos.contagem}>
         {total === 0 ? "Nenhuma peça encontrada" : total === 1 ? "1 peça" : `${total} peças`}
@@ -136,11 +140,21 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
 
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {f.pagina > 1 && <Link href={linkDaVitrine(f, { pagina: f.pagina - 1 })}>← Anteriores</Link>}
+          {f.pagina > 1 && (
+            <Link href={linkDaVitrine(f, { pagina: f.pagina - 1 })} className={estilos.voltar}>
+              <ChevronLeft className="icone" aria-hidden />
+              Anteriores
+            </Link>
+          )}
           <span>
             Página {f.pagina} de {paginas}
           </span>
-          {f.pagina < paginas && <Link href={linkDaVitrine(f, { pagina: f.pagina + 1 })}>Próximas →</Link>}
+          {f.pagina < paginas && (
+            <Link href={linkDaVitrine(f, { pagina: f.pagina + 1 })} className={estilos.voltar}>
+              Próximas
+              <ChevronRight className="icone" aria-hidden />
+            </Link>
+          )}
         </nav>
       )}
     </>

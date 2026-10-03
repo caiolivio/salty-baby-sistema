@@ -1,5 +1,6 @@
 "use client";
 
+import { ListChecks, Printer } from "lucide-react";
 import estilos from "../formulario.module.css";
 
 /**
@@ -17,9 +18,11 @@ export function ImprimirEtiquetas({ voltar }: { voltar: string }) {
     <form id="etiquetas" action="/etiquetas" className={estilos.acoes} data-consulta>
       <input type="hidden" name="voltar" value={voltar} />
       <button type="button" className={estilos.botaoSecundario} onClick={marcarTodas}>
+        <ListChecks className="icone" aria-hidden />
         Marcar todas desta página
       </button>
       <button type="submit" className={estilos.botaoSecundario}>
+        <Printer className="icone" aria-hidden />
         Imprimir etiquetas das marcadas
       </button>
     </form>

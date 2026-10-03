@@ -12,14 +12,14 @@
   gap: 6px;
   padding: 12px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
 }
 
 .proposta img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: var(--fundo-suave);
 }
 
@@ -32,7 +32,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--raio);
   background: var(--fundo-suave);
   color: var(--petroleo);
 }
@@ -67,7 +67,7 @@
 .filtroEtapas a {
   padding: 6px 12px;
   border: 1px solid var(--borda);
-  border-radius: 999px;
+  border-radius: var(--raio);
   text-decoration: none;
 }
 

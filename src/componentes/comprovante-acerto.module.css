@@ -1,7 +1,7 @@
 .comprovante {
   max-width: 720px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   padding: 20px;
   background: var(--fundo);
 }
@@ -27,7 +27,7 @@
 
 .dados span {
   font-size: 0.8rem;
-  color: #4a5a64;
+  color: var(--texto-suave);
 }
 
 .itens {
@@ -55,7 +55,7 @@
 
 .numero span {
   font-size: 0.8rem;
-  color: #4a5a64;
+  color: var(--texto-suave);
 }
 
 .totais {

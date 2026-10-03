@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cssDasCores, nomeComSlogan } from "@/lib/loja/regras";
 import { imagensDaLoja, lerLoja } from "@/lib/loja/servidor";
+import "@fontsource-variable/inter";
 import "./globals.css";
 
 // Nome, cores e ícone vêm das configurações da loja (/painel/configuracoes).
