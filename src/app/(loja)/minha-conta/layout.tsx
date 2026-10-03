@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
+import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../loja.module.css";
 import { Abas } from "./abas";
 import { sair } from "./acoes";
@@ -16,6 +18,11 @@ export default async function LayoutMinhaConta({ children }: LayoutProps<"/minha
           </button>
         </form>
       </div>
+      {podeAcessar(usuario.perfis, "area-fornecedora") && (
+        <p>
+          <Link href="/fornecedora">Ir para a área da fornecedora</Link>
+        </p>
+      )}
       <Abas />
       {children}
     </>

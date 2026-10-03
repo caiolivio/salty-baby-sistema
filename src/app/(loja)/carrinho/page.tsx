@@ -6,6 +6,7 @@ import { prisma } from "@/lib/banco";
 import { clienteDoUsuario } from "@/lib/clientes/contas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
+import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, formatarTelefone, lerCarrinho } from "@/lib/pedidos/regras";
 import { enderecoDaPeca } from "@/lib/vitrine";
@@ -38,6 +39,9 @@ export default async function Carrinho() {
   // Cliente logada: nome e WhatsApp já vêm preenchidos, e o pedido fica na conta dela.
   const usuario = await usuarioAtual();
   const ficha = usuario ? await clienteDoUsuario(usuario.id) : null;
+  // Fornecedora logada: pode pagar com o saldo dela.
+  const fornecedora = usuario ? await prisma.fornecedora.findFirst({ where: { usuarioId: usuario.id }, select: { id: true } }) : null;
+  const saldo = fornecedora ? (await saldoParaCompras(fornecedora.id)).disponivelCentavos : 0;
 
   return (
     <>
@@ -92,6 +96,8 @@ export default async function Carrinho() {
               <FecharPedido
                 nome={ficha?.nome}
                 telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
+                saldoCentavos={saldo}
+                totalCentavos={total}
               />
               {!usuario && (
                 <p className={estilos.dica}>

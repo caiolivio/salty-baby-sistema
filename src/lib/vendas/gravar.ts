@@ -4,11 +4,14 @@ import { registrar, rotuloDaPeca } from "../historico/gravar";
 import { formatarData } from "../datas";
 import { formatarReais } from "../dinheiro";
 import { mudancaDeStatus, type Autor, type Mudanca } from "../historico/regras";
+import { formaComCredito, type PedidoDeCredito } from "../fornecedoras/credito";
+import { gastarSaldo } from "../fornecedoras/saldo-para-compras";
 import { NOMES_QUEM_PAGA } from "./descontos";
 import {
   calcularItens,
   FORMAS_PAGAMENTO,
   motivoParaNaoCorrigir,
+  type FormaPagamento,
   type DadosConfirmacao,
   type DadosCorrecao,
   type DadosVendaDireta,
@@ -99,6 +102,22 @@ async function venderPecas(
   return calculo;
 }
 
+/** Forma gravada na venda quando parte (ou tudo) foi pago com o saldo de uma fornecedora. */
+function formaDaVenda(forma: FormaPagamento, credito: PedidoDeCredito, totalCentavos: number): FormaPagamento {
+  const r = formaComCredito(forma, credito?.valorCentavos ?? 0, totalCentavos);
+  if (!r.ok) throw new Recusa(r.erro);
+  return r.forma;
+}
+
+const camposDoCredito = (credito: PedidoDeCredito) =>
+  credito ? { creditoCentavos: credito.valorCentavos, creditoFornecedoraId: credito.fornecedoraId } : {};
+
+async function usarSaldo(tx: Transacao, credito: PedidoDeCredito, venda: { id: string; descricao: string }, autor: Autor) {
+  if (!credito) return;
+  const erro = await gastarSaldo(tx, credito, venda, autor);
+  if (erro) throw new Recusa(erro);
+}
+
 /**
  * Confirma o pagamento de um pedido do site: grava a venda com repasse e lucro
  * de cada peça, tira as peças da vitrine e marca o pedido como pago. Um pedido
@@ -109,6 +128,7 @@ export async function confirmarPagamento(
   dados: DadosConfirmacao,
   hoje: string,
   autor: Autor,
+  credito: PedidoDeCredito = null,
 ): Promise<ResultadoConfirmar> {
   try {
     const vendaId = await prisma.$transaction(async (tx) => {
@@ -128,6 +148,8 @@ export async function confirmarPagamento(
           ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`)
           : erro;
       });
+      const total = pedido.totalCentavos - descontoCentavos;
+      const forma = formaDaVenda(dados.forma, credito, total);
       const venda = await tx.venda.create({
         data: {
           data: data(hoje),
@@ -136,15 +158,17 @@ export async function confirmarPagamento(
           grupoId: pedido.grupoId,
           grupo: pedido.grupo?.nome ?? null,
           clienteId: pedido.clienteId,
-          formaPagamento: dados.forma,
+          formaPagamento: forma,
+          ...camposDoCredito(credito),
           subtotalCentavos: pedido.totalCentavos,
           descontoCentavos,
-          totalCentavos: pedido.totalCentavos - descontoCentavos,
+          totalCentavos: total,
           motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,
           origem: `Pedido nº ${pedido.numero} do site · ${pedido.nomeCliente}`,
           itens: { create: itens },
         },
       });
+      await usarSaldo(tx, credito, { id: venda.id, descricao: `pedido nº ${pedido.numero}` }, autor);
       await tx.pedido.update({ where: { id: pedido.id }, data: { status: "pago", vendaId: venda.id } });
       return venda.id;
     });
@@ -166,6 +190,7 @@ export async function registrarVendaDireta(
   dados: DadosVendaDireta,
   cliente: ClienteDaVenda,
   autor: Autor,
+  credito: PedidoDeCredito = null,
 ): Promise<ResultadoConfirmar> {
   if (pecaIds.length === 0) return { ok: false, erro: "Inclua pelo menos uma peça na venda." };
   try {
@@ -179,6 +204,8 @@ export async function registrarVendaDireta(
       const { itens, descontoCentavos } = await venderPecas(tx, itensDaVenda, "publicada", dados, autor, "Venda registrada no painel");
       // A nova cliente só entra no cadastro se a venda der certo.
       const clienteId = !cliente ? null : "id" in cliente ? cliente.id : (await tx.cliente.create({ data: cliente.nova })).id;
+      const total = subtotal - descontoCentavos;
+      const forma = formaDaVenda(dados.forma, credito, total);
       const venda = await tx.venda.create({
         data: {
           data: data(dados.data),
@@ -186,14 +213,17 @@ export async function registrarVendaDireta(
           grupo: dados.grupo,
           grupoId: dados.grupoId,
           clienteId,
-          formaPagamento: dados.forma,
+          formaPagamento: forma,
+          ...camposDoCredito(credito),
           subtotalCentavos: subtotal,
           descontoCentavos,
-          totalCentavos: subtotal - descontoCentavos,
+          totalCentavos: total,
           motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,
           itens: { create: itens },
         },
       });
+      const pecas = itens.length === 1 ? "1 peça" : `${itens.length} peças`;
+      await usarSaldo(tx, credito, { id: venda.id, descricao: `venda de ${formatarData(data(dados.data))} (${pecas})` }, autor);
       return venda.id;
     });
     return { ok: true, vendaId };
@@ -235,6 +265,15 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
       );
       if (!calculo.ok) throw new Recusa(calculo.erro);
 
+      // A parte paga com o saldo não muda: o novo total precisa cobrir esse valor.
+      // (Vendas antigas do Notion podem estar como "crédito" sem saldo gravado.)
+      const novoTotal = venda.subtotalCentavos - calculo.descontoCentavos;
+      const credito = venda.creditoFornecedoraId ? { fornecedoraId: venda.creditoFornecedoraId, valorCentavos: venda.creditoCentavos } : null;
+      const forma = credito ? formaDaVenda(dados.forma, credito, novoTotal) : dados.forma;
+      if (forma === "credito_fornecedora" && !credito && venda.formaPagamento !== "credito_fornecedora") {
+        throw new Recusa("Para pagar com o saldo de uma fornecedora, registre a venda com o saldo. Aqui, escolha outra forma de pagamento.");
+      }
+
       const nomeForma = (f: string | null) => FORMAS_PAGAMENTO.find((x) => x.valor === f)?.nome ?? null;
       const dataAntiga = venda.data.toISOString().slice(0, 10);
       const descricao = (centavos: number, porConta: string | null) =>
@@ -274,8 +313,8 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
             restrito: true,
           });
         }
-        if (venda.formaPagamento !== dados.forma) {
-          mudancas.push({ campo: "Forma de pagamento da venda", antes: nomeForma(venda.formaPagamento), depois: nomeForma(dados.forma), restrito: false });
+        if (venda.formaPagamento !== forma) {
+          mudancas.push({ campo: "Forma de pagamento da venda", antes: nomeForma(venda.formaPagamento), depois: nomeForma(forma), restrito: false });
         }
         if (dataAntiga !== dados.data) {
           mudancas.push({ campo: "Data da venda", antes: formatarData(venda.data), depois: formatarData(data(dados.data)), restrito: false });
@@ -288,9 +327,9 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
         where: { id: venda.id },
         data: {
           data: data(dados.data),
-          formaPagamento: dados.forma,
+          formaPagamento: forma,
           descontoCentavos: calculo.descontoCentavos,
-          totalCentavos: venda.subtotalCentavos - calculo.descontoCentavos,
+          totalCentavos: novoTotal,
           motivoDesconto: calculo.descontoCentavos > 0 ? dados.desconto.motivo : null,
         },
       });

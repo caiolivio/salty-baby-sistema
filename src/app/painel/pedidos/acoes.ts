@@ -10,6 +10,7 @@ import { encerrarPedido, incluirPecaNoPedido, tirarPecaDoPedido } from "@/lib/pe
 import { lerCodigoPeca, lerNomeCliente, lerTelefoneCliente } from "@/lib/pedidos/regras";
 import { confirmarPagamento } from "@/lib/vendas/gravar";
 import { lerConfirmacao } from "@/lib/vendas/regras";
+import { lerCreditoDoFormulario } from "../vendas/credito-do-formulario";
 
 /** Cancela um pedido reservado: as peças voltam na hora para a vitrine. */
 export async function cancelarPedido(dados: FormData): Promise<void> {
@@ -38,7 +39,9 @@ export async function confirmar(_anterior: EstadoConfirmar, dados: FormData): Pr
     pedido.itens.map((i) => ({ id: i.pecaId, codigo: i.peca.codigo, precoCentavos: i.precoCentavos })),
   );
   if (!lido.ok) return { erro: lido.erro, valores };
-  const resultado = await confirmarPagamento(id, lido.dados, hojeEmSaoPaulo(), autorDe(usuario));
+  const credito = await lerCreditoDoFormulario(valores, usuario);
+  if (!credito.ok) return { erro: credito.erro, valores };
+  const resultado = await confirmarPagamento(id, lido.dados, hojeEmSaoPaulo(), autorDe(usuario), credito.credito);
   if (!resultado.ok) return { erro: resultado.erro, valores };
   revalidatePath("/painel/pedidos");
   revalidatePath("/painel/vendas");

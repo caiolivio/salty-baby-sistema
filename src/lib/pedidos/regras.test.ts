@@ -89,6 +89,16 @@ describe("pedido", () => {
   });
 });
 
+describe("mensagem com saldo de fornecedora", () => {
+  it("avisa que quer pagar com o saldo", () => {
+    const texto = mensagemDoPedido(
+      { numero: 3, nomeCliente: "Amanda", total: "R$ 25,00", saldoDe: "F44", itens: [{ codigo: "F45-00005", nome: "Body", tamanho: null, preco: "R$ 25,00" }] },
+      "https://teste.saltybaby.com.br",
+    );
+    expect(texto).toContain("Total: R$ 25,00\nQuero pagar com o meu saldo de fornecedora (F44).\nAs peças ficam reservadas");
+  });
+});
+
 describe("dados da cliente", () => {
   it("lê o WhatsApp com ou sem DDI e máscara", () => {
     expect(lerTelefoneCliente("(12) 98105-3623")).toBe("12981053623");

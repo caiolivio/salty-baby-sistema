@@ -3,10 +3,23 @@
 import { useActionState } from "react";
 import { DESTINOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import estilos from "../../formulario.module.css";
+import { CampoDoSaldo, type SaldoDaFornecedora } from "../../vendas/campo-do-saldo";
 import { CamposDeDesconto, type PecaDoDesconto } from "../../vendas/campos-de-desconto";
 import { confirmar } from "../acoes";
 
-export function ConfirmarPagamento({ id, pecas, mostrarValores }: { id: string; pecas: PecaDoDesconto[]; mostrarValores: boolean }) {
+export function ConfirmarPagamento({
+  id,
+  pecas,
+  mostrarValores,
+  saldos,
+  saldoPedido,
+}: {
+  id: string;
+  pecas: PecaDoDesconto[];
+  mostrarValores: boolean;
+  saldos: SaldoDaFornecedora[];
+  saldoPedido: string | null;
+}) {
   const [estado, acao, enviando] = useActionState(confirmar, undefined);
   const v = estado?.valores ?? {};
   return (
@@ -43,6 +56,7 @@ export function ConfirmarPagamento({ id, pecas, mostrarValores }: { id: string; 
         </div>
       </fieldset>
       <CamposDeDesconto pecas={pecas} valores={v} mostrarValores={mostrarValores} />
+      <CampoDoSaldo fornecedoras={saldos} valores={v} padrao={saldoPedido} />
       <div className={estilos.acoes}>
         <button type="submit" className={estilos.botao} disabled={enviando}>
           {enviando ? "Confirmando…" : "Confirmar pagamento"}

@@ -36,6 +36,18 @@ async function fichaPeloWhatsapp(tx: Prisma.TransactionClient, digitos: string, 
  * Ficha de quem tem o perfil de cliente. Quem ganhou o perfil sem ficha (por
  * exemplo, uma fornecedora) recebe uma ficha nova com o nome e o e-mail da conta.
  */
+/**
+ * A fornecedora também compra: ao favoritar, ela ganha o perfil de cliente
+ * (a mesma pessoa pode ter os dois), e passa a ter "Minha conta".
+ */
+export async function tornarTambemCliente(usuarioId: string) {
+  await prisma.usuarioPerfil.upsert({
+    where: { usuarioId_perfil: { usuarioId, perfil: "cliente" } },
+    create: { usuarioId, perfil: "cliente" },
+    update: {},
+  });
+}
+
 export async function fichaDaCliente(usuario: { id: string; nome: string; email: string }) {
   const ficha = await clienteDoUsuario(usuario.id);
   if (ficha) return ficha;

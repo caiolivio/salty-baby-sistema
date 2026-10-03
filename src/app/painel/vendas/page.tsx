@@ -38,6 +38,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
       include: {
         cliente: { select: { id: true, nome: true } },
         pedido: { select: { id: true } },
+        creditoFornecedora: { select: { codigo: true } },
         itens: { include: { peca: { select: { id: true, codigo: true, nome: true } } } },
       },
     }),
@@ -113,7 +114,7 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
                     (v.origem ?? "—")
                   )}
                   <span className={estilos.antigo}>
-                    {[v.grupo ? (v.canal === "site" ? `Site, pelo grupo ${v.grupo}` : `Grupo ${v.grupo}`) : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome].filter(Boolean).join(" · ")}
+                    {[v.grupo ? (v.canal === "site" ? `Site, pelo grupo ${v.grupo}` : `Grupo ${v.grupo}`) : CANAIS[v.canal], FORMAS_PAGAMENTO.find((f) => f.valor === v.formaPagamento)?.nome, v.creditoFornecedora && v.creditoCentavos > 0 && v.formaPagamento !== "credito_fornecedora" ? `+ saldo ${v.creditoFornecedora.codigo} ${formatarReais(v.creditoCentavos)}` : v.creditoFornecedora ? `saldo ${v.creditoFornecedora.codigo}` : null].filter(Boolean).join(" · ")}
                   </span>
                 </td>
                 <td data-rotulo="Peças">

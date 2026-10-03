@@ -2,10 +2,11 @@
 
 import { refresh } from "next/cache";
 import { signOut } from "@/auth";
-import { exigirAcesso } from "@/lib/acesso";
+import { redirect } from "next/navigation";
+import { exigirAcesso, usuarioAtual } from "@/lib/acesso";
 import { lerNovaSenha, lerPerfil } from "@/lib/clientes/conta";
-import { alternarFavorito, atualizarPerfil, fichaDaCliente, trocarSenha } from "@/lib/clientes/contas";
-import { enderecoDeVoltaSeguro } from "@/lib/permissoes";
+import { alternarFavorito, atualizarPerfil, fichaDaCliente, tornarTambemCliente, trocarSenha } from "@/lib/clientes/contas";
+import { enderecoDeVoltaSeguro, podeAcessar } from "@/lib/permissoes";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -13,7 +14,13 @@ import { enderecoDeVoltaSeguro } from "@/lib/permissoes";
 /** Estrela da peça. Sem login, leva para entrar (ou criar conta) e depois volta para a peça. */
 export async function favoritar(dados: FormData) {
   const voltar = enderecoDeVoltaSeguro(dados.get("voltar")) ?? "/";
-  const usuario = await exigirAcesso("area-cliente", voltar);
+  const usuario = await usuarioAtual();
+  if (!usuario) redirect(`/entrar?voltar=${encodeURIComponent(voltar)}`);
+  // A fornecedora também favorita: ganha o perfil de cliente na primeira estrela.
+  if (!podeAcessar(usuario.perfis, "area-cliente")) {
+    if (!podeAcessar(usuario.perfis, "area-fornecedora")) redirect("/sem-acesso");
+    await tornarTambemCliente(usuario.id);
+  }
   const ficha = await fichaDaCliente(usuario);
   await alternarFavorito(ficha.id, String(dados.get("pecaId") ?? ""));
   refresh();

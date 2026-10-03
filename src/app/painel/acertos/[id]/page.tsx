@@ -32,6 +32,7 @@ export default async function Comprovante({ params, searchParams }: PageProps<"/
       data: acerto.data,
       forma: acerto.forma,
       totalCentavos: acerto.totalCentavos,
+      abatidoCentavos: acerto.abatidoCentavos,
       observacao: acerto.observacao,
       itens: acerto.itens.map((i) => ({ ...i.peca, data: i.venda.data, valorPagoCentavos: i.valorPagoCentavos, repasseCentavos: i.repasseCentavos })),
     },

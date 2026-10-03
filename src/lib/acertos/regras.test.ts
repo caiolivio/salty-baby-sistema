@@ -92,3 +92,27 @@ describe("textoDoComprovante", () => {
     expect(texto).not.toContain("Obs.");
   });
 });
+
+describe("textoDoComprovante com compras pelo saldo", () => {
+  const base = {
+    loja: "Salty Baby",
+    numero: 8,
+    fornecedora: { codigo: "F44", nome: "Maria da Silva" },
+    data: d("2026-10-01"),
+    forma: "pix",
+    totalCentavos: 2200,
+    observacao: null,
+    itens: [{ codigo: "F44-00001", nome: "Vestido", data: d("2026-09-10"), valorPagoCentavos: 5500, repasseCentavos: 2200 }],
+  };
+  it("mostra o desconto e o valor pago", () => {
+    const texto = textoDoComprovante({ ...base, abatidoCentavos: 1000 }).replace(/\u00a0/g, " ");
+    expect(texto).toContain("Pagamos R$ 12,00 em 01/10/2026 (Pix): o seu repasse de R$ 22,00, menos R$ 10,00 das suas compras com o saldo.");
+    expect(texto).toContain("Compras com o saldo: −R$ 10,00");
+    expect(texto).toContain("*Valor pago: R$ 12,00*");
+  });
+  it("repasse todo usado em compras", () => {
+    const texto = textoDoComprovante({ ...base, abatidoCentavos: 2200 }).replace(/\u00a0/g, " ");
+    expect(texto).toContain("O seu repasse de R$ 22,00 foi todo usado nas suas compras com o saldo");
+    expect(texto).toContain("*Valor pago: R$ 0,00*");
+  });
+});

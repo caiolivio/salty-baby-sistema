@@ -81,6 +81,8 @@ export function mensagemDoPedido(
     nomeCliente: string;
     total: string;
     itens: ItemDaMensagem[];
+    /** Código da fornecedora que quer pagar com o saldo dela. */
+    saldoDe?: string | null;
   },
   origem: string,
   minutosReserva = MINUTOS_DE_RESERVA,
@@ -96,6 +98,7 @@ export function mensagemDoPedido(
     ...linhas,
     "",
     `Total: ${pedido.total}`,
+    ...(pedido.saldoDe ? [`Quero pagar com o meu saldo de fornecedora (${pedido.saldoDe}).`] : []),
     `As peças ficam reservadas por ${minutosReserva} minutos. Como faço o pagamento?`,
   ].join("\n");
 }

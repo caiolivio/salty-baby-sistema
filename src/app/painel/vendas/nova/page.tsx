@@ -12,6 +12,7 @@ import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { tirarDaVenda } from "./acoes";
+import { opcoesDeSaldo } from "@/lib/fornecedoras/saldo-para-compras";
 import { FormularioVenda } from "./formulario-venda";
 import { IncluirNaVenda } from "./incluir-na-venda";
 import { pecasDaVenda } from "./pecas-da-venda";
@@ -24,7 +25,7 @@ export default async function NovaVenda() {
   const valores = temExtra(acesso, "valores");
   await liberarReservasVencidas();
   const ids = await pecasDaVenda();
-  const [encontradas, clientes, grupos] = await Promise.all([
+  const [encontradas, clientes, grupos, saldos] = await Promise.all([
     prisma.peca.findMany({
       where: { id: { in: ids } },
       select: {
@@ -45,6 +46,8 @@ export default async function NovaVenda() {
     }),
     listarOpcoesDeClientes(),
     listarGruposEmUso(),
+    // O saldo das fornecedoras é repasse: só para quem vê os valores.
+    valores ? opcoesDeSaldo() : [],
   ]);
   const pecas = ids.flatMap((id) => encontradas.filter((p) => p.id === id));
   const total = pecas.reduce((s, p) => s + p.precoCentavos, 0);
@@ -126,6 +129,7 @@ export default async function NovaVenda() {
       <FormularioVenda hoje={hojeEmSaoPaulo()} clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
         grupos={grupos.map(({ id, nome }) => ({ id, nome }))}
         mostrarValores={valores}
+        saldos={saldos}
         pecas={pecas.map((p) => ({
           id: p.id,
           codigo: p.codigo,

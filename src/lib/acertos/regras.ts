@@ -123,6 +123,8 @@ export type Comprovante = {
   data: Date;
   forma: string;
   totalCentavos: number;
+  /** Descontado do repasse pelas compras feitas com o saldo. */
+  abatidoCentavos?: number;
   observacao: string | null;
   itens: readonly ItemDoComprovante[];
 };
@@ -130,10 +132,19 @@ export type Comprovante = {
 /** Mensagem do comprovante para mandar no WhatsApp (o *negrito* é do WhatsApp). */
 export function textoDoComprovante(c: Comprovante, link?: string): string {
   const vendido = c.itens.reduce((s, i) => s + i.valorPagoCentavos, 0);
+  const abatido = c.abatidoCentavos ?? 0;
+  const pago = c.totalCentavos - abatido;
+  const ola = `Olá, ${primeiroNome(c.fornecedora.nome)}!`;
+  const abertura =
+    abatido === 0
+      ? `${ola} Pagamos o seu repasse de ${formatarReais(c.totalCentavos)} em ${formatarData(c.data)} (${nomeDaFormaAcerto(c.forma)}).`
+      : pago === 0
+        ? `${ola} O seu repasse de ${formatarReais(c.totalCentavos)} foi todo usado nas suas compras com o saldo (acerto de ${formatarData(c.data)}).`
+        : `${ola} Pagamos ${formatarReais(pago)} em ${formatarData(c.data)} (${nomeDaFormaAcerto(c.forma)}): o seu repasse de ${formatarReais(c.totalCentavos)}, menos ${formatarReais(abatido)} das suas compras com o saldo.`;
   const linhas = [
     `*${c.loja} · Comprovante de repasse nº ${c.numero}*`,
     "",
-    `Olá, ${primeiroNome(c.fornecedora.nome)}! Pagamos o seu repasse de ${formatarReais(c.totalCentavos)} em ${formatarData(c.data)} (${nomeDaFormaAcerto(c.forma)}).`,
+    abertura,
     "",
     `*Peças vendidas (${c.itens.length}):*`,
     ...c.itens.map(
@@ -144,6 +155,7 @@ export function textoDoComprovante(c: Comprovante, link?: string): string {
     `Total vendido: ${formatarReais(vendido)}`,
     `*Total do repasse: ${formatarReais(c.totalCentavos)}*`,
   ];
+  if (abatido > 0) linhas.push(`Compras com o saldo: −${formatarReais(abatido)}`, `*Valor pago: ${formatarReais(pago)}*`);
   if (c.observacao) linhas.push("", `Obs.: ${c.observacao}`);
   if (link) linhas.push("", `O comprovante também fica na sua área: ${link}`);
   linhas.push("", "Obrigada pela parceria!");

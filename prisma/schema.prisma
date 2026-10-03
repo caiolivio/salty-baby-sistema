@@ -109,6 +109,9 @@ model Fornecedora {
   devolucoes              Devolucao[]
   convites                ConviteFornecedora[]
   acertos                 Acerto[]
+  movimentosCredito       MovimentoCredito[]
+  vendasComCredito        Venda[]              @relation("CreditoDaVenda")
+  pedidosComCredito       Pedido[]             @relation("CreditoDoPedido")
 
   @@map("fornecedoras")
 }
@@ -326,27 +329,32 @@ enum FormaPagamento {
 }
 
 model Venda {
-  id               String          @id @default(cuid())
-  data             DateTime        @db.Date
-  clienteId        String?         @map("cliente_id")
-  canal            CanalVenda
+  id                   String             @id @default(cuid())
+  data                 DateTime           @db.Date
+  clienteId            String?            @map("cliente_id")
+  canal                CanalVenda
   /// Grupo de WhatsApp da venda, quando o canal é grupo_whatsapp.
-  grupo            String?         @db.VarChar(60)
+  grupo                String?            @db.VarChar(60)
   /// Grupo da venda (pelo canal ou pelo link do post), para medir as vendas por grupo.
-  grupoId          String?         @map("grupo_id")
-  formaPagamento   FormaPagamento? @map("forma_pagamento")
-  subtotalCentavos Int             @map("subtotal_centavos")
-  descontoCentavos Int             @default(0) @map("desconto_centavos")
-  totalCentavos    Int             @map("total_centavos")
+  grupoId              String?            @map("grupo_id")
+  formaPagamento       FormaPagamento?    @map("forma_pagamento")
+  subtotalCentavos     Int                @map("subtotal_centavos")
+  descontoCentavos     Int                @default(0) @map("desconto_centavos")
+  totalCentavos        Int                @map("total_centavos")
   /// Por que a loja deu o desconto (opcional).
-  motivoDesconto   String?         @map("motivo_desconto") @db.VarChar(200)
+  motivoDesconto       String?            @map("motivo_desconto") @db.VarChar(200)
+  /// Parte do total paga com o saldo da fornecedora (o resto, na forma de pagamento).
+  creditoCentavos      Int                @default(0) @map("credito_centavos")
+  creditoFornecedoraId String?            @map("credito_fornecedora_id")
   /// De onde veio a venda antiga, quando importada (ex.: "Notion: ka - liquida").
-  origem           String?         @db.VarChar(191)
-  criadoEm         DateTime        @default(now()) @map("criado_em")
-  cliente          Cliente?        @relation(fields: [clienteId], references: [id])
-  grupoWhatsapp    GrupoWhatsapp?  @relation(fields: [grupoId], references: [id], onDelete: SetNull)
-  itens            ItemVenda[]
-  pedido           Pedido?
+  origem               String?            @db.VarChar(191)
+  criadoEm             DateTime           @default(now()) @map("criado_em")
+  cliente              Cliente?           @relation(fields: [clienteId], references: [id])
+  creditoFornecedora   Fornecedora?       @relation("CreditoDaVenda", fields: [creditoFornecedoraId], references: [id])
+  grupoWhatsapp        GrupoWhatsapp?     @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  movimentosCredito    MovimentoCredito[]
+  itens                ItemVenda[]
+  pedido               Pedido?
 
   @@index([data])
   @@map("vendas")
@@ -393,25 +401,56 @@ enum FormaAcerto {
 /// Pagamento de repasses a uma fornecedora (acerto). Gera o comprovante que
 /// vai pelo WhatsApp e fica na área dela. Desfeito, continua aqui com canceladoEm.
 model Acerto {
-  id            String      @id @default(cuid())
+  id                String             @id @default(cuid())
   /// Número do comprovante (tabela sequencias, chave "acerto").
-  numero        Int         @unique
-  fornecedoraId String      @map("fornecedora_id")
-  data          DateTime    @db.Date
-  forma         FormaAcerto
-  totalCentavos Int         @map("total_centavos")
-  pecas         Int
-  observacao    String?     @db.VarChar(200)
-  usuarioId     String?     @map("usuario_id")
-  quem          String      @db.VarChar(191)
-  criadoEm      DateTime    @default(now()) @map("criado_em")
-  canceladoEm   DateTime?   @map("cancelado_em")
-  canceladoPor  String?     @map("cancelado_por") @db.VarChar(191)
-  fornecedora   Fornecedora @relation(fields: [fornecedoraId], references: [id])
-  itens         ItemVenda[]
+  numero            Int                @unique
+  fornecedoraId     String             @map("fornecedora_id")
+  data              DateTime           @db.Date
+  forma             FormaAcerto
+  totalCentavos     Int                @map("total_centavos")
+  /// Parte do repasse já usada pela fornecedora em compras (sai do valor pago).
+  abatidoCentavos   Int                @default(0) @map("abatido_centavos")
+  pecas             Int
+  observacao        String?            @db.VarChar(200)
+  usuarioId         String?            @map("usuario_id")
+  quem              String             @db.VarChar(191)
+  criadoEm          DateTime           @default(now()) @map("criado_em")
+  canceladoEm       DateTime?          @map("cancelado_em")
+  canceladoPor      String?            @map("cancelado_por") @db.VarChar(191)
+  fornecedora       Fornecedora        @relation(fields: [fornecedoraId], references: [id])
+  itens             ItemVenda[]
+  movimentosCredito MovimentoCredito[]
 
   @@index([fornecedoraId, data])
   @@map("acertos")
+}
+
+enum TipoMovimentoCredito {
+  compra
+  bonus
+  abatimento
+}
+
+/// Saldo da fornecedora usado em compras e bônus ganhos. `repasseCentavos`
+/// mexe no repasse já usado e ainda não descontado num acerto (negativo na
+/// compra, positivo quando o acerto desconta); `bonusCentavos`, no bônus.
+model MovimentoCredito {
+  id              String               @id @default(cuid())
+  fornecedoraId   String               @map("fornecedora_id")
+  tipo            TipoMovimentoCredito
+  repasseCentavos Int                  @default(0) @map("repasse_centavos")
+  bonusCentavos   Int                  @default(0) @map("bonus_centavos")
+  vendaId         String?              @map("venda_id")
+  acertoId        String?              @map("acerto_id")
+  descricao       String               @db.VarChar(191)
+  quem            String               @db.VarChar(191)
+  criadoEm        DateTime             @default(now()) @map("criado_em")
+  fornecedora     Fornecedora          @relation(fields: [fornecedoraId], references: [id])
+  venda           Venda?               @relation(fields: [vendaId], references: [id], onDelete: SetNull)
+  acerto          Acerto?              @relation(fields: [acertoId], references: [id], onDelete: Cascade)
+
+  @@index([fornecedoraId, criadoEm])
+  @@map("movimentos_credito")
 }
 
 /// Lista de categorias que a administradora mantém no painel. Uma peça pode ter várias.
@@ -449,29 +488,32 @@ enum StatusPedido {
 
 /// Pedido montado no carrinho do site e enviado pelo WhatsApp.
 model Pedido {
-  id              String         @id @default(cuid())
+  id                   String         @id @default(cuid())
   /// Número curto que a cliente cita no WhatsApp (tabela sequencias, chave "pedido").
-  numero          Int            @unique
-  nomeCliente     String         @map("nome_cliente") @db.VarChar(120)
+  numero               Int            @unique
+  nomeCliente          String         @map("nome_cliente") @db.VarChar(120)
   /// WhatsApp que a cliente digitou ao fechar o pedido (a administradora pode corrigir).
-  telefoneCliente String?        @map("telefone_cliente") @db.VarChar(40)
+  telefoneCliente      String?        @map("telefone_cliente") @db.VarChar(40)
   /// Cliente do cadastro ligada ao pedido pela administradora; passa para a venda.
-  clienteId       String?        @map("cliente_id")
-  observacao      String?        @db.Text
+  clienteId            String?        @map("cliente_id")
+  observacao           String?        @db.Text
   /// Grupo de WhatsApp de onde a cliente veio (link do post com ?g=...).
-  grupoId         String?        @map("grupo_id")
-  status          StatusPedido   @default(reservado)
+  grupoId              String?        @map("grupo_id")
+  status               StatusPedido   @default(reservado)
   /// Até quando as peças ficam reservadas.
-  reservadoAte    DateTime       @map("reservado_ate")
-  totalCentavos   Int            @map("total_centavos")
+  reservadoAte         DateTime       @map("reservado_ate")
+  totalCentavos        Int            @map("total_centavos")
   /// Venda criada ao confirmar o pagamento.
-  vendaId         String?        @unique @map("venda_id")
-  criadoEm        DateTime       @default(now()) @map("criado_em")
-  atualizadoEm    DateTime       @updatedAt @map("atualizado_em")
-  itens           ItemPedido[]
-  venda           Venda?         @relation(fields: [vendaId], references: [id])
-  cliente         Cliente?       @relation(fields: [clienteId], references: [id])
-  grupo           GrupoWhatsapp? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  vendaId              String?        @unique @map("venda_id")
+  criadoEm             DateTime       @default(now()) @map("criado_em")
+  atualizadoEm         DateTime       @updatedAt @map("atualizado_em")
+  itens                ItemPedido[]
+  venda                Venda?         @relation(fields: [vendaId], references: [id])
+  cliente              Cliente?       @relation(fields: [clienteId], references: [id])
+  grupo                GrupoWhatsapp? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  /// A fornecedora logada pediu para pagar com o saldo dela.
+  creditoFornecedoraId String?        @map("credito_fornecedora_id")
+  creditoFornecedora   Fornecedora?   @relation("CreditoDoPedido", fields: [creditoFornecedoraId], references: [id], onDelete: SetNull)
 
   @@index([status, reservadoAte])
   @@map("pedidos")

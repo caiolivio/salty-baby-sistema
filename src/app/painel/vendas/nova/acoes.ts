@@ -11,6 +11,7 @@ import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { lerVendaDireta } from "@/lib/vendas/regras";
 import { gravarPecas, pecasDaVenda } from "./pecas-da-venda";
 import { autorDe } from "@/lib/historico/regras";
+import { lerCreditoDoFormulario } from "../credito-do-formulario";
 
 // Venda direta no painel: só a administradora (como "Confirmar pagamento").
 
@@ -85,7 +86,9 @@ export async function registrarVenda(_anterior: EstadoVenda, dados: FormData): P
     cliente = { id: existe.id };
   }
 
-  const resultado = await registrarVendaDireta(ids, lido.dados, cliente, autorDe(usuario));
+  const credito = await lerCreditoDoFormulario(valores, usuario);
+  if (!credito.ok) return { erro: credito.erro, valores };
+  const resultado = await registrarVendaDireta(ids, lido.dados, cliente, autorDe(usuario), credito.credito);
   if (!resultado.ok) return { erro: resultado.erro, valores };
   await gravarPecas([]);
   revalidatePath("/painel/vendas");

@@ -22,6 +22,7 @@ export default async function CorrigirVenda({ params }: PageProps<"/painel/venda
     where: { id },
     include: {
       cliente: { select: { nome: true } },
+      creditoFornecedora: { select: { codigo: true, nome: true } },
       itens: { include: { peca: { select: { codigo: true, nome: true, tipo: true } } } },
     },
   });
@@ -39,6 +40,12 @@ export default async function CorrigirVenda({ params }: PageProps<"/painel/venda
         {venda.origem ?? venda.cliente?.nome ?? "Venda"} · total pago {formatarReais(venda.totalCentavos)}
         {venda.descontoCentavos > 0 && ` (desconto de ${formatarReais(venda.descontoCentavos)})`}
       </p>
+      {venda.creditoFornecedora && venda.creditoCentavos > 0 && (
+        <p>
+          {formatarReais(venda.creditoCentavos)} foram pagos com o saldo de {venda.creditoFornecedora.codigo} · {venda.creditoFornecedora.nome}.
+          Essa parte não muda na correção, então o total não pode ficar menor que ela.
+        </p>
+      )}
       {bloqueio ? (
         <p className={proprios.erro} role="alert">
           {bloqueio}

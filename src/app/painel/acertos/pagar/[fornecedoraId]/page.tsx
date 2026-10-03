@@ -6,6 +6,8 @@ import { pendentesDaFornecedora } from "@/lib/acertos/gravar";
 import { marcadoDeInicio } from "@/lib/acertos/regras";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
+import { formatarReais } from "@/lib/dinheiro";
+import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import estilos from "../../../painel.module.css";
 import { FormularioPagar } from "./formulario-pagar";
@@ -21,7 +23,7 @@ export default async function PagarRepasses({ params }: PageProps<"/painel/acert
   });
   if (!fornecedora) notFound();
   const hoje = hojeEmSaoPaulo();
-  const pendentes = await pendentesDaFornecedora(fornecedora.id);
+  const [pendentes, saldo] = await Promise.all([pendentesDaFornecedora(fornecedora.id), saldoParaCompras(fornecedora.id)]);
 
   return (
     <>
@@ -42,9 +44,16 @@ export default async function PagarRepasses({ params }: PageProps<"/painel/acert
             Já vêm marcadas as vendas até o fim do mês passado. Faça o Pix (ou o pagamento) primeiro e depois registre aqui. O
             sistema gera o comprovante para mandar no WhatsApp, e ele também fica na área da fornecedora.
           </p>
+          {saldo.usadoPendenteCentavos > 0 && (
+            <p>
+              Ela já usou <strong>{formatarReais(saldo.usadoPendenteCentavos)}</strong> do repasse em compras com o saldo. Esse valor é
+              descontado deste pagamento.
+            </p>
+          )}
           <FormularioPagar
             fornecedoraId={fornecedora.id}
             hoje={hoje}
+            usadoCentavos={saldo.usadoPendenteCentavos}
             vendas={pendentes.map((i) => ({
               id: i.id,
               codigo: i.peca.codigo,
