@@ -12,6 +12,7 @@ export type PecaDoCartao = {
   nome: string;
   tamanho: string | null;
   conservacao: string | null;
+  marca: string | null;
   precoCentavos: number;
   fotos: { arquivo: string }[];
 };
@@ -23,6 +24,7 @@ export const SELECAO_CARTAO = {
   nome: true,
   tamanho: true,
   conservacao: true,
+  marca: true,
   precoCentavos: true,
   fotos: { orderBy: { ordem: "asc" as const }, take: 1, select: { arquivo: true } },
 };
@@ -51,10 +53,11 @@ export function CartaoPeca({
         ) : (
           <span className={estilos.semFoto}>Sem foto</span>
         )}
+        {nomeConservacao(peca.conservacao) && (
+          <span className={`sobretitulo ${estilos.sobreCartao}`}>{nomeConservacao(peca.conservacao)}</span>
+        )}
         <span className={estilos.nome}>{peca.nome}</span>
-        <span className={estilos.detalhe}>
-          {[peca.tamanho && `Tam. ${peca.tamanho}`, nomeConservacao(peca.conservacao)].filter(Boolean).join(" · ")}
-        </span>
+        <span className={estilos.detalhe}>{[peca.tamanho && `Tam. ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ")}</span>
         <strong className={estilos.preco}>{formatarReais(peca.precoCentavos)}</strong>
       </Link>
       {estrela && <Estrela pecaId={peca.id} favorita={favorita} voltar={voltar} nome={peca.nome} />}

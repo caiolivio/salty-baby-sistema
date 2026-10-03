@@ -13,6 +13,7 @@ import { AcessoDaFornecedora } from "../acesso-da-fornecedora";
 import { formatarDataHora } from "@/lib/datas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Fornecedora" };
 
@@ -38,7 +39,7 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
   return (
     <>
       <p>
-        <Link href="/painel/fornecedoras">← Fornecedoras</Link>
+        <Voltar href="/painel/fornecedoras">Fornecedoras</Voltar>
       </p>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>

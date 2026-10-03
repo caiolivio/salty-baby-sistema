@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
@@ -39,7 +40,8 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
           <BotoesExportar tabela="fornecedoras" />
           {podeCadastrar && (
             <Link href="/painel/fornecedoras/nova" className={proprios.botao}>
-              + Nova fornecedora
+              <Plus className="icone" aria-hidden />
+              Nova fornecedora
             </Link>
           )}
         </span>

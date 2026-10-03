@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../../painel.module.css";
 import { novaCliente } from "../acoes";
 import { FormularioCliente } from "../formulario-cliente";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Nova cliente" };
 
@@ -13,7 +13,7 @@ export default async function NovaCliente() {
   return (
     <>
       <p>
-        <Link href="/painel/clientes">← Clientes</Link>
+        <Voltar href="/painel/clientes">Clientes</Voltar>
       </p>
       <h1 className={estilos.titulo}>Nova cliente</h1>
       <FormularioCliente

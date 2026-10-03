@@ -9,7 +9,7 @@
   margin: 0 0 16px;
   padding: 16px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
 }
 
@@ -58,7 +58,7 @@
 
 .mes {
   font-size: 11px;
-  fill: #4a5a64;
+  fill: var(--texto-suave);
 }
 
 .criancas {
@@ -75,7 +75,7 @@
 .crianca {
   padding: 12px 16px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
 }
 

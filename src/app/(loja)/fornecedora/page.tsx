@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Gift, Package, PiggyBank, ShoppingBag, Tag, TrendingUp, Wallet } from "lucide-react";
 import { GraficoBarras } from "@/componentes/grafico-barras";
 import { Passos } from "@/componentes/passos";
 import { exigirAcesso } from "@/lib/acesso";
@@ -220,6 +221,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <h2 id="saldos">Seus saldos</h2>
         <div className={estilos.saldos}>
           <div className={`${estilos.saldo} ${estilos.saldoDestaque}`}>
+            <Wallet className="icone" aria-hidden />
             <span>Vendidas · total a receber</span>
             <strong>{formatarReais(credito.aReceberCentavos)}</strong>
             <span>
@@ -228,6 +230,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             </span>
           </div>
           <div className={estilos.saldo}>
+            <ShoppingBag className="icone" aria-hidden />
             <span>Saldo para compras</span>
             <strong>{formatarReais(credito.disponivelCentavos)}</strong>
             <span>
@@ -236,6 +239,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             </span>
           </div>
           <div className={estilos.saldo}>
+            <Tag className="icone" aria-hidden />
             <span>À venda</span>
             <strong>{formatarReais(saldos.aVendaCentavos)}</strong>
             <span>
@@ -243,12 +247,14 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             </span>
           </div>
           <div className={estilos.saldo}>
+            <TrendingUp className="icone" aria-hidden />
             <span>Acumulado</span>
             <strong>{formatarReais(saldos.acumuladoCentavos)}</strong>
             <span>Tudo o que você já ganhou ({formatarReais(saldos.acumuladoCentavos - credito.aReceberCentavos)} já pago ou usado em compras).</span>
           </div>
         </div>
         <div className={estilos.bonus} role="note">
+          <Gift className="icone" aria-hidden />
           <strong>Ganhe 10% a mais comprando com o seu saldo!</strong> Use todo o seu saldo a receber numa compra na {loja.nomeCurto} e ganhe
           10% do valor usado como bônus para a próxima compra. Por exemplo: com R$ 100,00 de saldo, você compra R$ 100,00 e ganha
           R$ 10,00 de bônus. Se usar só uma parte (R$ 99,00, por exemplo), não há bônus.
@@ -263,6 +269,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           saldo” ao fechar o pedido.
           <p>
             <Link href="/" className={estilos.botaoWhats}>
+              <ShoppingBag className="icone" aria-hidden />
               Comprar agora
             </Link>
           </p>
@@ -274,14 +281,17 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <EscolherPeriodo periodo={periodo} hoje={hoje} />
         <div className={estilos.saldos}>
           <div className={estilos.saldo}>
+            <Package className="icone" aria-hidden />
             <span>Peças vendidas</span>
             <strong>{noPeriodo.pecas}</strong>
           </div>
           <div className={estilos.saldo}>
+            <TrendingUp className="icone" aria-hidden />
             <span>Valor das vendas</span>
             <strong>{formatarReais(noPeriodo.vendidoCentavos)}</strong>
           </div>
           <div className={estilos.saldo}>
+            <PiggyBank className="icone" aria-hidden />
             <span>Para você (repasse)</span>
             <strong>{formatarReais(noPeriodo.repasseCentavos)}</strong>
           </div>

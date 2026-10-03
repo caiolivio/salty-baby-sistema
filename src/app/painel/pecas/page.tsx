@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
 import { exigirPagina } from "@/lib/acesso";
 import { podeAlterar } from "@/lib/permissoes";
@@ -64,7 +65,8 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
           <BotoesExportar tabela="pecas" />
           {podeAlterar(acesso, "pecas") && (
             <Link href="/painel/pecas/nova" className={proprios.botao}>
-              + Nova peça
+              <Plus className="icone" aria-hidden />
+              Nova peça
             </Link>
           )}
         </span>
@@ -75,6 +77,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
         </p>
       )}
       <form className={estilos.busca} role="search">
+        <Search className="icone" aria-hidden />
         <input
           name="q"
           defaultValue={busca}
@@ -83,7 +86,7 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
         />
         <button type="submit">Buscar</button>
       </form>
-      <p>
+      <p className={estilos.contagem}>
         {total} peça(s){busca && ` encontradas para "${busca}"`}.
       </p>
       <ImprimirEtiquetas voltar={link(pagina)} />
@@ -137,15 +140,15 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
                     `${loja.nomeCurto} (loja)`
                   )}
                 </td>
-                <td className={estilos.curta} data-rotulo="Tamanho">
+                <td className={`${estilos.curta} ${estilos.emLinha}`} data-rotulo="Tam.">
                   {nomeTamanho(p.tamanho)}
                 </td>
-                <td className={estilos.numero} data-rotulo="Preço">
-                  {formatarReais(p.precoCentavos)}
-                </td>
-                <td className={estilos.curta} data-rotulo="Status">
-                  {nomeDoStatus(p.status, p.naoListada)}
-                  {p.quantidade > 1 && ` (${p.quantidade})`}
+                <td className={`${estilos.numero} ${estilos.emLinha} ${estilos.valor}`}>{formatarReais(p.precoCentavos)}</td>
+                <td className={`${estilos.curta} ${estilos.emLinha}`}>
+                  <span className={estilos.selo} data-status={p.naoListada && p.status === "publicada" ? "nao_listada" : p.status}>
+                    {nomeDoStatus(p.status, p.naoListada)}
+                    {p.quantidade > 1 && ` (${p.quantidade})`}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -154,11 +157,21 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
       </div>
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {pagina > 1 && <Link href={link(pagina - 1)}>← Anteriores</Link>}
+          {pagina > 1 && (
+            <Link href={link(pagina - 1)} className={estilos.comIcone}>
+              <ChevronLeft className="icone" aria-hidden />
+              Anteriores
+            </Link>
+          )}
           <span>
             Página {pagina} de {paginas}
           </span>
-          {pagina < paginas && <Link href={link(pagina + 1)}>Próximas →</Link>}
+          {pagina < paginas && (
+            <Link href={link(pagina + 1)} className={estilos.comIcone}>
+              Próximas
+              <ChevronRight className="icone" aria-hidden />
+            </Link>
+          )}
         </nav>
       )}
     </>

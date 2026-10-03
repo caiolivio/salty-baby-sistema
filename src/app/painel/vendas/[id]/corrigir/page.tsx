@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
@@ -11,6 +10,7 @@ import { motivoParaNaoCorrigir, valoresDaVenda } from "@/lib/vendas/regras";
 import estilos from "../../../painel.module.css";
 import proprios from "../../../formulario.module.css";
 import { FormularioCorrecao } from "./formulario-correcao";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Corrigir venda" };
 
@@ -33,7 +33,7 @@ export default async function CorrigirVenda({ params }: PageProps<"/painel/venda
   return (
     <>
       <p>
-        <Link href="/painel/vendas">← Vendas</Link>
+        <Voltar href="/painel/vendas">Vendas</Voltar>
       </p>
       <h1 className={estilos.titulo}>Corrigir venda de {formatarData(venda.data)}</h1>
       <p>

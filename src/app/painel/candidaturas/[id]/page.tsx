@@ -13,6 +13,7 @@ import { anotar, efetivar, recusar } from "../acoes";
 import { Aprovar } from "../aprovar";
 import visual from "../candidaturas.module.css";
 import { PropostasNoPainel } from "../propostas";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Inscrição de fornecedora" };
 
@@ -51,7 +52,7 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
   return (
     <>
       <p>
-        <Link href="/painel/candidaturas">← Seja fornecedora</Link>
+        <Voltar href="/painel/candidaturas">Seja fornecedora</Voltar>
       </p>
       <h1 className={estilos.titulo}>{c.nome}</h1>
       {c.etapa !== "recusada" && <Passos nomes={PASSOS} situacoes={situacaoDosPassos(passo.atual, passo.concluido)} />}

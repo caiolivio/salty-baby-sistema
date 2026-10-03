@@ -10,6 +10,7 @@ import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { cancelar, marcarDevolvidas } from "./acoes";
 import { BotoesExportar } from "../exportar/botoes";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Devoluções" };
 
@@ -51,7 +52,7 @@ export default async function Devolucoes({ searchParams }: PageProps<"/painel/de
       </p>
       <p>
         {historico ? (
-          <Link href="/painel/devolucoes">← Pedidos em aberto</Link>
+          <Voltar href="/painel/devolucoes">Pedidos em aberto</Voltar>
         ) : (
           <Link href="/painel/devolucoes?ver=historico">Ver devoluções concluídas e canceladas</Link>
         )}

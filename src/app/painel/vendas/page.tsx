@@ -1,3 +1,4 @@
+import { PiggyBank, Plus, Store, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
@@ -9,6 +10,7 @@ import { FORMAS_PAGAMENTO, motivoParaNaoCorrigir } from "@/lib/vendas/regras";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
+import { Seguir, Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Vendas" };
 
@@ -56,7 +58,8 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
           <BotoesExportar tabela="vendas" />
           {podeAlterar(acesso, "vendas") && (
             <Link href="/painel/vendas/nova" className={proprios.botao}>
-              + Nova venda
+              <Plus className="icone" aria-hidden />
+              Nova venda
             </Link>
           )}
         </span>
@@ -73,16 +76,19 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
       )}
       <div className={estilos.cartoes}>
         <div className={estilos.cartao}>
+          <TrendingUp className="icone" aria-hidden />
           <strong>{formatarReais(somas._sum.valorPagoCentavos ?? 0)}</strong>
           vendido ({total} vendas)
         </div>
         {valores && (
           <>
             <div className={estilos.cartao}>
+              <Store className="icone" aria-hidden />
               <strong>{formatarReais(somas._sum.repasseCentavos ?? 0)}</strong>
               de repasse às fornecedoras
             </div>
             <div className={estilos.cartao}>
+              <PiggyBank className="icone" aria-hidden />
               <strong>{formatarReais(somas._sum.lucroCentavos ?? 0)}</strong>
               de lucro da loja
             </div>
@@ -150,11 +156,11 @@ export default async function Vendas({ searchParams }: PageProps<"/painel/vendas
       </div>
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {pagina > 1 && <Link href={`/painel/vendas?pagina=${pagina - 1}`}>← Mais recentes</Link>}
+          {pagina > 1 && <Voltar href={`/painel/vendas?pagina=${pagina - 1}`}>Mais recentes</Voltar>}
           <span>
             Página {pagina} de {paginas}
           </span>
-          {pagina < paginas && <Link href={`/painel/vendas?pagina=${pagina + 1}`}>Mais antigas →</Link>}
+          {pagina < paginas && <Seguir href={`/painel/vendas?pagina=${pagina + 1}`}>Mais antigas</Seguir>}
         </nav>
       )}
     </>

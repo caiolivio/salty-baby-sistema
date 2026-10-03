@@ -8,6 +8,7 @@ import { descreverMudanca, NOMES_TABELA, type TabelaDoHistorico } from "@/lib/hi
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
+import { Voltar, Seguir } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Histórico" };
 
@@ -140,11 +141,11 @@ export default async function Historico({ searchParams }: PageProps<"/painel/his
       )}
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {pagina > 1 && <Link href={link(pagina - 1)}>← Mais novas</Link>}
+          {pagina > 1 && <Voltar href={link(pagina - 1)}>Mais novas</Voltar>}
           <span>
             Página {pagina} de {paginas}
           </span>
-          {pagina < paginas && <Link href={link(pagina + 1)}>Mais antigas →</Link>}
+          {pagina < paginas && <Seguir href={link(pagina + 1)}>Mais antigas</Seguir>}
         </nav>
       )}
     </>

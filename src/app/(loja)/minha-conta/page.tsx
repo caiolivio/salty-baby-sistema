@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { Heart, Receipt, ShoppingBag } from "lucide-react";
 import { prisma } from "@/lib/banco";
 import { fichaDaCliente } from "@/lib/clientes/contas";
 import { escolherSugestoes, preferenciasDaCliente } from "@/lib/clientes/sugestoes";
@@ -98,17 +99,23 @@ export default async function MinhaConta() {
 
       <section className={estilos.secao} aria-labelledby="titulo-resumo">
         <h2 id="titulo-resumo">Sua conta</h2>
-        <ul>
-          <li>
-            <Link href="/carrinho">Carrinho</Link>: {noCarrinho === 0 ? "vazio" : `${noCarrinho} peça(s)`}
-          </li>
-          <li>
-            <Link href="/minha-conta/favoritos">Favoritos</Link>: {favoritos.length} peça(s)
-          </li>
-          <li>
-            <Link href="/minha-conta/compras">Compras</Link>: {compras.length} peça(s)
-          </li>
-        </ul>
+        <div className={estilos.saldos}>
+          <Link href="/carrinho" className={`${estilos.saldo} ${estilos.saldoLink}`}>
+            <ShoppingBag className="icone" aria-hidden />
+            <span>Carrinho</span>
+            <strong>{noCarrinho === 0 ? "Vazio" : `${noCarrinho} peça(s)`}</strong>
+          </Link>
+          <Link href="/minha-conta/favoritos" className={`${estilos.saldo} ${estilos.saldoLink}`}>
+            <Heart className="icone" aria-hidden />
+            <span>Favoritos</span>
+            <strong>{favoritos.length} peça(s)</strong>
+          </Link>
+          <Link href="/minha-conta/compras" className={`${estilos.saldo} ${estilos.saldoLink}`}>
+            <Receipt className="icone" aria-hidden />
+            <span>Compras</span>
+            <strong>{compras.length} peça(s)</strong>
+          </Link>
+        </div>
       </section>
     </>
   );

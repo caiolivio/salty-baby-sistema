@@ -4,11 +4,15 @@
 }
 
 .topo {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
+  height: 56px;
+  padding: 0 16px;
   background: var(--fundo);
   border-bottom: 1px solid var(--borda);
 }
@@ -23,8 +27,8 @@
 }
 
 .logo {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
 }
 
 .marca span {
@@ -46,27 +50,87 @@
 }
 
 .sair {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
-  padding: 6px 12px;
-  border: 1px solid var(--petroleo);
-  border-radius: 8px;
+  font-size: 0.9rem;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--raio);
   background: transparent;
-  color: var(--petroleo);
+  color: var(--texto-suave);
   cursor: pointer;
 }
 
+.sair:hover {
+  background: var(--fundo-suave);
+  color: var(--tinta);
+}
+
+/* Menu à esquerda e conteúdo à direita (no celular, o menu vai para o rodapé). */
+.corpo {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  align-items: start;
+}
+
 .conteudo {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
 .titulo {
+  color: var(--tinta);
+  font-size: clamp(1.6rem, 4vw, 2rem);
+}
+
+.tituloGrande {
+  color: var(--tinta);
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  margin-bottom: 4px;
+}
+
+/* Atalhos do início: as ações do dia a dia em um toque. */
+.atalhosInicio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.atalhoInicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--petroleo);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.atalhoInicio:hover {
+  background: var(--tinta);
+}
+
+.atalhoInicio + .atalhoInicio {
+  background: var(--fundo);
   color: var(--petroleo);
-  font-size: 1.5rem;
+  border: 1px solid var(--borda-forte);
+}
+
+.atalhoInicio + .atalhoInicio:hover {
+  background: var(--fundo-marca);
 }
 
 .lista {
@@ -74,57 +138,266 @@
 }
 
 .menu {
+  position: sticky;
+  top: 56px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px 16px;
+  flex-direction: column;
+  gap: 2px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding: 16px 12px;
   background: var(--fundo);
-  border-bottom: 1px solid var(--borda);
+  border-right: 1px solid var(--borda);
 }
 
 .menu a {
-  flex: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  color: var(--petroleo);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--raio);
+  color: var(--tinta);
+  font-size: 0.92rem;
+  font-weight: 500;
   text-decoration: none;
+}
+
+.menu a :global(.icone) {
+  color: var(--texto-suave);
 }
 
 .menu a:hover {
   background: var(--fundo-suave);
 }
 
-/* Peças é o que mais se usa no dia a dia. */
-.menu a.destaque {
-  background: var(--petroleo);
-  color: #fff;
+.menu a[aria-current="page"] {
+  background: var(--fundo-marca);
+  color: var(--petroleo);
+  font-weight: 600;
 }
 
-.menu a.destaque:hover {
-  background: var(--tinta);
+.menu a[aria-current="page"] :global(.icone) {
+  color: var(--petroleo);
+}
+
+.menuTopo,
+.barraCelular,
+.fundoMenu {
+  display: none;
+}
+
+.botaoIcone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--altura-toque);
+  height: var(--altura-toque);
+  border: 0;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+/* Celular: barra de ícones fixa no rodapé; "Menu" abre a lista completa por baixo. */
+@media (max-width: 900px) {
+  .corpo {
+    display: block;
+  }
+
+  .conteudo {
+    padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .barraCelular {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 4px 4px env(safe-area-inset-bottom);
+    background: var(--fundo);
+    border-top: 1px solid var(--borda);
+  }
+
+  .barraCelular a,
+  .barraCelular button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    border: 0;
+    background: transparent;
+    color: var(--texto-suave);
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .barraCelular :global(.icone) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .barraCelular [aria-current="page"],
+  .barraCelular [aria-expanded="true"] {
+    color: var(--petroleo);
+    font-weight: 650;
+  }
+
+  .menu {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    height: auto;
+    max-height: 80vh;
+    padding: 8px 12px calc(16px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -8px 32px rgba(19, 33, 43, 0.18);
+    transform: translateY(105%);
+    transition: transform 0.2s ease;
+    visibility: hidden;
+  }
+
+  .menuAberto {
+    transform: none;
+    visibility: visible;
+  }
+
+  .menu a {
+    min-height: var(--altura-toque);
+    font-size: 1rem;
+  }
+
+  .menuTopo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 0 10px;
+  }
+
+  .fundoMenu {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(19, 33, 43, 0.35);
+  }
 }
 
 .busca {
+  position: relative;
   display: flex;
   gap: 8px;
+}
+
+.busca > :global(.icone) {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+.busca > :global(.icone) ~ input {
+  padding-left: 40px;
+}
+
+.contagem {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.comIcone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Status da peça como etiqueta colorida. */
+.selo {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--raio-p);
+  background: var(--fundo-suave);
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selo[data-status="publicada"] {
+  background: #e6f4ec;
+  color: #1f6b43;
+}
+
+.selo[data-status="reservada"],
+.selo[data-status="devolucao_pedida"] {
+  background: #fff3dc;
+  color: #8a4b00;
+}
+
+.selo[data-status="vendida"],
+.selo[data-status="na_sacolinha"] {
+  background: #e7eef3;
+  color: var(--petroleo);
+}
+
+.selo[data-status="pedido_pago"] {
+  background: #e6f4ec;
+  color: #1f6b43;
+}
+
+.selo[data-status="pedido_reservado"] {
+  background: #fff3dc;
+  color: #8a4b00;
+}
+
+.selo[data-status="pedido_expirado"] {
+  background: #fdecea;
+  color: var(--erro);
+}
+
+.selo[data-status="nao_listada"] {
+  background: var(--fundo-marca);
+  color: var(--petroleo);
+}
+
+.valor {
+  font-weight: 600;
 }
 
 .busca input {
   flex: 1;
   min-width: 0;
   font: inherit;
+  min-height: var(--altura-toque);
   padding: 10px 12px;
-  border: 1px solid var(--borda);
-  border-radius: 10px;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
 }
 
 .busca button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
   font-weight: 600;
   padding: 10px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--petroleo);
   color: #fff;
   cursor: pointer;
@@ -133,7 +406,7 @@
 .tabelaCaixa {
   overflow-x: auto;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
 }
 
@@ -157,7 +430,15 @@
 }
 
 .tabela th {
-  color: var(--petroleo);
+  color: var(--texto-suave);
+  background: var(--fundo);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tabela tbody tr:hover {
   background: var(--fundo-suave);
 }
 
@@ -200,7 +481,7 @@
     margin-bottom: 10px;
     padding: 10px 12px;
     border: 1px solid var(--borda);
-    border-radius: 12px;
+    border-radius: var(--raio);
     background: var(--fundo);
   }
 
@@ -213,13 +494,19 @@
     text-align: left;
   }
 
+  /* Tamanho, preço e status lado a lado na última linha do cartão. */
+  .tabela td.emLinha {
+    display: inline-block;
+    margin: 6px 12px 0 0;
+  }
+
   .tabela td[data-rotulo]:empty {
     display: none;
   }
 
   .tabela td[data-rotulo]::before {
     content: attr(data-rotulo) ": ";
-    color: #4a5a64;
+    color: var(--texto-suave);
   }
 
   .tabela tr.comFoto {
@@ -244,7 +531,7 @@
   width: 48px;
   height: 48px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   background: var(--fundo-suave);
   display: block;
 }
@@ -257,7 +544,7 @@
 .antigo {
   display: block;
   font-size: 0.8rem;
-  color: #4a5a64;
+  color: var(--texto-suave);
 }
 
 .paginas {
@@ -272,19 +559,31 @@
   gap: 12px;
 }
 
+@media (max-width: 480px) {
+  .cartoes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
 .cartao {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 16px;
   border: 1px solid var(--borda);
-  border-radius: 12px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--tinta);
   text-decoration: none;
 }
 
 .cartao strong {
-  color: var(--petroleo);
+  color: var(--tinta);
   font-size: 1.5rem;
+  font-weight: 650;
+}
+
+.cartao :global(.icone) {
+  color: var(--turquesa);
 }

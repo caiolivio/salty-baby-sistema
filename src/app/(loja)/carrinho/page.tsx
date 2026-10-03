@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { usuarioAtual } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { clienteDoUsuario } from "@/lib/clientes/contas";
@@ -46,15 +47,25 @@ export default async function Carrinho() {
   return (
     <>
       <p>
-        <Link href="/">← Continuar escolhendo</Link>
+        <Link href="/" className={estilos.voltar}>
+          <ArrowLeft className="icone" aria-hidden />
+          Continuar escolhendo
+        </Link>
       </p>
-      <h1 className={estilos.tituloPagina}>Seu carrinho</h1>
+      <h1 className={estilos.tituloPagina}>
+        Seu carrinho
+        {pecas.length > 0 && <span className={estilos.qtdTitulo}> · {pecas.length === 1 ? "1 peça" : `${pecas.length} peças`}</span>}
+      </h1>
       {pecas.length === 0 ? (
-        <p className={estilos.comoComprar}>
-          Seu carrinho está vazio. Escolha as peças na vitrine e toque em &quot;Incluir no carrinho&quot;.
-        </p>
+        <div className={estilos.vazio}>
+          <ShoppingBag className="icone" aria-hidden />
+          <p>Seu carrinho está vazio. Escolha as peças na vitrine e toque em &quot;Incluir no carrinho&quot;.</p>
+          <Link href="/" className={estilos.botaoWhats}>
+            Ver peças
+          </Link>
+        </div>
       ) : (
-        <>
+        <div className={estilos.carrinho}>
           <ul className={estilos.itens}>
             {pecas.map((p) => (
               <li key={p.id} className={disponivel(p) ? undefined : estilos.saiu}>
@@ -70,9 +81,7 @@ export default async function Carrinho() {
                   <Link href={enderecoDaPeca(p.codigo)} className={estilos.nome}>
                     {p.nome}
                   </Link>
-                  <span className={estilos.detalhe}>
-                    {[p.codigo, p.tamanho && `Tam. ${p.tamanho}`].filter(Boolean).join(" · ")}
-                  </span>
+                  <span className={estilos.detalhe}>{[p.codigo, p.tamanho && `Tam. ${p.tamanho}`].filter(Boolean).join(" · ")}</span>
                   {disponivel(p) ? (
                     <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>
                   ) : (
@@ -81,35 +90,38 @@ export default async function Carrinho() {
                 </div>
                 <form action={tirar}>
                   <input type="hidden" name="id" value={p.id} />
-                  <button type="submit" className={estilos.tirar}>
-                    Tirar
+                  <button type="submit" className={estilos.tirar} aria-label={`Tirar ${p.nome} do carrinho`}>
+                    <Trash2 className="icone" aria-hidden />
+                    <span>Tirar</span>
                   </button>
                 </form>
               </li>
             ))}
           </ul>
-          <p className={estilos.total}>
-            Total: <strong>{formatarReais(total)}</strong>
-          </p>
-          {todasDisponiveis ? (
-            <>
-              <FecharPedido
-                nome={ficha?.nome}
-                telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
-                saldoCentavos={saldo}
-                totalCentavos={total}
-              />
-              {!usuario && (
-                <p className={estilos.dica}>
-                  <Link href="/entrar?voltar=/carrinho">Entre na sua conta</Link> ou{" "}
-                  <Link href="/cadastro?voltar=/carrinho">crie uma</Link> para o pedido ficar guardado nas suas compras.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className={estilos.aviso}>Tire do carrinho as peças que não estão mais disponíveis para fechar o pedido.</p>
-          )}
-        </>
+          <aside className={estilos.resumo}>
+            <p className={estilos.total}>
+              <span>Total</span> <strong>{formatarReais(total)}</strong>
+            </p>
+            {todasDisponiveis ? (
+              <>
+                <FecharPedido
+                  nome={ficha?.nome}
+                  telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
+                  saldoCentavos={saldo}
+                  totalCentavos={total}
+                />
+                {!usuario && (
+                  <p className={estilos.dica}>
+                    <Link href="/entrar?voltar=/carrinho">Entre na sua conta</Link> ou{" "}
+                    <Link href="/cadastro?voltar=/carrinho">crie uma</Link> para o pedido ficar guardado nas suas compras.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className={estilos.aviso}>Tire do carrinho as peças que não estão mais disponíveis para fechar o pedido.</p>
+            )}
+          </aside>
+        </div>
       )}
     </>
   );

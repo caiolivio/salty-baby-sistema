@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { EditarGrupo, NovoGrupo } from "./formularios";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Grupos de WhatsApp" };
 
@@ -15,7 +15,7 @@ export default async function Grupos() {
   return (
     <>
       <p>
-        <Link href="/painel/marketing">← WhatsApp Marketing</Link>
+        <Voltar href="/painel/marketing">WhatsApp Marketing</Voltar>
       </p>
       <h1 className={estilos.titulo}>Grupos de WhatsApp</h1>
       <p>

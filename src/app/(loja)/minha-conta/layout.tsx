@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeftRight, LogOut } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { podeAcessar } from "@/lib/permissoes";
 import estilos from "../loja.module.css";
@@ -10,19 +11,24 @@ export default async function LayoutMinhaConta({ children }: LayoutProps<"/minha
   const usuario = await exigirAcesso("area-cliente", "/minha-conta");
   return (
     <>
-      <div className={estilos.precoEEstrela}>
-        <h1 className={estilos.tituloPagina}>Olá, {usuario.nome.split(" ")[0]}!</h1>
+      <div className={estilos.cabecalhoArea}>
+        <div>
+          <p className="sobretitulo">Minha conta</p>
+          <h1 className={estilos.olaArea}>Olá, {usuario.nome.split(" ")[0]}!</h1>
+          {podeAcessar(usuario.perfis, "area-fornecedora") && (
+            <Link href="/fornecedora" className={estilos.trocarArea}>
+              <ArrowLeftRight className="icone" aria-hidden />
+              Ir para a área da fornecedora
+            </Link>
+          )}
+        </div>
         <form action={sair}>
-          <button type="submit" className={estilos.sair}>
-            Sair da conta
+          <button type="submit" className={estilos.sairIcone}>
+            <LogOut className="icone" aria-hidden />
+            Sair
           </button>
         </form>
       </div>
-      {podeAcessar(usuario.perfis, "area-fornecedora") && (
-        <p>
-          <Link href="/fornecedora">Ir para a área da fornecedora</Link>
-        </p>
-      )}
       <Abas />
       {children}
     </>

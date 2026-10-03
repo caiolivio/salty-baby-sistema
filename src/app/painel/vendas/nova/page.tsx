@@ -16,6 +16,7 @@ import { opcoesDeSaldo } from "@/lib/fornecedoras/saldo-para-compras";
 import { FormularioVenda } from "./formulario-venda";
 import { IncluirNaVenda } from "./incluir-na-venda";
 import { pecasDaVenda } from "./pecas-da-venda";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Nova venda" };
 
@@ -55,7 +56,7 @@ export default async function NovaVenda() {
   return (
     <>
       <p>
-        <Link href="/painel/vendas">← Vendas</Link>
+        <Voltar href="/painel/vendas">Vendas</Voltar>
       </p>
       <h1 className={estilos.titulo}>Nova venda</h1>
       <p>Para vendas pelo WhatsApp, pelos grupos, pelo Instagram, na loja ou na Bag. Os pedidos do site são confirmados em Pedidos.</p>

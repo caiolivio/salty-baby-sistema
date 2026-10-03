@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ComprovanteAcerto } from "@/componentes/comprovante-acerto";
 import { exigirAcesso } from "@/lib/acesso";
@@ -13,6 +12,7 @@ import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { desfazer } from "../acoes";
 import { EnviarComprovante } from "./enviar-comprovante";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Comprovante de repasse" };
 
@@ -42,7 +42,7 @@ export default async function Comprovante({ params, searchParams }: PageProps<"/
   return (
     <>
       <p>
-        <Link href="/painel/acertos">← Contas a pagar</Link>
+        <Voltar href="/painel/acertos">Contas a pagar</Voltar>
       </p>
       <h1 className={estilos.titulo}>Comprovante de repasse nº {acerto.numero}</h1>
       {aviso.pago && !acerto.canceladoEm && (

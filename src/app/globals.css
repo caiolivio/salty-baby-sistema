@@ -1,14 +1,26 @@
 /* Cores da marca. Estas são as da Salty; as de verdade vêm das configurações
-   da loja (layout raiz). O destaque é só para ícones: não serve para texto. */
+   da loja (layout raiz). O destaque é só para ícones: não serve para texto.
+   Visual minimalista: fundo branco, cinzas neutros, cantos discretos e as
+   cores da marca só como destaque. */
 :root {
   --turquesa: #32afb5;
   --petroleo: #13506e;
   --tinta: #13212b;
   --fundo: #ffffff;
-  --fundo-suave: color-mix(in srgb, var(--turquesa) 6%, #ffffff);
-  --borda: color-mix(in srgb, var(--turquesa) 18%, #e6e6e6);
+  --fundo-suave: #f5f6f7;
+  --fundo-marca: color-mix(in srgb, var(--turquesa) 8%, #ffffff);
+  --borda: #e3e6e9;
+  --borda-forte: #c9cfd4;
+  --texto-suave: #5d6a73;
   --sucesso: #1f7a4d;
   --erro: #b3261e;
+  --raio: 6px;
+  --raio-p: 4px;
+  --sombra: 0 1px 2px rgba(19, 33, 43, 0.06), 0 4px 16px rgba(19, 33, 43, 0.06);
+  --fonte: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Títulos e nomes das peças: letra com mais personalidade, bem marcada. */
+  --fonte-titulo: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", var(--fonte);
+  --altura-toque: 44px;
 }
 
 * {
@@ -22,30 +34,115 @@ body {
   min-height: 100%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--fundo);
   color: var(--tinta);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: var(--fonte);
+  font-feature-settings: "cv11", "ss01";
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Linha pequena em maiúsculas acima de um título (ex.: "SEMINOVA · CARTER'S"). */
+.sobretitulo {
+  font-family: var(--fonte);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--petroleo);
+}
+
 a {
   color: var(--petroleo);
+  text-underline-offset: 3px;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Links com seta ("Voltar para Peças", "Próximas"). */
+.linkSeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.linkSeta:hover {
+  text-decoration: underline;
+}
+
+.linkSeta .icone {
+  width: 18px;
+  height: 18px;
+}
+
+/* Ícones (lucide): mesmo traço em todo o sistema. */
+.icone {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  stroke-width: 1.75;
+}
+
+:focus-visible {
+  outline: 2px solid var(--turquesa);
+  outline-offset: 2px;
 }
 
 .creditos {
   padding: 12px 16px;
   text-align: center;
-  font-size: 0.8rem;
-  color: #4a5a64;
-  background: var(--fundo-suave);
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  background: var(--fundo);
   border-top: 1px solid var(--borda);
 }
 
 .creditos a {
   color: var(--petroleo);
   font-weight: 600;
+}
+
+/* Embaixo do rodapé escuro da loja, os créditos acompanham o fundo escuro. */
+body:has([data-rodape-escuro]) .creditos {
+  background: var(--tinta);
+  color: rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body:has([data-rodape-escuro]) .creditos a {
+  color: #fff;
 }
 
 @media print {

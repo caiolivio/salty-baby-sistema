@@ -17,7 +17,7 @@
 }
 
 .linha img {
-  border-radius: 10px;
+  border-radius: var(--raio);
   border: 1px solid var(--borda);
   max-width: 100%;
   height: auto;
@@ -29,7 +29,7 @@
   font-weight: 600;
   padding: 8px 12px;
   border: 1px solid var(--petroleo);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: transparent;
   color: var(--petroleo);
   cursor: pointer;
@@ -42,7 +42,7 @@
   text-transform: uppercase;
   padding: 12px;
   border: 1px solid var(--borda);
-  border-radius: 10px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--tinta);
   max-width: 220px;

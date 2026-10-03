@@ -31,7 +31,7 @@
   min-height: 40px;
   padding: 6px 8px;
   border: 1px solid #b8c9d0;
-  border-radius: 8px;
+  border-radius: var(--raio-p);
   font: inherit;
 }
 
