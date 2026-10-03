@@ -110,6 +110,7 @@ model Fornecedora {
   convites                ConviteFornecedora[]
   acertos                 Acerto[]
   movimentosCredito       MovimentoCredito[]
+  relatoriosEnviados      RelatorioEnviado[]
   vendasComCredito        Venda[]              @relation("CreditoDaVenda")
   pedidosComCredito       Pedido[]             @relation("CreditoDoPedido")
 
@@ -751,4 +752,20 @@ model ConfiguracaoLoja {
   atualizadoEm   DateTime @updatedAt @map("atualizado_em")
 
   @@map("configuracao_loja")
+}
+
+/// Relatório mensal enviado à fornecedora pelo WhatsApp (o relatório é
+/// calculado na hora a partir das vendas; aqui fica só quando e quem enviou).
+model RelatorioEnviado {
+  id            String      @id @default(cuid())
+  fornecedoraId String      @map("fornecedora_id")
+  /// Mês do relatório, aaaa-mm.
+  mes           String      @db.VarChar(7)
+  enviadoEm     DateTime    @default(now()) @map("enviado_em")
+  quem          String      @db.VarChar(191)
+  fornecedora   Fornecedora @relation(fields: [fornecedoraId], references: [id], onDelete: Cascade)
+
+  @@unique([fornecedoraId, mes])
+  @@index([mes])
+  @@map("relatorios_enviados")
 }

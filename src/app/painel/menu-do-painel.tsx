@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  ChartColumn,
   ClipboardList,
   HardDrive,
   History,
@@ -39,6 +40,7 @@ const ICONES: Record<string, LucideIcon> = {
   vendas: Receipt,
   historico: History,
   acertos: Wallet,
+  relatorios: ChartColumn,
   backup: HardDrive,
   equipe: UsersRound,
   configuracoes: Settings,
