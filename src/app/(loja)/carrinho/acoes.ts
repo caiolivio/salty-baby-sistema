@@ -10,6 +10,7 @@ import { COOKIE_GRUPO, lerCodigoGrupo } from "@/lib/grupos/regras";
 import { fecharPedido, liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
 import { autorDoSite } from "@/lib/historico/regras";
+import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 
 // Ações públicas da loja (não pedem login). O carrinho fica num cookie da
 // própria cliente; o banco só é alterado ao fechar o pedido.
@@ -56,9 +57,15 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   const grupo = guardado ? await prisma.grupoWhatsapp.findUnique({ where: { codigo: guardado }, select: { id: true } }) : null;
   const usuario = await usuarioAtual();
   const ficha = usuario && podeAcessar(usuario.perfis, "area-cliente") ? await fichaDaCliente(usuario) : null;
+  // Fornecedora logada que quer pagar com o saldo: a loja confere o valor ao confirmar.
+  const fornecedora =
+    usuario && dados.get("usar_saldo") === "sim"
+      ? await prisma.fornecedora.findFirst({ where: { usuarioId: usuario.id }, select: { id: true } })
+      : null;
+  const comSaldo = fornecedora && (await saldoParaCompras(fornecedora.id)).disponivelCentavos > 0 ? fornecedora.id : null;
   const resultado = await fecharPedido(
     ids,
-    { nome, telefone, clienteId: ficha?.id },
+    { nome, telefone, clienteId: ficha?.id, creditoFornecedoraId: comSaldo },
     grupo?.id ?? null,
     autorDoSite(nome, usuario?.id ?? null),
   );

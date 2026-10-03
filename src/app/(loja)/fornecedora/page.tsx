@@ -11,6 +11,7 @@ import { PASSOS, situacaoDosPassos } from "@/lib/fornecedoras/candidatura";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
 import { etapaDaFornecedora, PASSOS_PRIMEIRO_ACESSO } from "@/lib/fornecedoras/conta";
 import { calcularSaldos, vendasNoPeriodo } from "@/lib/fornecedoras/saldos";
+import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../loja.module.css";
@@ -202,7 +203,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
     { periodo: parametros.periodo ?? "mensal", mes: parametros.mes, de: parametros.de, ate: parametros.ate },
     hoje,
   );
-  const { pecas, itens } = await dadosDaFornecedora(fornecedora.id);
+  const [{ pecas, itens }, credito] = await Promise.all([dadosDaFornecedora(fornecedora.id), saldoParaCompras(fornecedora.id)]);
   const saldos = calcularSaldos(pecas, itens);
   const noPeriodo = vendasNoPeriodo(itens, periodo);
   const contagem = {
@@ -220,8 +221,19 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <div className={estilos.saldos}>
           <div className={`${estilos.saldo} ${estilos.saldoDestaque}`}>
             <span>Vendidas · total a receber</span>
-            <strong>{formatarReais(saldos.aReceberCentavos)}</strong>
-            <span>Repasse das peças vendidas que ainda não foi pago.</span>
+            <strong>{formatarReais(credito.aReceberCentavos)}</strong>
+            <span>
+              Repasse das peças vendidas que ainda não foi pago
+              {credito.usadoPendenteCentavos > 0 && `, já sem os ${formatarReais(credito.usadoPendenteCentavos)} usados em compras`}.
+            </span>
+          </div>
+          <div className={estilos.saldo}>
+            <span>Saldo para compras</span>
+            <strong>{formatarReais(credito.disponivelCentavos)}</strong>
+            <span>
+              Para comprar na {loja.nomeCurto}
+              {credito.bonusCentavos > 0 && `, com ${formatarReais(credito.bonusCentavos)} de bônus`}.
+            </span>
           </div>
           <div className={estilos.saldo}>
             <span>À venda</span>
@@ -233,8 +245,22 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           <div className={estilos.saldo}>
             <span>Acumulado</span>
             <strong>{formatarReais(saldos.acumuladoCentavos)}</strong>
-            <span>Tudo o que você já ganhou ({formatarReais(saldos.recebidoCentavos)} já pago).</span>
+            <span>Tudo o que você já ganhou ({formatarReais(saldos.acumuladoCentavos - credito.aReceberCentavos)} já pago ou usado em compras).</span>
           </div>
+        </div>
+        <div className={estilos.bonus} role="note">
+          <strong>Ganhe 10% a mais comprando com o seu saldo!</strong> Use todo o seu saldo a receber numa compra na {loja.nomeCurto} e ganhe
+          10% do valor usado como bônus para a próxima compra. Por exemplo: com R$ 100,00 de saldo, você compra R$ 100,00 e ganha
+          R$ 10,00 de bônus. Se usar só uma parte (R$ 99,00, por exemplo), não há bônus.
+          {credito.aReceberCentavos > 0 && (
+            <>
+              {" "}
+              Hoje, usando os seus {formatarReais(credito.aReceberCentavos)}, você ganha{" "}
+              <strong>{formatarReais(Math.round(credito.aReceberCentavos / 10))}</strong>.
+            </>
+          )}{" "}
+          O bônus vale só para compras, não é pago em dinheiro. Para usar o saldo, monte o seu pedido no site e marque “Pagar com o meu
+          saldo” ao fechar o pedido.
         </div>
       </section>
 

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { CANAIS_DIRETOS, DESTINOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import estilos from "../../formulario.module.css";
+import { CampoDoSaldo, type SaldoDaFornecedora } from "../campo-do-saldo";
 import { CamposDeDesconto, type PecaDoDesconto } from "../campos-de-desconto";
 import { registrarVenda } from "./acoes";
 
@@ -14,12 +15,14 @@ export function FormularioVenda({
   grupos,
   pecas,
   mostrarValores,
+  saldos,
 }: {
   hoje: string;
   clientes: Opcao[];
   grupos: { id: string; nome: string }[];
   pecas: PecaDoDesconto[];
   mostrarValores: boolean;
+  saldos: SaldoDaFornecedora[];
 }) {
   const vazia = pecas.length === 0;
   const [estado, acao, enviando] = useActionState(registrarVenda, undefined);
@@ -92,6 +95,7 @@ export function FormularioVenda({
         </div>
       </fieldset>
       {!vazia && <CamposDeDesconto pecas={pecas} valores={v} mostrarValores={mostrarValores} />}
+      {!vazia && <CampoDoSaldo fornecedoras={saldos} valores={v} />}
       <fieldset className={estilos.grupo}>
         <legend>Cliente</legend>
         <div className={estilos.grade}>

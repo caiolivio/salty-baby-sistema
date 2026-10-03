@@ -6,6 +6,7 @@ import { fimDoMesAnterior, nomeDaFormaAcerto, nomeDoMes, resumirAPagar } from "@
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
+import { saldosParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
@@ -21,13 +22,14 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
   const hoje = hojeEmSaoPaulo();
   const corte = fimDoMesAnterior(hoje);
 
-  const [pendentes, acertos] = await Promise.all([
+  const [pendentes, acertos, saldos] = await Promise.all([
     repassesPendentes(),
     prisma.acerto.findMany({
       orderBy: [{ data: "desc" }, { numero: "desc" }],
       take: 100,
       include: { fornecedora: { select: { codigo: true, nome: true } } },
     }),
+    saldosParaCompras(),
   ]);
 
   // Agrupa os repasses pendentes por fornecedora.
@@ -113,6 +115,11 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
                   </td>
                   <td className={estilos.numero} data-rotulo="Total">
                     {formatarReais(r.totalCentavos)}
+                    {(saldos.get(f.id)?.usadoPendenteCentavos ?? 0) > 0 && (
+                      <span className={estilos.antigo}>
+                        menos {formatarReais(saldos.get(f.id)?.usadoPendenteCentavos ?? 0)} já usados em compras
+                      </span>
+                    )}
                   </td>
                   <td>
                     <Link href={`/painel/acertos/pagar/${f.id}`} className={proprios.botao}>
@@ -155,7 +162,10 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
                   </td>
                   <td>{nomeDaFormaAcerto(a.forma)}</td>
                   <td className={estilos.numero}>{a.pecas}</td>
-                  <td className={estilos.numero}>{a.canceladoEm ? <s>{formatarReais(a.totalCentavos)}</s> : formatarReais(a.totalCentavos)}</td>
+                  <td className={estilos.numero}>
+                    {a.canceladoEm ? <s>{formatarReais(a.totalCentavos)}</s> : formatarReais(a.totalCentavos)}
+                    {a.abatidoCentavos > 0 && <span className={estilos.antigo}>pago {formatarReais(a.totalCentavos - a.abatidoCentavos)}</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

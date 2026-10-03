@@ -3,6 +3,8 @@ import { prisma } from "../banco";
 import { formatarReais } from "../dinheiro";
 import { registrar, rotuloDaFornecedora } from "../historico/gravar";
 import type { Autor } from "../historico/regras";
+import { abatimentoNoAcerto } from "../fornecedoras/credito";
+import { saldoParaCompras } from "../fornecedoras/saldo-para-compras";
 import { nomeDaFormaAcerto, type DadosAcerto } from "./regras";
 
 // Acerto com as fornecedoras: o que falta pagar e o registro do pagamento.
@@ -53,6 +55,8 @@ export class AcertoMudou extends Error {
  */
 export async function registrarAcerto(fornecedoraId: string, dados: DadosAcerto, autor: Autor): Promise<{ id: string }> {
   return prisma.$transaction(async (tx) => {
+    // Trava a fornecedora: uma compra com o saldo ao mesmo tempo esperaria este acerto.
+    await tx.$queryRaw`SELECT id FROM fornecedoras WHERE id = ${fornecedoraId} FOR UPDATE`;
     const fornecedora = await tx.fornecedora.findUniqueOrThrow({ where: { id: fornecedoraId }, select: { id: true, codigo: true, nome: true } });
     const itens = await tx.itemVenda.findMany({
       where: { id: { in: dados.itemIds }, ...PENDENTE, peca: { ...PENDENTE.peca, fornecedoraId } },
@@ -65,6 +69,9 @@ export async function registrarAcerto(fornecedoraId: string, dados: DadosAcerto,
 
     const total = itens.reduce((s, i) => s + i.repasseCentavos, 0);
     const pecas = itens.reduce((s, i) => s + i.quantidade, 0);
+    // O que ela já gastou em compras com o saldo sai deste pagamento.
+    const { usadoPendenteCentavos } = await saldoParaCompras(fornecedoraId, tx);
+    const abatido = abatimentoNoAcerto(usadoPendenteCentavos, total);
     const data = new Date(`${dados.data}T00:00:00Z`);
     const acerto = await tx.acerto.create({
       data: {
@@ -73,6 +80,7 @@ export async function registrarAcerto(fornecedoraId: string, dados: DadosAcerto,
         data,
         forma: dados.forma,
         totalCentavos: total,
+        abatidoCentavos: abatido,
         pecas,
         observacao: dados.observacao,
         usuarioId: autor.usuarioId,
@@ -85,6 +93,18 @@ export async function registrarAcerto(fornecedoraId: string, dados: DadosAcerto,
       data: { repasseRecebido: true, repasseRecebidoEm: data, acertoId: acerto.id },
     });
     if (marcados.count !== itens.length) throw new AcertoMudou();
+    if (abatido > 0) {
+      await tx.movimentoCredito.create({
+        data: {
+          fornecedoraId,
+          tipo: "abatimento",
+          repasseCentavos: abatido,
+          acertoId: acerto.id,
+          descricao: `Descontado no pagamento nº ${numero}`,
+          quem: autor.nome.slice(0, 191),
+        },
+      });
+    }
 
     await registrar(
       tx,
@@ -93,7 +113,9 @@ export async function registrarAcerto(fornecedoraId: string, dados: DadosAcerto,
         {
           campo: "Repasse pago",
           antes: null,
-          depois: `Comprovante nº ${numero}: ${formatarReais(total)} (${pecas} ${pecas === 1 ? "peça" : "peças"}), ${nomeDaFormaAcerto(dados.forma)}`,
+          depois:
+            `Comprovante nº ${numero}: ${formatarReais(total)} (${pecas} ${pecas === 1 ? "peça" : "peças"}), ${nomeDaFormaAcerto(dados.forma)}` +
+            (abatido > 0 ? `, menos ${formatarReais(abatido)} de compras com o saldo: pago ${formatarReais(total - abatido)}` : ""),
           restrito: true,
         },
       ],
@@ -116,6 +138,8 @@ export async function desfazerAcerto(id: string, autor: Autor, agora = new Date(
       where: { acertoId: id },
       data: { repasseRecebido: false, repasseRecebidoEm: null, acertoId: null },
     });
+    // O desconto das compras volta a ficar para o próximo acerto.
+    await tx.movimentoCredito.deleteMany({ where: { acertoId: id } });
     await tx.acerto.update({ where: { id }, data: { canceladoEm: agora, canceladoPor: autor.nome.slice(0, 191) } });
     await registrar(
       tx,

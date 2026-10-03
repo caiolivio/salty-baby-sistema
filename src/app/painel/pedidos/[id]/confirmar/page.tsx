@@ -8,6 +8,7 @@ import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { minutosRestantes } from "@/lib/pedidos/regras";
+import { opcoesDeSaldo } from "@/lib/fornecedoras/saldo-para-compras";
 import proprios from "../../../formulario.module.css";
 import estilos from "../../../painel.module.css";
 import { cancelarPedido } from "../../acoes";
@@ -47,6 +48,9 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
   if (!pedido) notFound();
   const aberto = pedido.status === "reservado" || pedido.status === "expirado";
   if (!aberto) redirect(`/painel/pedidos/${id}`);
+  // O saldo das fornecedoras é repasse: só para quem vê os valores.
+  const saldos = valores ? await opcoesDeSaldo(pedido.creditoFornecedoraId) : [];
+  const pediuSaldo = saldos.find((f) => f.id === pedido.creditoFornecedoraId);
 
   return (
     <>
@@ -102,10 +106,18 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
       </p>
 
+      {pediuSaldo && (
+        <p className={proprios.aviso} role="status">
+          A cliente é a fornecedora {pediuSaldo.rotulo} e pediu para pagar com o saldo dela (disponível: {formatarReais(pediuSaldo.disponivelCentavos)}).
+          Confira o valor em “Pagar com o saldo de uma fornecedora”.
+        </p>
+      )}
       {aberto && (
         <ConfirmarPagamento
           id={pedido.id}
           mostrarValores={valores}
+          saldos={saldos}
+          saldoPedido={pedido.creditoFornecedoraId}
           pecas={pedido.itens.map((i) => ({
             id: i.pecaId,
             codigo: i.peca.codigo,

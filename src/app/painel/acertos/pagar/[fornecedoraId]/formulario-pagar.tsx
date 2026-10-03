@@ -18,10 +18,23 @@ export type VendaAPagar = {
   marcado: boolean;
 };
 
-export function FormularioPagar({ fornecedoraId, vendas, hoje }: { fornecedoraId: string; vendas: VendaAPagar[]; hoje: string }) {
+export function FormularioPagar({
+  fornecedoraId,
+  vendas,
+  hoje,
+  usadoCentavos,
+}: {
+  fornecedoraId: string;
+  vendas: VendaAPagar[];
+  hoje: string;
+  /** Repasse que ela já gastou em compras com o saldo: sai deste pagamento. */
+  usadoCentavos: number;
+}) {
   const [estado, acao, enviando] = useActionState(pagarRepasses, undefined);
   const [marcados, setMarcados] = useState<Set<string>>(() => new Set(vendas.filter((v) => v.marcado).map((v) => v.id)));
   const total = vendas.filter((v) => marcados.has(v.id)).reduce((s, v) => s + v.repasseCentavos, 0);
+  const abatido = Math.min(usadoCentavos, total);
+  const aPagar = total - abatido;
   const trocar = (id: string, sim: boolean) =>
     setMarcados((atual) => {
       const novo = new Set(atual);
@@ -89,9 +102,16 @@ export function FormularioPagar({ fornecedoraId, vendas, hoje }: { fornecedoraId
         </div>
         <p aria-live="polite">
           <strong>
-            {marcados.size} {marcados.size === 1 ? "venda marcada" : "vendas marcadas"} · Total a pagar: {formatarReais(total)}
+            {marcados.size} {marcados.size === 1 ? "venda marcada" : "vendas marcadas"} ·{" "}
+            {abatido > 0 ? `Repasse: ${formatarReais(total)}` : `Total a pagar: ${formatarReais(total)}`}
           </strong>
         </p>
+        {abatido > 0 && (
+          <p aria-live="polite">
+            Menos {formatarReais(abatido)} que ela já usou em compras com o saldo.{" "}
+            <strong>Total a pagar: {formatarReais(aPagar)}</strong>
+          </p>
+        )}
       </fieldset>
       <fieldset className={proprios.grupo}>
         <legend>Pagamento</legend>
@@ -118,7 +138,7 @@ export function FormularioPagar({ fornecedoraId, vendas, hoje }: { fornecedoraId
       </fieldset>
       <div className={proprios.acoes}>
         <button type="submit" className={proprios.botao} disabled={enviando || marcados.size === 0}>
-          {enviando ? "Registrando…" : `Registrar pagamento de ${formatarReais(total)}`}
+          {enviando ? "Registrando…" : `Registrar pagamento de ${formatarReais(aPagar)}`}
         </button>
         <Link href="/painel/acertos" className={proprios.botaoSecundario}>
           Voltar

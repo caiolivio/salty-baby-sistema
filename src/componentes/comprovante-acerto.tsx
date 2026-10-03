@@ -35,6 +35,17 @@ export function ComprovanteAcerto({ acerto, loja, mostrarQuem = false }: { acert
           <span>Total do repasse</span>
           <strong>{formatarReais(acerto.totalCentavos)}</strong>
         </div>
+        {acerto.abatidoCentavos > 0 && (
+          <>
+            <div>
+              <span>Compras com o saldo</span>−{formatarReais(acerto.abatidoCentavos)}
+            </div>
+            <div>
+              <span>Valor pago</span>
+              <strong>{formatarReais(acerto.totalCentavos - acerto.abatidoCentavos)}</strong>
+            </div>
+          </>
+        )}
         {mostrarQuem && (
           <div>
             <span>Registrado por</span>
@@ -66,6 +77,12 @@ export function ComprovanteAcerto({ acerto, loja, mostrarQuem = false }: { acert
             </span>
             <strong>Repasse: {formatarReais(acerto.totalCentavos)}</strong>
           </p>
+          {acerto.abatidoCentavos > 0 && (
+            <p className={estilos.totais}>
+              <span>Menos {formatarReais(acerto.abatidoCentavos)} das compras com o saldo</span>
+              <strong>Valor pago: {formatarReais(acerto.totalCentavos - acerto.abatidoCentavos)}</strong>
+            </p>
+          )}
         </>
       )}
     </article>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { nomeDaFormaAcerto } from "@/lib/acertos/regras";
 import { prisma } from "@/lib/banco";
-import { formatarData } from "@/lib/datas";
+import { formatarData, formatarDataHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { lerLoja } from "@/lib/loja/servidor";
 import estilos from "../../loja.module.css";
@@ -16,10 +16,17 @@ export default async function MeusPagamentos() {
     prisma.acerto.findMany({
       where: { fornecedoraId: fornecedora.id, canceladoEm: null },
       orderBy: [{ data: "desc" }, { numero: "desc" }],
-      select: { id: true, numero: true, data: true, forma: true, totalCentavos: true, pecas: true },
+      select: { id: true, numero: true, data: true, forma: true, totalCentavos: true, abatidoCentavos: true, pecas: true },
     }),
     lerLoja(),
   ]);
+  // Compras com o saldo e bônus (o desconto no acerto já aparece no comprovante).
+  const movimentos = await prisma.movimentoCredito.findMany({
+    where: { fornecedoraId: fornecedora.id, tipo: { in: ["compra", "bonus"] } },
+    orderBy: { criadoEm: "desc" },
+    take: 100,
+    select: { id: true, tipo: true, repasseCentavos: true, bonusCentavos: true, descricao: true, criadoEm: true },
+  });
 
   return (
     <>
@@ -41,11 +48,44 @@ export default async function MeusPagamentos() {
                 Pago em {formatarData(a.data)} ({nomeDaFormaAcerto(a.forma)}) · {a.pecas} {a.pecas === 1 ? "peça" : "peças"}
               </div>
               <div className={estilos.numero}>
-                <strong>{formatarReais(a.totalCentavos)}</strong>
+                <strong>{formatarReais(a.totalCentavos - a.abatidoCentavos)}</strong>
+                {a.abatidoCentavos > 0 && (
+                  <>
+                    <br />
+                    <small>repasse {formatarReais(a.totalCentavos)}, menos compras</small>
+                  </>
+                )}
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {movimentos.length > 0 && (
+        <>
+          <h2>Compras com o saldo</h2>
+          <p className={estilos.dica}>
+            O que você usou do seu saldo em compras na {loja.nomeCurto} e os bônus que ganhou. O valor usado é descontado do próximo
+            pagamento.
+          </p>
+          <ul className={estilos.listaVendasArea}>
+            {movimentos.map((m) => {
+              const valor = m.repasseCentavos + m.bonusCentavos;
+              return (
+                <li key={m.id}>
+                  <div>
+                    <strong>{m.tipo === "bonus" ? "Bônus" : "Compra"}</strong>
+                    <br />
+                    {m.descricao} · {formatarDataHora(m.criadoEm)}
+                  </div>
+                  <div className={estilos.numero}>
+                    <strong>{valor < 0 ? `−${formatarReais(-valor)}` : `+${formatarReais(valor)}`}</strong>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </>
   );

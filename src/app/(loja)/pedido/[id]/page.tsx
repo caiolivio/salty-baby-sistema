@@ -32,6 +32,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       status: true,
       reservadoAte: true,
       totalCentavos: true,
+      creditoFornecedora: { select: { codigo: true } },
       itens: {
         orderBy: { ordem: "asc" },
         select: {
@@ -52,6 +53,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
         numero: pedido.numero,
         nomeCliente: pedido.nomeCliente,
         total,
+        saldoDe: pedido.creditoFornecedora?.codigo,
         itens: pedido.itens.map((i) => ({
           ...i.peca,
           preco: formatarReais(i.precoCentavos),

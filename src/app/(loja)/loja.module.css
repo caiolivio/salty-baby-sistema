@@ -755,14 +755,16 @@
   max-width: 640px;
 }
 
-.formConta .marcarLinha {
+.formConta .marcarLinha,
+.fechar .marcarLinha {
   flex-direction: row;
   align-items: flex-start;
   gap: 8px;
   font-weight: 400;
 }
 
-.formConta .marcarLinha input {
+.formConta .marcarLinha input,
+.fechar .marcarLinha input {
   width: 18px;
   height: 18px;
   margin-top: 2px;
@@ -1020,4 +1022,17 @@
 .numero {
   text-align: right;
   white-space: nowrap;
+}
+
+.bonus {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--turquesa);
+  border-radius: 10px;
+  background: var(--fundo-suave);
+  line-height: 1.5;
+}
+
+.bonus strong {
+  color: var(--petroleo);
 }
