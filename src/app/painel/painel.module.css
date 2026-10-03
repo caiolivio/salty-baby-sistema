@@ -89,7 +89,48 @@
 
 .titulo {
   color: var(--tinta);
-  font-size: 1.5rem;
+  font-size: clamp(1.6rem, 4vw, 2rem);
+}
+
+.tituloGrande {
+  color: var(--tinta);
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  margin-bottom: 4px;
+}
+
+/* Atalhos do início: as ações do dia a dia em um toque. */
+.atalhosInicio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.atalhoInicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--petroleo);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.atalhoInicio:hover {
+  background: var(--tinta);
+}
+
+.atalhoInicio + .atalhoInicio {
+  background: var(--fundo);
+  color: var(--petroleo);
+  border: 1px solid var(--borda-forte);
+}
+
+.atalhoInicio + .atalhoInicio:hover {
+  background: var(--fundo-marca);
 }
 
 .lista {
@@ -314,6 +355,21 @@
   color: var(--petroleo);
 }
 
+.selo[data-status="pedido_pago"] {
+  background: #e6f4ec;
+  color: #1f6b43;
+}
+
+.selo[data-status="pedido_reservado"] {
+  background: #fff3dc;
+  color: #8a4b00;
+}
+
+.selo[data-status="pedido_expirado"] {
+  background: #fdecea;
+  color: var(--erro);
+}
+
 .selo[data-status="nao_listada"] {
   background: var(--fundo-marca);
   color: var(--petroleo);
@@ -501,6 +557,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .cartoes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
 }
 
 .cartao {

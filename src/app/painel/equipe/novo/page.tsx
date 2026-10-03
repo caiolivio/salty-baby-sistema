@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
 import estilos from "../../painel.module.css";
 import { novoSuporte } from "../acoes";
 import { FormularioSuporte } from "../formulario-suporte";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Novo suporte" };
 
@@ -12,7 +12,7 @@ export default async function NovoSuporte() {
   return (
     <>
       <p>
-        <Link href="/painel/equipe">← Equipe</Link>
+        <Voltar href="/painel/equipe">Equipe</Voltar>
       </p>
       <h1 className={estilos.titulo}>Novo suporte</h1>
       <p>

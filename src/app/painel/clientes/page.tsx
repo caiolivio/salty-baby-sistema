@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
@@ -10,6 +11,7 @@ import { podeAlterar, podeVer } from "@/lib/permissoes";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { BotoesExportar } from "../exportar/botoes";
+import { Voltar, Seguir } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Clientes" };
 
@@ -62,7 +64,8 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
           <BotoesExportar tabela="clientes" />
           {podeAlterar(usuario.acesso, "clientes") && (
             <Link href="/painel/clientes/nova" className={proprios.botao}>
-              + Nova cliente
+              <Plus className="icone" aria-hidden />
+              Nova cliente
             </Link>
           )}
         </span>
@@ -124,11 +127,11 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
       </div>
       {paginas > 1 && (
         <nav className={estilos.paginas} aria-label="Páginas">
-          {pagina > 1 && <Link href={link(pagina - 1)}>← Anterior</Link>}
+          {pagina > 1 && <Voltar href={link(pagina - 1)}>Anterior</Voltar>}
           <span>
             Página {pagina} de {paginas}
           </span>
-          {pagina < paginas && <Link href={link(pagina + 1)}>Próxima →</Link>}
+          {pagina < paginas && <Seguir href={link(pagina + 1)}>Próxima</Seguir>}
         </nav>
       )}
     </>

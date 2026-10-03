@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { podeAlterar, temExtra } from "@/lib/permissoes";
@@ -10,6 +9,7 @@ import { novaPeca } from "../acoes";
 import { opcoesDeCategoria } from "../categorias";
 import { FormularioPeca } from "../formulario-peca";
 import { lerLoja } from "@/lib/loja/servidor";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Nova peça" };
 
@@ -29,7 +29,7 @@ export default async function NovaPeca({ searchParams }: PageProps<"/painel/peca
   return (
     <>
       <p>
-        <Link href="/painel/pecas">← Peças</Link>
+        <Voltar href="/painel/pecas">Peças</Voltar>
       </p>
       <h1 className={estilos.titulo}>Nova peça</h1>
       <p>O código é criado ao salvar, na sequência da fornecedora escolhida.</p>

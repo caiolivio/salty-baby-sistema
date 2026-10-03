@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
@@ -19,7 +20,8 @@ export default async function Equipe({ searchParams }: PageProps<"/painel/equipe
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Equipe</h1>
         <Link href="/painel/equipe/novo" className={proprios.botao}>
-          + Novo suporte
+          <Plus className="icone" aria-hidden />
+          Novo suporte
         </Link>
       </div>
       {saiu && (

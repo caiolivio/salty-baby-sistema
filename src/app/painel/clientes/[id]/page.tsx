@@ -30,6 +30,7 @@ import { EscolherPeriodo } from "../escolher-periodo";
 import { GraficoGasto } from "../grafico-gasto";
 import { FormularioCliente } from "../formulario-cliente";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Cliente" };
 
@@ -83,7 +84,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
   return (
     <>
       <p>
-        <Link href="/painel/clientes">← Clientes</Link>
+        <Voltar href="/painel/clientes">Clientes</Voltar>
       </p>
       <h1 className={estilos.titulo}>{c.nome}</h1>
       {aviso.criada && (

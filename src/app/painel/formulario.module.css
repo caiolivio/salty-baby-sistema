@@ -1,10 +1,10 @@
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 16px;
+  gap: 18px;
+  padding: 24px 20px;
   border: 1px solid var(--borda);
-  border-radius: var(--raio);
+  border-radius: 12px;
   background: var(--fundo);
 }
 
@@ -23,10 +23,14 @@
   margin: 0;
 }
 
+/* Nome de cada bloco do formulário, em letras pequenas e maiúsculas. */
 .grupo legend {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: var(--petroleo);
+  font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .campo {
@@ -34,7 +38,7 @@
   flex-direction: column;
   gap: 6px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .campo input,
@@ -42,8 +46,9 @@
 .campo textarea {
   font: inherit;
   font-weight: 400;
+  min-height: var(--altura-toque);
   padding: 10px 12px;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--borda-forte);
   border-radius: var(--raio);
   background: var(--fundo);
   color: var(--tinta);
@@ -419,4 +424,12 @@ label.botaoSecundario:focus-within {
   width: 24px;
   height: 24px;
   border-radius: 50%;
+}
+
+.botao:hover {
+  background: var(--tinta);
+}
+
+.botaoSecundario:hover {
+  background: var(--fundo-marca);
 }

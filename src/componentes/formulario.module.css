@@ -13,10 +13,26 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 32px 24px;
+  padding: 40px 32px;
   border: 1px solid var(--borda);
-  border-radius: var(--raio);
+  border-radius: 16px;
   background: var(--fundo);
+  box-shadow: var(--sombra);
+}
+
+/* No celular, o formulário ocupa a tela toda, sem caixa. */
+@media (max-width: 480px) {
+  .pagina {
+    align-items: flex-start;
+    padding: 24px 16px;
+    background: var(--fundo);
+  }
+
+  .cartao {
+    padding: 8px 0;
+    border: 0;
+    box-shadow: none;
+  }
 }
 
 .logo {
@@ -26,13 +42,15 @@
 }
 
 .titulo {
-  color: var(--petroleo);
-  font-size: 1.35rem;
+  color: var(--tinta);
+  font-size: 2rem;
   text-align: center;
 }
 
 .explicacao {
+  margin-top: -8px;
   font-size: 0.95rem;
+  color: var(--texto-suave);
   text-align: center;
 }
 
@@ -53,8 +71,9 @@
 .campo input {
   font: inherit;
   font-weight: 400;
+  min-height: 48px;
   padding: 12px;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--borda-forte);
   border-radius: var(--raio);
   background: var(--fundo);
   color: var(--tinta);
@@ -73,6 +92,11 @@
 }
 
 .botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
   font: inherit;
   font-weight: 600;
   padding: 12px;
@@ -81,6 +105,10 @@
   background: var(--petroleo);
   color: #fff;
   cursor: pointer;
+}
+
+.botao:hover {
+  background: var(--tinta);
 }
 
 .botao:disabled {

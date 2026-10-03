@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import estilos from "../formulario.module.css";
@@ -52,7 +53,8 @@ export function EscolherCategorias({
         ))}
         {podeIncluir && !incluindo && (
           <button type="button" className={estilos.botaoSecundario} onClick={() => setIncluindo(true)}>
-            + Nova categoria
+            <Plus className="icone" aria-hidden />
+            Nova categoria
           </button>
         )}
       </div>
