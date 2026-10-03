@@ -1036,3 +1036,7 @@
 .bonus strong {
   color: var(--petroleo);
 }
+
+.bonus p {
+  margin: 12px 0 0;
+}

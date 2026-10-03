@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
+import { podeAcessar } from "@/lib/permissoes";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
 import estilos from "../loja.module.css";
@@ -16,6 +18,12 @@ export default async function LayoutFornecedora({ children }: LayoutProps<"/forn
       <div className={estilos.precoEEstrela}>
         <p className={estilos.ola}>
           Olá, {usuario.nome.split(" ")[0]}!{situacao.tipo === "fornecedora" && ` · ${situacao.fornecedora.codigo}`}
+          {podeAcessar(usuario.perfis, "area-cliente") && (
+            <>
+              {" · "}
+              <Link href="/minha-conta">Minhas compras e favoritos</Link>
+            </>
+          )}
         </p>
         <form action={sair}>
           <button type="submit" className={estilos.sair}>

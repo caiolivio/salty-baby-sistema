@@ -261,6 +261,11 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           )}{" "}
           O bônus vale só para compras, não é pago em dinheiro. Para usar o saldo, monte o seu pedido no site e marque “Pagar com o meu
           saldo” ao fechar o pedido.
+          <p>
+            <Link href="/" className={estilos.botaoWhats}>
+              Comprar agora
+            </Link>
+          </p>
         </div>
       </section>
 
