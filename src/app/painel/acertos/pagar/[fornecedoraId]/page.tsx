@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { pendentesDaFornecedora } from "@/lib/acertos/gravar";
@@ -11,6 +10,7 @@ import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import estilos from "../../../painel.module.css";
 import { FormularioPagar } from "./formulario-pagar";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Pagar repasses" };
 
@@ -28,7 +28,7 @@ export default async function PagarRepasses({ params }: PageProps<"/painel/acert
   return (
     <>
       <p>
-        <Link href="/painel/acertos">← Contas a pagar</Link>
+        <Voltar href="/painel/acertos">Contas a pagar</Voltar>
       </p>
       <h1 className={estilos.titulo}>
         Pagar repasses · {fornecedora.codigo} · {fornecedora.nome}

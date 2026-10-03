@@ -88,6 +88,25 @@ textarea {
   font-family: inherit;
 }
 
+/* Links com seta ("Voltar para Peças", "Próximas"). */
+.linkSeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.linkSeta:hover {
+  text-decoration: underline;
+}
+
+.linkSeta .icone {
+  width: 18px;
+  height: 18px;
+}
+
 /* Ícones (lucide): mesmo traço em todo o sistema. */
 .icone {
   width: 20px;

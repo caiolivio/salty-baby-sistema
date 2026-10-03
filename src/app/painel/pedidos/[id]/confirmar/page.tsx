@@ -13,6 +13,7 @@ import proprios from "../../../formulario.module.css";
 import estilos from "../../../painel.module.css";
 import { cancelarPedido } from "../../acoes";
 import { ConfirmarPagamento } from "../formulario-confirmar";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Confirmar pagamento" };
 
@@ -55,7 +56,7 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
   return (
     <>
       <p>
-        <Link href="/painel/pedidos">← Pedidos</Link>
+        <Voltar href="/painel/pedidos">Pedidos</Voltar>
         {" · "}
         <Link href={`/painel/pedidos/${pedido.id}`}>Ver detalhes e editar</Link>
       </p>

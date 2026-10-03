@@ -15,6 +15,7 @@ import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { cancelarPedido } from "../acoes";
 import { DadosCliente, IncluirPeca, TirarPeca } from "./editar-pedido";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Pedido" };
 
@@ -68,7 +69,7 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
   return (
     <>
       <p>
-        <Link href="/painel/pedidos">← Pedidos</Link>
+        <Voltar href="/painel/pedidos">Pedidos</Voltar>
       </p>
       <h1 className={estilos.titulo}>
         Pedido nº {pedido.numero} · {pedido.nomeCliente}

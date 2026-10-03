@@ -1225,6 +1225,43 @@
   margin: 0;
 }
 
+/* Topo das áreas da cliente e da fornecedora. */
+.cabecalhoArea {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.olaArea {
+  margin: 2px 0 6px;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--tinta);
+}
+
+.trocarArea {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.trocarArea:hover {
+  text-decoration: underline;
+}
+
+.trocarArea :global(.icone) {
+  width: 16px;
+  height: 16px;
+}
+
 .sairIcone {
   display: inline-flex;
   align-items: center;
@@ -1401,6 +1438,16 @@
 .saldo span {
   font-size: 0.85rem;
   color: var(--texto-suave);
+}
+
+.saldoLink {
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.saldoLink:hover {
+  border-color: var(--borda-forte);
+  background: var(--fundo-suave);
 }
 
 .saldoDestaque {

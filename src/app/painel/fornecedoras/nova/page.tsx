@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { exigirPagina } from "@/lib/acesso";
 import { temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
@@ -10,6 +9,7 @@ import { novaFornecedora } from "../acoes";
 import { lerLoja } from "@/lib/loja/servidor";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { FormularioFornecedora } from "../formulario-fornecedora";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Nova fornecedora" };
 
@@ -25,7 +25,7 @@ export default async function NovaFornecedora() {
   return (
     <>
       <p>
-        <Link href="/painel/fornecedoras">← Fornecedoras</Link>
+        <Voltar href="/painel/fornecedoras">Fornecedoras</Voltar>
       </p>
       <h1 className={estilos.titulo}>Nova fornecedora</h1>
       <p>

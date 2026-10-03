@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { Desafio } from "@/componentes/desafio";
@@ -143,7 +144,8 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
         </ol>
         {pecas.length < limite && (
           <button type="button" className={estilos.botaoContorno} onClick={() => setPecas((atuais) => [...atuais, novaPeca()])}>
-            + Mostrar outra peça
+            <Plus className="icone" aria-hidden />
+            Mostrar outra peça
           </button>
         )}
       </fieldset>

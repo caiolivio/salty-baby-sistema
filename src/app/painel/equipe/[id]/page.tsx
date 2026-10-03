@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { formatarDataHora } from "@/lib/datas";
@@ -12,6 +11,7 @@ import { salvarAcessoDoSuporte } from "../acoes";
 import { FormularioSuporte } from "../formulario-suporte";
 import { LinkDeSenha } from "../link-de-senha";
 import { TirarDaEquipe } from "../tirar-da-equipe";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Suporte" };
 
@@ -25,7 +25,7 @@ export default async function Suporte({ params, searchParams }: PageProps<"/pain
   return (
     <>
       <p>
-        <Link href="/painel/equipe">← Equipe</Link>
+        <Voltar href="/painel/equipe">Equipe</Voltar>
       </p>
       <h1 className={estilos.titulo}>{s.nome} · Suporte</h1>
       {salvo && (

@@ -28,6 +28,7 @@ import { FormularioPeca } from "../formulario-peca";
 import { ExcluirPeca } from "../excluir-peca";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 import { lerLoja } from "@/lib/loja/servidor";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Peça" };
 
@@ -84,7 +85,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   return (
     <>
       <p>
-        <Link href="/painel/pecas">← Peças</Link>
+        <Voltar href="/painel/pecas">Peças</Voltar>
       </p>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>

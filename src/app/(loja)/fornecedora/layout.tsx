@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { ArrowLeftRight, LogOut } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { podeAcessar } from "@/lib/permissoes";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
@@ -16,16 +16,17 @@ export default async function LayoutFornecedora({ children }: LayoutProps<"/forn
   const liberada = situacao.tipo === "fornecedora" && etapaDaFornecedora(situacao.fornecedora) === "liberada";
   return (
     <div className={estilos.paginaFornecedora}>
-      <div className={estilos.precoEEstrela}>
-        <p className={estilos.ola}>
-          Olá, {usuario.nome.split(" ")[0]}!{situacao.tipo === "fornecedora" && ` · ${situacao.fornecedora.codigo}`}
+      <div className={estilos.cabecalhoArea}>
+        <div>
+          <p className="sobretitulo">Área da fornecedora{situacao.tipo === "fornecedora" && ` · ${situacao.fornecedora.codigo}`}</p>
+          <p className={estilos.olaArea}>Olá, {usuario.nome.split(" ")[0]}!</p>
           {podeAcessar(usuario.perfis, "area-cliente") && (
-            <>
-              {" · "}
-              <Link href="/minha-conta">Minhas compras e favoritos</Link>
-            </>
+            <Link href="/minha-conta" className={estilos.trocarArea}>
+              <ArrowLeftRight className="icone" aria-hidden />
+              Minhas compras e favoritos
+            </Link>
           )}
-        </p>
+        </div>
         <form action={sair}>
           <button type="submit" className={estilos.sairIcone}>
             <LogOut className="icone" aria-hidden />
