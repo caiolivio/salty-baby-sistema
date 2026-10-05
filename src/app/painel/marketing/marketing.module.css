@@ -178,3 +178,20 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* Resumo da semana: um bloco por grupo. */
+.resumoGrupo {
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.resumoGrupo summary {
+  cursor: pointer;
+}
+
+.resumoGrupo summary h2 {
+  display: inline;
+  font-size: 1.1rem;
+}

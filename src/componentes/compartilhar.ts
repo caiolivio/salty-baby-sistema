@@ -49,3 +49,45 @@ export function baixarArquivo(arquivo: File) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+/**
+ * O Android só deixa compartilhar até 10 arquivos de uma vez; com mais, o
+ * compartilhamento falha sem abrir nada.
+ */
+export const MAXIMO_DE_FOTOS_POR_VEZ = 10;
+
+/** Divide as fotos em levas que o celular aceita compartilhar. */
+export function emLevas<T>(itens: T[], tamanho = MAXIMO_DE_FOTOS_POR_VEZ): T[][] {
+  const levas: T[][] = [];
+  for (let i = 0; i < itens.length; i += tamanho) levas.push(itens.slice(i, i + tamanho));
+  return levas;
+}
+
+/** Link que abre o WhatsApp com o texto pronto, para escolher o grupo ou a conversa. */
+export const linkDoWhatsApp = (texto: string) => `https://wa.me/?text=${encodeURIComponent(texto)}`;
+
+export type ResultadoDoCompartilhar = "ok" | "cancelado" | "erro";
+
+/**
+ * Abre o compartilhamento do celular com as fotos (se o celular aceitar) e o
+ * texto. O compartilhamento é chamado antes de qualquer espera: o celular só
+ * abre logo depois do toque, e esperar algo antes (como copiar o texto) faz
+ * ele recusar. O texto é copiado em seguida, caso o WhatsApp mostre só as fotos.
+ */
+export async function compartilharNoCelular(texto: string, fotos: File[]): Promise<ResultadoDoCompartilhar> {
+  const comTexto = texto ? { text: texto } : {};
+  const comFotos = fotos.length > 0 && navigator.canShare?.({ files: fotos, ...comTexto }) === true;
+  let pedido: Promise<void>;
+  try {
+    pedido = navigator.share(comFotos ? { files: fotos, ...comTexto } : comTexto);
+  } catch {
+    return "erro";
+  }
+  if (texto) navigator.clipboard?.writeText(texto).catch(() => {});
+  try {
+    await pedido;
+    return "ok";
+  } catch (erro) {
+    return erro instanceof DOMException && erro.name === "AbortError" ? "cancelado" : "erro";
+  }
+}
