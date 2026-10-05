@@ -11,6 +11,8 @@ import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { CartaoPeca, SELECAO_CARTAO } from "../cartao-peca";
+import { tamanhoDaCrianca } from "@/lib/clientes/perfil";
+import { Baby } from "lucide-react";
 import estilos from "../loja.module.css";
 
 export const metadata: Metadata = { title: "Minha conta" };
@@ -35,7 +37,11 @@ export default async function MinhaConta() {
       where: { clienteId: ficha.id },
       select: { pecaId: true, criadoEm: true, peca: { select: doHistorico } },
     }),
-    prisma.crianca.findMany({ where: { clienteId: ficha.id, nascimento: { not: null } }, select: { nascimento: true } }),
+    prisma.crianca.findMany({
+      where: { clienteId: ficha.id },
+      orderBy: [{ nascimento: "asc" }, { criadoEm: "asc" }],
+      select: { id: true, nome: true, sexo: true, nascimento: true, tamanho: true, tamanhoEm: true },
+    }),
     prisma.peca.findMany({
       where: { status: "publicada", naoListada: false, quantidade: { gt: 0 } },
       select: { ...SELECAO_CARTAO, marca: true, dataEntrada: true, categorias: doHistorico.categorias },
@@ -50,7 +56,7 @@ export default async function MinhaConta() {
   const gosto = preferenciasDaCliente({
     compras: compras.map((c) => ({ ...c.peca, categorias: nomes(c.peca.categorias), data: c.venda.data })),
     favoritos: favoritos.map((f) => ({ ...f.peca, categorias: nomes(f.peca.categorias), data: f.criadoEm })),
-    nascimentos: criancas.flatMap((c) => (c.nascimento ? [c.nascimento] : [])),
+    tamanhosAtuais: criancas.flatMap((c) => tamanhoDaCrianca(c, hoje) ?? []),
     hoje,
   });
   const favoritas = new Set(favoritos.map((f) => f.pecaId));
@@ -78,6 +84,40 @@ export default async function MinhaConta() {
           </ul>
         </section>
       )}
+
+      <section className={estilos.secao} aria-labelledby="titulo-criancas">
+        <h2 id="titulo-criancas">Para as suas crianças</h2>
+        {criancas.length === 0 ? (
+          <p>
+            <Baby className="icone" aria-hidden /> Conte em <Link href="/minha-conta/perfil#titulo-criancas">Meus dados</Link> o
+            tamanho ou o nascimento das suas crianças, e a gente mostra o que serve nelas.
+          </p>
+        ) : (
+          <ul className={estilos.atalhosCriancas}>
+            {criancas.map((c) => {
+              const tamanho = tamanhoDaCrianca(c, hoje);
+              const publico = c.sexo === "feminino" ? "menina" : c.sexo === "masculino" ? "menino" : null;
+              const busca = new URLSearchParams({ ...(tamanho && { tamanho }), ...(publico && { publico }) });
+              return (
+                <li key={c.id}>
+                  <Link href={`/?${busca.toString()}`}>
+                    <Baby className="icone" aria-hidden />
+                    <span>
+                      <strong>{c.nome}</strong>
+                      {tamanho ? `Ver peças no tamanho ${tamanho}` : "Ver peças"}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <Link href="/minha-conta/perfil#titulo-criancas" className={estilos.botaoSimples}>
+                Mudar as crianças
+              </Link>
+            </li>
+          </ul>
+        )}
+      </section>
 
       <section className={estilos.secao} aria-labelledby="titulo-sugestoes">
         <h2 id="titulo-sugestoes">{sugestoes.personalizadas ? "Escolhidas para você" : "Novidades da loja"}</h2>

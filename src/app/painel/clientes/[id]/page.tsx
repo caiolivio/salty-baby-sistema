@@ -14,7 +14,7 @@ import {
   lerPeriodo,
   marcasPreferidas,
   mesesEntre,
-  tamanhoParaIdade,
+  tamanhoDaCrianca,
 } from "@/lib/clientes/perfil";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarData, formatarDataHora } from "@/lib/datas";
@@ -235,6 +235,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
       <div className={visual.criancas}>
         {c.criancas.map((k) => {
           const idade = k.nascimento ? mesesEntre(k.nascimento, agora) : undefined;
+          const veste = tamanhoDaCrianca(k, agora);
           return (
             <FormularioCrianca
               key={k.id}
@@ -245,10 +246,13 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
                 nome: k.nome,
                 nascimento: k.nascimento ? k.nascimento.toISOString().slice(0, 10) : "",
                 sexo: k.sexo ?? "",
+                tamanho: k.tamanho ?? "",
                 resumo:
-                  idade === undefined
-                    ? `${k.nome}: sem data de nascimento.`
-                    : `${k.nome}: ${formatarIdade(idade)}, veste ${tamanhoParaIdade(idade)}.`,
+                  idade !== undefined
+                    ? `${k.nome}: ${formatarIdade(idade)}, veste ${veste}.`
+                    : veste
+                      ? `${k.nome}: veste ${veste} (pelo tamanho informado).`
+                      : `${k.nome}: sem data de nascimento.`,
               }}
             />
           );

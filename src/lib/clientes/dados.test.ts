@@ -37,12 +37,14 @@ describe("dados da criança", () => {
   it("lê nome, nascimento e sexo", () => {
     expect(lerCrianca({ nome: " Maria  Clara ", nascimento: "2025-03-10", sexo: "feminino" }, hoje)).toEqual({
       ok: true,
-      dados: { nome: "Maria Clara", nascimento: new Date("2025-03-10T00:00:00Z"), sexo: "feminino" },
+      dados: { nome: "Maria Clara", nascimento: new Date("2025-03-10T00:00:00Z"), sexo: "feminino", tamanho: null },
     });
     expect(lerCrianca({ nome: "Theo", nascimento: "", sexo: "" }, hoje)).toEqual({
       ok: true,
-      dados: { nome: "Theo", nascimento: null, sexo: null },
+      dados: { nome: "Theo", nascimento: null, sexo: null, tamanho: null },
     });
+    expect(lerCrianca({ nome: "Theo", tamanho: "2 anos" }, hoje)).toMatchObject({ ok: true, dados: { tamanho: "2 anos" } });
+    expect(lerCrianca({ nome: "Theo", tamanho: "99 anos" }, hoje)).toEqual({ ok: false, erro: "Escolha um tamanho da lista." });
   });
 
   it("recusa sem nome, data no futuro ou muito antiga", () => {

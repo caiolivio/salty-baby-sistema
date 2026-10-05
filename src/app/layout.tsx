@@ -4,6 +4,7 @@ import { imagensDaLoja, lerLoja } from "@/lib/loja/servidor";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
+import { RegistrarApp } from "@/componentes/app-instalavel";
 
 // Nome, cores e ícone vêm das configurações da loja (/painel/configuracoes).
 // Cada página escreve só o próprio título ("Peças"); o nome da loja entra aqui.
@@ -13,7 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: nomeComSlogan(loja), template: `%s · ${loja.nome}` },
     description: loja.descricao ?? loja.nome,
-    icons: { icon: icone, apple: icone },
+    icons: { icon: icone, apple: `/loja/app-192.png?v=${loja.versao}` },
+    appleWebApp: { capable: true, title: loja.nomeCurto, statusBarStyle: "default" },
   };
 }
 
@@ -30,6 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <style>{cssDasCores(loja)}</style>
       </head>
       <body>
+        <RegistrarApp />
         {children}
         {/* Crédito do desenvolvimento, em todas as páginas do sistema (fica de fora na impressão). */}
         <footer className="creditos">

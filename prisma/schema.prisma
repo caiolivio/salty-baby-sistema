@@ -304,6 +304,10 @@ model Crianca {
   nascimento DateTime? @db.Date
   /// feminino (menina) ou masculino (menino).
   sexo       Genero?
+  /// Tamanho que serve hoje, quando não se sabe o nascimento (a cliente informa).
+  tamanho    String?   @db.VarChar(20)
+  /// Quando o tamanho foi informado: com o tempo, a criança cresce para o próximo.
+  tamanhoEm  DateTime? @map("tamanho_em") @db.Date
   criadoEm   DateTime  @default(now()) @map("criado_em")
   cliente    Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 

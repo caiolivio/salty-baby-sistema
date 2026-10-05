@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agruparGasto, estimarCriancas, faixaDoTamanho, formatarIdade, lerPeriodo, marcasPreferidas, tamanhoParaIdade } from "./perfil";
+import { agruparGasto, estimarCriancas, faixaDoTamanho, formatarIdade, lerPeriodo, marcasPreferidas, tamanhoDaCrianca, tamanhoParaIdade } from "./perfil";
 
 const d = (t: string) => new Date(`${t}T00:00:00Z`);
 
@@ -129,5 +129,20 @@ describe("resumo da cliente", () => {
     // Datas trocadas são corrigidas; data no futuro vira hoje.
     expect(lerPeriodo({ periodo: "periodo", de: "2026-09-20", ate: "2026-09-10" }, "2026-09-30")).toMatchObject({ de: "2026-09-10", ate: "2026-09-20" });
     expect(lerPeriodo({ periodo: "periodo", de: "2026-09-20", ate: "2027-01-01" }, "2026-09-30").ate).toBe("2026-09-30");
+  });
+});
+
+describe("tamanho de hoje da criança cadastrada", () => {
+  const hoje = new Date("2026-10-05T12:00:00Z");
+  it("pelo nascimento, quando houver", () => {
+    expect(tamanhoDaCrianca({ nascimento: new Date("2024-09-01T00:00:00Z"), tamanho: "RN", tamanhoEm: null }, hoje)).toBe("2 anos");
+  });
+  it("pelo tamanho informado, que cresce com o tempo", () => {
+    expect(tamanhoDaCrianca({ nascimento: null, tamanho: "2 anos", tamanhoEm: new Date("2026-09-01T00:00:00Z") }, hoje)).toBe("2 anos");
+    expect(tamanhoDaCrianca({ nascimento: null, tamanho: "2 anos", tamanhoEm: new Date("2025-09-01T00:00:00Z") }, hoje)).toBe("3 anos");
+    expect(tamanhoDaCrianca({ nascimento: null, tamanho: "P", tamanhoEm: new Date("2026-07-01T00:00:00Z") }, hoje)).toBe("M");
+  });
+  it("sem nascimento nem tamanho, não sabe", () => {
+    expect(tamanhoDaCrianca({ nascimento: null, tamanho: null, tamanhoEm: null }, hoje)).toBeUndefined();
   });
 });

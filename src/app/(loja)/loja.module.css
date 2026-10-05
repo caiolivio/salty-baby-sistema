@@ -1882,3 +1882,72 @@
   font-size: 0.88rem;
   color: var(--texto-suave, #5a6b75);
 }
+
+/* Minhas crianças (Meus dados) */
+.criancas {
+  display: grid;
+  gap: 16px;
+}
+
+.atalhosCriancas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.atalhosCriancas a:not(.botaoSimples) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--altura-toque);
+  padding: 10px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.atalhosCriancas a :global(.icone) {
+  color: var(--turquesa);
+}
+
+.atalhosCriancas span {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+
+/* "Instalar o app" no rodapé (some quando já está instalado) */
+.instalarApp {
+  margin-top: 12px;
+}
+
+.instalarApp button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--petroleo);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.instalarApp p {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.instalarApp p :global(.icone) {
+  vertical-align: -3px;
+}
