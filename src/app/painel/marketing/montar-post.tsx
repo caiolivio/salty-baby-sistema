@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { baixarArquivo, fotoEmJpeg, usePodeCompartilhar } from "@/componentes/compartilhar";
+import {
+  baixarArquivo,
+  compartilharNoCelular,
+  emLevas,
+  fotoEmJpeg,
+  linkDoWhatsApp,
+  usePodeCompartilhar,
+} from "@/componentes/compartilhar";
 import { aberturaDaDivulgacao, linkDaPeca, textoDaDivulgacao, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
 import estilos from "../formulario.module.css";
 import proprios from "./marketing.module.css";
@@ -100,7 +107,9 @@ export function MontarPost({
   const arquivos = pecas.map((p) => fotoDe(p.codigo)).filter((f): f is File => Boolean(f));
   const aceitaFotos = (lista: File[]) =>
     lista.length > 0 && typeof navigator !== "undefined" && navigator.canShare?.({ files: lista }) === true;
-  const vaiComFotos = aceitaFotos(arquivos);
+  // O Android aceita no máximo 10 fotos por vez: com mais, o envio é feito em levas.
+  const levas = emLevas(arquivos);
+  const vaiComFotos = levas.length === 1 && aceitaFotos(arquivos);
   const textoDaPeca = (p: PecaComFoto) => textoDoPost(p, linkDaPeca(origem, p.codigo, grupo?.codigo));
 
   async function copiar(conteudo: string, oQue = "Texto") {
@@ -112,18 +121,18 @@ export function MontarPost({
     }
   }
 
-  async function compartilhar(conteudo: string, fotos: File[]) {
-    // O texto também vai para a área de transferência, caso o WhatsApp mostre só as fotos.
-    await navigator.clipboard?.writeText(conteudo).catch(() => {});
+  // Sem nenhuma espera antes: o celular só abre o compartilhamento logo depois do toque.
+  function compartilhar(conteudo: string, fotos: File[]) {
     const comFotos = aceitaFotos(fotos);
-    try {
-      await navigator.share(comFotos ? { files: fotos, text: conteudo } : { text: conteudo });
-      setAviso(comFotos ? "Se o texto não aparecer junto da foto, ele já está copiado: é só colar." : "");
-    } catch (erro) {
-      if (!(erro instanceof DOMException && erro.name === "AbortError")) {
-        setAviso("Não deu para compartilhar. Copie o texto e baixe a foto.");
+    compartilharNoCelular(conteudo, fotos).then((resultado) => {
+      if (resultado === "ok") {
+        setAviso(comFotos && conteudo ? "Se o texto não aparecer junto da foto, ele já está copiado: é só colar." : "");
+      } else if (resultado === "erro") {
+        setAviso(
+          "O celular não abriu o compartilhamento. Toque em \"Abrir no WhatsApp\" para mandar o texto e anexe as fotos baixadas.",
+        );
       }
-    }
+    });
   }
 
   async function baixarFotos() {
@@ -183,7 +192,7 @@ export function MontarPost({
         <pre className={proprios.previa}>{post}</pre>
       </div>
       <div className={estilos.acoes}>
-        {podeCompartilhar && (
+        {podeCompartilhar && levas.length <= 1 && (
           <button
             type="button"
             className={estilos.botao}
@@ -192,6 +201,27 @@ export function MontarPost({
           >
             Compartilhar tudo ({vaiComFotos ? `${arquivos.length} foto(s) e texto` : "texto"})
           </button>
+        )}
+        {podeCompartilhar &&
+          levas.length > 1 &&
+          levas.map((leva, i) => {
+            const primeira = i * 10 + 1;
+            const ultima = primeira + leva.length - 1;
+            return (
+              <button
+                key={primeira}
+                type="button"
+                className={i === 0 ? estilos.botao : estilos.botaoSecundario}
+                onClick={() => compartilhar(i === 0 ? post : "", leva)}
+              >
+                {i === 0 ? `Compartilhar texto e fotos ${primeira} a ${ultima}` : `Compartilhar fotos ${primeira} a ${ultima}`}
+              </button>
+            );
+          })}
+        {pecas.length > 0 && (
+          <a className={estilos.botaoSecundario} href={linkDoWhatsApp(post)} target="_blank" rel="noopener noreferrer">
+            Abrir no WhatsApp (só o texto)
+          </a>
         )}
         <button
           type="button"
@@ -213,9 +243,10 @@ export function MontarPost({
         </p>
       )}
       <p className={estilos.dica}>
-        &quot;Compartilhar tudo&quot; manda as fotos juntas e o texto inteiro numa mensagem só. Para cada foto ir com o texto
-        dela embaixo, use &quot;Enviar peça por peça&quot;. Cada link leva a marca do grupo, e a compra por ele conta para o
-        grupo.
+        &quot;Compartilhar tudo&quot; manda as fotos juntas e o texto inteiro numa mensagem só (o WhatsApp do Android aceita
+        até 10 fotos por vez; com mais, o envio é dividido). Para cada foto ir com o texto dela embaixo, use &quot;Enviar
+        peça por peça&quot;. &quot;Abrir no WhatsApp&quot; abre o WhatsApp só com o texto, para escolher o grupo. Cada link
+        leva a marca do grupo, e a compra por ele conta para o grupo.
       </p>
       {pecas.length > 0 && (
         <div>
@@ -233,6 +264,14 @@ export function MontarPost({
                   <button type="button" className={estilos.botaoSecundario} onClick={() => copiar(abertura, "Título e texto")}>
                     Copiar título e texto
                   </button>
+                  <a
+                    className={estilos.botaoSecundario}
+                    href={linkDoWhatsApp(abertura)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir no WhatsApp
+                  </a>
                 </div>
               </li>
             )}
@@ -267,6 +306,14 @@ export function MontarPost({
                     >
                       Copiar texto
                     </button>
+                    <a
+                      className={estilos.botaoSecundario}
+                      href={linkDoWhatsApp(legenda)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Abrir no WhatsApp (só o texto)
+                    </a>
                     {foto && (
                       <button type="button" className={estilos.botaoSecundario} onClick={() => baixarArquivo(foto)}>
                         Baixar foto

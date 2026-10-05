@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { baixarArquivo, fotoEmJpeg, usePodeCompartilhar } from "@/componentes/compartilhar";
+import { baixarArquivo, compartilharNoCelular, fotoEmJpeg, linkDoWhatsApp, usePodeCompartilhar } from "@/componentes/compartilhar";
 import estilos from "../formulario.module.css";
 
 export type PostDoGrupo = { id: string; nome: string; sugerido: boolean; texto: string };
@@ -49,17 +49,14 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
     }
   }
 
-  async function compartilhar() {
-    // O texto também vai para a área de transferência, caso o WhatsApp não o mostre junto da foto.
-    await navigator.clipboard?.writeText(texto).catch(() => {});
-    try {
-      await navigator.share(arquivo && vaiComFoto ? { files: [arquivo], text: texto } : { text: texto });
-      setAviso("");
-    } catch (erro) {
-      if (!(erro instanceof DOMException && erro.name === "AbortError")) {
-        setAviso("Não deu para compartilhar. Copie o texto e baixe a foto.");
+  // Sem nenhuma espera antes: o celular só abre o compartilhamento logo depois do toque.
+  function compartilhar() {
+    compartilharNoCelular(texto, arquivo && vaiComFoto ? [arquivo] : []).then((resultado) => {
+      if (resultado === "ok") setAviso(vaiComFoto ? "Se o texto não aparecer junto da foto, ele já está copiado: é só colar." : "");
+      else if (resultado === "erro") {
+        setAviso("O celular não abriu o compartilhamento. Toque em \"Abrir no WhatsApp\" para mandar o texto e anexe a foto baixada.");
       }
-    }
+    });
   }
 
   if (posts.length === 0) return <p>Nenhum grupo em uso. Inclua os grupos em WhatsApp Marketing.</p>;
@@ -110,6 +107,9 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
         <button type="button" className={podeCompartilhar ? estilos.botaoSecundario : estilos.botao} onClick={copiar}>
           Copiar texto
         </button>
+        <a className={estilos.botaoSecundario} href={linkDoWhatsApp(texto)} target="_blank" rel="noopener noreferrer">
+          Abrir no WhatsApp (só o texto)
+        </a>
         {foto && (
           <button
             type="button"
