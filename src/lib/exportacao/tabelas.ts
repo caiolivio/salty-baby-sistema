@@ -7,6 +7,7 @@ import { NOMES_QUEM_PAGA } from "../vendas/descontos";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
 import type { Pagina } from "../permissoes";
+import { descontoDaPromocao, descricaoDoDesconto } from "../promocoes/regras";
 import { nomeDoStatus } from "../situacoes";
 import { TAMANHOS } from "../tamanhos";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "../vendas/regras";
@@ -331,6 +332,54 @@ async function despesas() {
   );
 }
 
+/** Uma linha por peça em cada promoção. */
+async function promocoes() {
+  const linhas = await prisma.promocaoPeca.findMany({
+    orderBy: [{ promocao: { inicio: "desc" } }, { peca: { codigo: "asc" } }],
+    select: { promocao: true, peca: { select: { codigo: true, nome: true, precoCentavos: true } } },
+  });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Promoção", valor: (l) => l.promocao.nome },
+      { titulo: "Desconto", valor: (l) => descricaoDoDesconto(l.promocao) },
+      { titulo: "Início", tipo: "data", valor: (l) => l.promocao.inicio },
+      { titulo: "Fim", tipo: "data", valor: (l) => l.promocao.fim },
+      { titulo: "Quem paga", valor: (l) => (l.promocao.porContaDaLoja ? "Loja" : "Dividido com a fornecedora") },
+      { titulo: "Ativa", valor: (l) => (l.promocao.ativa ? "Sim" : "Não") },
+      { titulo: "Código da peça", valor: (l) => l.peca.codigo },
+      { titulo: "Peça", valor: (l) => l.peca.nome },
+      { titulo: "Preço", tipo: "reais", valor: (l) => l.peca.precoCentavos },
+      { titulo: "Preço na promoção", tipo: "reais", valor: (l) => l.peca.precoCentavos - descontoDaPromocao(l.peca.precoCentavos, l.promocao) },
+    ],
+    linhas,
+  );
+}
+
+async function cupons() {
+  const linhas = await prisma.cupom.findMany({ orderBy: { criadoEm: "desc" }, include: { _count: { select: { pedidos: true } } } });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Código", valor: (c) => c.codigo },
+      { titulo: "Desconto", valor: (c) => descricaoDoDesconto(c) },
+      { titulo: "Início", tipo: "data", valor: (c) => c.inicio },
+      { titulo: "Fim", tipo: "data", valor: (c) => c.fim },
+      { titulo: "Limite de usos", valor: (c) => c.limiteUsos ?? "" },
+      { titulo: "Pedidos com o cupom", valor: (c) => c._count.pedidos },
+      { titulo: "Pedido mínimo", tipo: "reais", valor: (c) => c.pedidoMinimoCentavos },
+      { titulo: "Quem paga", valor: (c) => (c.porContaDaLoja ? "Loja" : "Dividido com a fornecedora") },
+      { titulo: "Ativo", valor: (c) => (c.ativo ? "Sim" : "Não") },
+      { titulo: "Marca", valor: (c) => c.marca ?? "" },
+      { titulo: "Tamanho", valor: (c) => c.tamanho ?? "" },
+      { titulo: "Gênero", valor: (c) => c.genero ?? "" },
+      { titulo: "Só para uma cliente", valor: (c) => (c.clienteId ? "Sim" : "Não") },
+      { titulo: "Só para uma fornecedora", valor: (c) => (c.fornecedoraId ? "Sim" : "Não") },
+    ],
+    linhas,
+  );
+}
+
 async function historico(ver: Visao) {
   // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
   const linhas = await prisma.alteracao.findMany({
@@ -365,5 +414,7 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
   historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
   despesas: { titulo: "Despesas", arquivo: "despesas", pagina: "vendas", soAdministradora: true, carregar: despesas },
+  cupons: { titulo: "Cupons", arquivo: "cupons", pagina: "vendas", soAdministradora: true, carregar: cupons },
+  promocoes: { titulo: "Promoções", arquivo: "promocoes", pagina: "vendas", soAdministradora: true, carregar: promocoes },
   acertos: { titulo: "Pagamentos às fornecedoras", arquivo: "pagamentos-fornecedoras", pagina: "vendas", soAdministradora: true, carregar: acertos },
 };

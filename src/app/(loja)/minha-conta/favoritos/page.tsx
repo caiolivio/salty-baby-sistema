@@ -4,6 +4,7 @@ import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { fichaDaCliente } from "@/lib/clientes/contas";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { CartaoPeca, SELECAO_CARTAO } from "../../cartao-peca";
 import estilos from "../../loja.module.css";
 
@@ -21,6 +22,7 @@ export default async function Favoritos() {
   const aVenda = favoritos.map((f) => f.peca).filter((p) => p.status === "publicada" && p.quantidade > 0);
   const reservadas = favoritos.map((f) => f.peca).filter((p) => p.status === "reservada");
   const sairam = favoritos.length - aVenda.length - reservadas.length;
+  const promocoes = await promocoesDasPecas([...aVenda, ...reservadas]);
 
   if (favoritos.length === 0) {
     return (
@@ -36,7 +38,7 @@ export default async function Favoritos() {
         <ul className={estilos.grade}>
           {aVenda.map((p) => (
             <li key={p.id}>
-              <CartaoPeca peca={p} favorita estrela voltar="/minha-conta/favoritos" />
+              <CartaoPeca peca={p} promocao={promocoes.get(p.id)} favorita estrela voltar="/minha-conta/favoritos" />
             </li>
           ))}
         </ul>
@@ -48,7 +50,7 @@ export default async function Favoritos() {
           <ul className={estilos.grade}>
             {reservadas.map((p) => (
               <li key={p.id}>
-                <CartaoPeca peca={p} favorita estrela voltar="/minha-conta/favoritos" />
+                <CartaoPeca peca={p} promocao={promocoes.get(p.id)} favorita estrela voltar="/minha-conta/favoritos" />
               </li>
             ))}
           </ul>

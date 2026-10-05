@@ -9,6 +9,7 @@ import { exigirAcesso } from "@/lib/acesso";
 import { formatarReais } from "@/lib/dinheiro";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { CartaoPeca, SELECAO_CARTAO } from "../cartao-peca";
 import estilos from "../loja.module.css";
 
@@ -58,6 +59,7 @@ export default async function MinhaConta() {
     gosto,
     favoritas,
   );
+  const promocoes = await promocoesDasPecas(sugestoes.pecas);
   const noCarrinho = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value).length;
 
   return (
@@ -90,7 +92,7 @@ export default async function MinhaConta() {
           <ul className={estilos.carrossel}>
             {sugestoes.pecas.map((p) => (
               <li key={p.id}>
-                <CartaoPeca peca={p} favorita={false} estrela voltar="/minha-conta" />
+                <CartaoPeca peca={p} promocao={promocoes.get(p.id)} favorita={false} estrela voltar="/minha-conta" />
               </li>
             ))}
           </ul>

@@ -9,6 +9,8 @@ import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
+import { valoresDaPromocao } from "@/lib/promocoes/regras";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { tirarDaVenda } from "./acoes";
@@ -51,7 +53,8 @@ export default async function NovaVenda() {
     valores ? opcoesDeSaldo() : [],
   ]);
   const pecas = ids.flatMap((id) => encontradas.filter((p) => p.id === id));
-  const total = pecas.reduce((s, p) => s + p.precoCentavos, 0);
+  const promocoes = await promocoesDasPecas(pecas);
+  const total = pecas.reduce((s, p) => s + p.precoCentavos - (promocoes.get(p.id)?.descontoCentavos ?? 0), 0);
 
   return (
     <>
@@ -106,7 +109,12 @@ export default async function NovaVenda() {
                     </td>
                     <td data-rotulo="Fornecedora">{p.fornecedora ? `${p.fornecedora.codigo} ${p.fornecedora.nome}` : "Peça da loja"}</td>
                     <td className={estilos.numero} data-rotulo="Preço">
-                      {formatarReais(p.precoCentavos)}
+                      {formatarReais(p.precoCentavos - (promocoes.get(p.id)?.descontoCentavos ?? 0))}
+                      {promocoes.has(p.id) && (
+                        <span className={estilos.antigo}>
+                          {promocoes.get(p.id)!.nome} · antes {formatarReais(p.precoCentavos)}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <form action={tirarDaVenda}>
@@ -127,7 +135,26 @@ export default async function NovaVenda() {
         Total: <strong>{formatarReais(total)}</strong> ({pecas.length} {pecas.length === 1 ? "peça" : "peças"})
       </p>
 
-      <FormularioVenda hoje={hojeEmSaoPaulo()} clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
+      <FormularioVenda
+        // Peças novas na venda: o formulário recomeça com o desconto das promoções delas.
+        key={ids.join(",")}
+        iniciais={valoresDaPromocao(
+          pecas.flatMap((p) => {
+            const promocao = promocoes.get(p.id);
+            return promocao
+              ? [
+                  {
+                    pecaId: p.id,
+                    descontoCentavos: promocao.descontoCentavos,
+                    porContaDaLoja: promocao.porContaDaLoja,
+                    nome: promocao.nome,
+                  },
+                ]
+              : [];
+          }),
+        )}
+        hoje={hojeEmSaoPaulo()}
+        clientes={clientes.map(({ id, nome, detalhe }) => ({ id, nome, detalhe }))}
         grupos={grupos.map(({ id, nome }) => ({ id, nome }))}
         mostrarValores={valores}
         saldos={saldos}
@@ -140,7 +167,8 @@ export default async function NovaVenda() {
           // Custo e repasse só vão ao navegador de quem pode ver.
           percentualRepasse: valores ? (p.percentualRepasse ?? p.fornecedora?.percentualRepassePadrao ?? null) : null,
           custoCentavos: valores ? p.custoCentavos : null,
-        }))} />
+        }))}
+      />
     </>
   );
 }

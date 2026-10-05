@@ -13,15 +13,18 @@ export function ConfirmarPagamento({
   mostrarValores,
   saldos,
   saldoPedido,
+  iniciais,
 }: {
   id: string;
   pecas: PecaDoDesconto[];
   mostrarValores: boolean;
   saldos: SaldoDaFornecedora[];
   saldoPedido: string | null;
+  /** Campos já preenchidos (o desconto das promoções). */
+  iniciais?: Record<string, string>;
 }) {
   const [estado, acao, enviando] = useActionState(confirmar, undefined);
-  const v = estado?.valores ?? {};
+  const v = estado?.valores ?? iniciais ?? {};
   return (
     <form action={acao} className={estilos.formulario} key={JSON.stringify(estado ?? null)}>
       <input type="hidden" name="id" value={id} />

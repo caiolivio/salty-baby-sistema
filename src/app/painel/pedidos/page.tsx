@@ -68,7 +68,8 @@ export default async function Pedidos() {
                     {p.itens.map((i) => (
                       <span key={i.pecaId} className={estilos.antigo}>
                         <Link href={`/painel/pecas/${i.peca.id}`}>{i.peca.codigo}</Link> {i.peca.nome}
-                        {i.peca.tamanho && ` (${i.peca.tamanho})`} · {formatarReais(i.precoCentavos)}
+                        {i.peca.tamanho && ` (${i.peca.tamanho})`} · {formatarReais(i.precoCentavos - i.descontoCentavos)}
+                        {i.descontoCentavos > 0 && " (promoção)"}
                       </span>
                     ))}
                   </td>
