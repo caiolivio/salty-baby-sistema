@@ -17,6 +17,7 @@ import { FiltrosDaVitrine } from "./filtros-da-vitrine";
 import estilos from "./loja.module.css";
 import { quemVeALoja } from "./quem-ve";
 import { lerLoja } from "@/lib/loja/servidor";
+import { ondeEmPromocao, promocoesDasPecas } from "@/lib/promocoes/servidor";
 
 // Título e descrição: os da loja (layout raiz).
 export const metadata: Metadata = {};
@@ -39,6 +40,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     ...(f.tamanho && { tamanho: f.tamanho }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     AND: [
+      f.promocao ? ondeEmPromocao() : {},
       generos.length > 0 ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] } : {},
       f.busca
         ? {
@@ -48,7 +50,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     ],
   };
 
-  const [total, pecas, tamanhos, categorias] = await Promise.all([
+  const [total, pecas, tamanhos, categorias, emPromocao] = await Promise.all([
     prisma.peca.count({ where: onde }),
     prisma.peca.findMany({
       where: onde,
@@ -67,10 +69,12 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
       orderBy: [{ ordem: "asc" }, { nome: "asc" }],
       select: { id: true, nome: true },
     }),
+    prisma.peca.count({ where: { ...A_VENDA, ...ondeEmPromocao() } }),
   ]);
+  const promocoes = await promocoesDasPecas(pecas);
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA_VITRINE));
   const quem = await quemVeALoja(pecas.map((p) => p.id));
-  const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.busca);
+  const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.busca || f.promocao);
   const loja = await lerLoja();
 
   return (
@@ -118,6 +122,15 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
             </select>
           </label>
         )}
+        {(emPromocao > 0 || f.promocao) && (
+          <label>
+            Preço
+            <select name="promocao" defaultValue={f.promocao ? "1" : ""}>
+              <option value="">Todos</option>
+              <option value="1">Em promoção</option>
+            </select>
+          </label>
+        )}
         <div className={estilos.campoBusca}>
           <Search className="icone" aria-hidden />
           <input name="q" defaultValue={f.busca ?? ""} placeholder="Buscar por nome, marca ou código" aria-label="Buscar" type="search" />
@@ -141,7 +154,10 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
         <ul className={estilos.grade}>
           {pecas.map((p) => (
             <li key={p.id}>
-              <CartaoPeca peca={p} favorita={quem.favoritas.has(p.id)} estrela={quem.estrela} voltar={linkDaVitrine(f, { pagina: f.pagina })} />
+              <CartaoPeca
+                peca={p}
+                promocao={promocoes.get(p.id)}
+                favorita={quem.favoritas.has(p.id)} estrela={quem.estrela} voltar={linkDaVitrine(f, { pagina: f.pagina })} />
             </li>
           ))}
         </ul>

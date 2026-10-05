@@ -12,6 +12,8 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
+import { precoDoPost } from "@/lib/promocoes/regras";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { avisoDaTroca, opcoesDeStatus, reaisNoCampo, statusNoFormulario } from "@/lib/pecas/dados";
 import { motivoParaNaoExcluirPeca } from "@/lib/pecas/gravar";
 import { TAMANHOS } from "@/lib/tamanhos";
@@ -60,7 +62,11 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
   const divulgavel = p.status === "publicada" && p.quantidade > 0;
   const grupos = divulgavel ? await listarGruposEmUso() : [];
-  const sugeridos = gruposSugeridos({ genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome) }, grupos);
+  const promocao = (await promocoesDasPecas([p])).get(p.id) ?? null;
+  const sugeridos = gruposSugeridos(
+    { genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome), emPromocao: Boolean(promocao) },
+    grupos,
+  );
   const origem = origemDaRequisicao(await headers());
   const dadosDoPost: PecaDoPost = {
     codigo: p.codigo,
@@ -68,7 +74,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
     descricao: p.descricao,
     categorias: p.categorias.map((c) => c.categoria.nome),
     tamanho: TAMANHOS.find((t) => t.valor === p.tamanho)?.nome ?? p.tamanho,
-    preco: formatarReais(p.precoCentavos),
+    preco: precoDoPost(p.precoCentavos, promocao),
     marca: p.marca,
     nota: p.nota,
   };
@@ -111,6 +117,13 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           </form>
         </div>
       </div>
+      {promocao && (
+        <p className={proprios.aviso}>
+          Em promoção: <Link href={`/painel/promocoes/${promocao.promocaoId}`}>{promocao.nome}</Link>, por{" "}
+          {formatarReais(promocao.precoCentavos)} (de {formatarReais(promocao.precoAntigoCentavos)}) até{" "}
+          {promocao.fim.split("-").reverse().join("/")}.
+        </p>
+      )}
       {aviso.criada && (
         <p className={proprios.aviso} role="status">
           Peça cadastrada com o código {p.codigo}.
