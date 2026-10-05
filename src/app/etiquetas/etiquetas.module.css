@@ -99,9 +99,17 @@
   margin-bottom: 0.6mm;
 }
 
-.codigo {
+.codigo,
+.tamanho {
   font-size: 6pt;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tamanho {
+  font-size: 6.5pt;
+  font-weight: 700;
 }
 
 .nome {
