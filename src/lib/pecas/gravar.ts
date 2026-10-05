@@ -90,9 +90,23 @@ export async function criarPeca(
       },
       select: { id: true },
     });
+    await anotarPublicacao(tx, [criada.id]);
     const situacao = nomeDoStatus(dados.status, dados.naoListada);
     await registrarCadastro(tx, { tabela: "peca", id: criada.id, rotulo: rotuloDaPeca({ codigo, nome: dados.nome }) }, `Cadastrada: ${situacao}`, autor, motivo);
     return { id: criada.id, codigo };
+  });
+}
+
+/**
+ * Contrato, cláusula 11.2: o prazo mínimo de consignação conta do dia em que a
+ * peça foi disponibilizada para venda no site. Grava esse dia na primeira vez
+ * que ela fica à venda (as vezes seguintes não mudam a data).
+ */
+export async function anotarPublicacao(tx: Prisma.TransactionClient, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await tx.peca.updateMany({
+    where: { id: { in: ids }, status: "publicada", publicadaEm: null },
+    data: { publicadaEm: new Date(`${hojeEmSaoPaulo()}T00:00:00Z`) },
   });
 }
 
@@ -119,6 +133,7 @@ export async function atualizarPeca(
         categorias: { deleteMany: {}, create: categoriaIds.map((categoriaId) => ({ categoriaId })) },
       },
     });
+    await anotarPublicacao(tx, [id]);
     const depois = await estadoParaHistorico(tx, id);
     if (antes && depois) {
       await registrar(tx, { tabela: "peca", id, rotulo: rotuloDaPeca(depois) }, compararPeca(antes, depois), autor, "Edição no painel");
@@ -277,6 +292,7 @@ export async function mudarStatusDaPeca(id: string, novo: string, autor: Autor):
       // Só muda se ninguém mexeu na peça enquanto isso.
       const mudou = await tx.peca.updateMany({ where: { id, status: peca.status }, data: { status, naoListada } });
       if (mudou.count === 0) throw new Recusa("O status desta peça mudou enquanto você editava. Abra a peça de novo.");
+      await anotarPublicacao(tx, [id]);
       const motivo = ["Status mudado no painel", ...motivos].join("; ");
       await registrarStatus(tx, [peca], { status, naoListada }, autor, motivo);
     });

@@ -24,6 +24,7 @@ export async function dadosDaFornecedora(fornecedoraId: string) {
         quantidade: true,
         percentualRepasse: true,
         dataEntrada: true,
+        publicadaEm: true,
         fotos: { orderBy: { ordem: "asc" }, take: 1, select: { arquivo: true } },
         devolucoes: { where: { situacao: "pedida" }, select: { pedidaEm: true } },
       },
@@ -66,7 +67,7 @@ export async function pedirDevolucao(fornecedoraId: string, pecaIds: string[], h
     const ok = await prisma.$transaction(async (tx) => {
       const peca = await tx.peca.findFirst({
         where: { id: pecaId, fornecedoraId },
-        select: { ...SELECAO_STATUS, dataEntrada: true },
+        select: { ...SELECAO_STATUS, dataEntrada: true, publicadaEm: true },
       });
       if (!peca || situacaoDaDevolucao(peca, hoje, mesesDevolucao).tipo !== "pode") return false;
       // Só muda se o status ainda for o lido (uma cliente pode ter reservado agora).

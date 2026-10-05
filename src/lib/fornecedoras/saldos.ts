@@ -26,17 +26,24 @@ export type SituacaoDevolucaoDaPeca =
   | { tipo: "pode" }
   | { tipo: "a-partir-de"; data: string }
   | { tipo: "pedida" }
+  | { tipo: "fora-do-site" }
   | { tipo: "nao-se-aplica" };
 
-/** Se a peça pode ser pedida de volta hoje (aaaa-mm-dd), e desde quando. */
+/**
+ * Se a peça pode ser pedida de volta hoje (aaaa-mm-dd), e desde quando. Pelo
+ * contrato (11.2), os meses contam do dia em que a peça entrou à venda no site
+ * (`publicadaEm`), não da entrada na loja: ela pode precisar ser lavada ou
+ * consertada antes. Peça que ainda não foi para o site não pode ser pedida.
+ */
 export function situacaoDaDevolucao(
-  peca: { status: string; dataEntrada: Date },
+  peca: { status: string; dataEntrada: Date; publicadaEm: Date | null },
   hoje: string,
   meses = MESES_PARA_DEVOLUCAO,
 ): SituacaoDevolucaoDaPeca {
   if (peca.status === "devolucao_pedida") return { tipo: "pedida" };
   if (!(STATUS_DEVOLVIVEIS as readonly string[]).includes(peca.status)) return { tipo: "nao-se-aplica" };
-  const data = devolucaoDisponivelEm(peca.dataEntrada, meses);
+  if (!peca.publicadaEm) return { tipo: "fora-do-site" };
+  const data = devolucaoDisponivelEm(peca.publicadaEm, meses);
   return data <= hoje ? { tipo: "pode" } : { tipo: "a-partir-de", data };
 }
 

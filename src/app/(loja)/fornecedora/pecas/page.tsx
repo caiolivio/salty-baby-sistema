@@ -67,11 +67,18 @@ export default async function MinhasPecas({ searchParams }: PageProps<"/forneced
                     {p.status === "rascunho" ? `Em cadastro na ${loja.nomeCurto}` : nomeDoStatus(p.status)}
                   </span>{" "}
                   Entrada em {formatarData(p.dataEntrada)}
+                  {p.publicadaEm && ` · no site desde ${formatarData(p.publicadaEm)}`}
                   {p.precoCentavos > 0 && ` · ${formatarReais(p.precoCentavos)}`}
                   {p.devolucao.tipo === "a-partir-de" && (
                     <span className={estilos.indisponivel}>
                       <br />
                       Devolução disponível a partir de {brasileira(p.devolucao.data)}
+                    </span>
+                  )}
+                  {p.devolucao.tipo === "fora-do-site" && (
+                    <span className={estilos.indisponivel}>
+                      <br />
+                      Ainda não está no site. O prazo de devolução conta a partir do dia em que ela entrar à venda.
                     </span>
                   )}
                   {p.devolucao.tipo === "pedida" && p.devolucoes[0] && (
