@@ -213,6 +213,7 @@ model Peca {
   itensVendidos     ItemVenda[]
   itensPedido       ItemPedido[]
   favoritos         Favorito[]
+  avisosAlerta      AvisoDeAlerta[]
   promocoes         PromocaoPeca[]
   proposta          PecaProposta?
   devolucoes        Devolucao[]
@@ -259,6 +260,8 @@ model Cliente {
   criancas     Crianca[]
   favoritos    Favorito[]
   sacolinhas   Sacolinha[]
+  alertas      Alerta[]
+  avisosAlerta AvisoDeAlerta[]
 
   @@map("clientes")
 }
@@ -955,4 +958,34 @@ model VersaoDePagina {
 
   @@unique([chave, versao])
   @@map("paginas_versoes")
+}
+
+/// "Me avise quando chegar": o que a cliente quer (pelo menos um campo preenchido).
+model Alerta {
+  id          String   @id @default(cuid())
+  clienteId   String   @map("cliente_id")
+  tamanho     String?  @db.VarChar(20)
+  /// menina ou menino (como o filtro da vitrine).
+  publico     String?  @db.VarChar(10)
+  /// Sem chave estrangeira: categoria apagada só deixa o alerta sem efeito.
+  categoriaId String?  @map("categoria_id") @db.VarChar(40)
+  marca       String?  @db.VarChar(80)
+  criadoEm    DateTime @default(now()) @map("criado_em")
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@map("alertas")
+}
+
+/// Peça já avisada para a cliente (para não avisar a mesma peça duas vezes).
+model AvisoDeAlerta {
+  clienteId String   @map("cliente_id")
+  pecaId    String   @map("peca_id")
+  avisadoEm DateTime @default(now()) @map("avisado_em")
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  peca      Peca     @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  @@id([clienteId, pecaId])
+  @@index([pecaId])
+  @@map("avisos_alerta")
 }

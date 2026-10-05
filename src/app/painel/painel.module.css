@@ -749,3 +749,22 @@
   border-radius: var(--raio);
   background: var(--fundo-suave);
 }
+
+/* Fileira de fotos pequenas com o código (avisos de chegada). */
+.miniaturas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  margin: 8px 0;
+  list-style: none;
+}
+
+.miniaturas a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
