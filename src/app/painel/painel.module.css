@@ -587,3 +587,15 @@
 .cartao :global(.icone) {
   color: var(--turquesa);
 }
+
+/* Texto pronto para o WhatsApp, como vai na mensagem. */
+.textoPronto {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo-suave);
+}
