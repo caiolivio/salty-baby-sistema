@@ -29,11 +29,19 @@ const valoresDigitados = (dados: FormData) =>
 function manterProtegidos(
   valores: Record<string, string>,
   acesso: Acesso,
-  atual: { documento: string | null; pix: string | null; percentualRepassePadrao: number },
+  atual: {
+    documento: string | null;
+    pix: string | null;
+    pixTipo?: string | null;
+    recebimentoPreferido?: string | null;
+    percentualRepassePadrao: number;
+  },
 ) {
   if (!acesso.administradora) {
     valores.documento = atual.documento ?? "";
     valores.pix = atual.pix ?? "";
+    valores.pixTipo = atual.pixTipo ?? "";
+    valores.recebimentoPreferido = atual.recebimentoPreferido ?? "";
   }
   if (!temExtra(acesso, "valores")) valores.percentualRepassePadrao = mostrarPercentual(atual.percentualRepassePadrao);
 }
@@ -57,7 +65,7 @@ export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormD
   const id = valores.id ?? "";
   const atual = await prisma.fornecedora.findUnique({
     where: { id },
-    select: { documento: true, pix: true, percentualRepassePadrao: true },
+    select: { documento: true, pix: true, pixTipo: true, recebimentoPreferido: true, percentualRepassePadrao: true },
   });
   if (!atual) return { erro: "Esta fornecedora não existe mais.", valores };
   manterProtegidos(valores, usuario.acesso, atual);

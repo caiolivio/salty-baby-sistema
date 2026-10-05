@@ -1,6 +1,12 @@
+import { FORMAS_RECEBIMENTO, TIPOS_CHAVE_PIX } from "@/lib/fornecedoras/contrato";
 import estilos from "../loja.module.css";
 
-export type ValoresDados = Partial<Record<"nome" | "email" | "telefone" | "endereco" | "cep" | "cidade" | "estado" | "pix", string>>;
+export type ValoresDados = Partial<
+  Record<
+    "nome" | "email" | "telefone" | "endereco" | "cep" | "cidade" | "estado" | "pix" | "pixTipo" | "recebimentoPreferido",
+    string
+  >
+>;
 
 /** Campos do cadastro que a própria fornecedora completa. Obrigatórios: nome, e-mail e endereço. */
 export function CamposDaFornecedora({ valores }: { valores: ValoresDados }) {
@@ -44,6 +50,30 @@ export function CamposDaFornecedora({ valores }: { valores: ValoresDados }) {
         Chave Pix (para receber os repasses)
         <input name="pix" maxLength={191} defaultValue={valores.pix} />
       </label>
+      <div className={estilos.linhaCampos}>
+        <label>
+          Tipo da chave Pix
+          <select name="pixTipo" defaultValue={valores.pixTipo ?? ""}>
+            <option value="">Escolha</option>
+            {TIPOS_CHAVE_PIX.map((t) => (
+              <option key={t.valor} value={t.valor}>
+                {t.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Prefere receber por
+          <select name="recebimentoPreferido" defaultValue={valores.recebimentoPreferido ?? ""}>
+            <option value="">Escolha</option>
+            {FORMAS_RECEBIMENTO.map((f) => (
+              <option key={f.valor} value={f.valor}>
+                {f.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     </>
   );
 }

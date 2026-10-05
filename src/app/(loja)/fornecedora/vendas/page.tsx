@@ -30,8 +30,8 @@ export default async function MinhasVendas() {
       <h1 className={estilos.tituloPagina}>Vendas ({itens.length})</h1>
       <p className={estilos.dica}>
         O repasse é a sua parte de cada venda, calculada sobre o valor pago pela cliente (já com desconto), a não ser quando a{" "}
-        {loja.nomeCurto} assume o desconto. A {loja.nomeCurto} paga os repasses do mês no dia 1 do mês seguinte. À direita, quanto
-        você recebe de cada venda.
+        {loja.nomeCurto} assume o desconto. A {loja.nomeCurto} paga os repasses no primeiro dia útil de cada mês; as vendas dos 10
+        dias antes do pagamento (prazo de troca) ficam para o mês seguinte. À direita, quanto você recebe de cada venda.
       </p>
       {itens.length === 0 ? (
         <p>Nenhuma peça vendida ainda.</p>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { VALIDADE_LINK_DIAS } from "../clientes/conta";
 import { lerTelefoneCliente } from "../pedidos/regras";
 import { normalizarEmail } from "../senha";
+import { lerChavePix, type FormaRecebimento, type TipoChavePix } from "./contrato";
 
 const opcional = (maximo: number) =>
   z
@@ -36,6 +37,8 @@ const campos = z.object({
   cidade: opcional(100),
   estado: opcional(60),
   pix: opcional(191),
+  pixTipo: z.enum(["", "cpf", "telefone", "email", "aleatoria"]).transform((t) => (t || null) as TipoChavePix | null),
+  recebimentoPreferido: z.enum(["", "pix", "credito"]).transform((t) => (t || null) as FormaRecebimento | null),
 });
 
 export type DadosDaFornecedora = z.output<typeof campos>;
@@ -48,7 +51,15 @@ export function lerDadosDaFornecedora(
     Object.fromEntries(Object.keys(campos.shape).map((k) => [k, typeof valores[k] === "string" ? valores[k] : ""])),
   );
   if (!lido.success) return { ok: false, erro: lido.error.issues[0]?.message ?? "Confira os campos." };
-  return { ok: true, dados: lido.data };
+  const dados = lido.data;
+  // Com o tipo escolhido, a chave Pix precisa combinar com ele.
+  if (dados.pix && dados.pixTipo) {
+    const chave = lerChavePix(dados.pixTipo, dados.pix);
+    if (!chave.ok) return { ok: false, erro: chave.erro };
+    dados.pix = chave.chave;
+  }
+  if (!dados.pix) dados.pixTipo = null;
+  return { ok: true, dados };
 }
 
 /** Mensagem que a loja manda no WhatsApp com o link de primeiro acesso. */

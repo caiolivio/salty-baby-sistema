@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { fimDoMesAnterior, lerAcerto, marcadoDeInicio, nomeDoMes, resumirAPagar, textoDoComprovante } from "./regras";
+import {
+  corteDoAcerto,
+  fimDoMesAnterior,
+  lerAcerto,
+  marcadoDeInicio,
+  nomeDoMes,
+  resumirAPagar,
+  textoDoComprovante,
+} from "./regras";
 
 const d = (t: string) => new Date(`${t}T00:00:00Z`);
 
@@ -16,14 +24,23 @@ describe("fimDoMesAnterior", () => {
   });
 });
 
+describe("corteDoAcerto (contrato: 10 dias de consolidação)", () => {
+  it("as vendas dos 10 dias antes do dia 1 ficam para o próximo acerto", () => {
+    expect(corteDoAcerto("2026-11-01")).toBe("2026-10-21");
+    expect(corteDoAcerto("2026-11-20")).toBe("2026-10-21");
+    expect(corteDoAcerto("2027-01-02")).toBe("2026-12-21");
+    expect(corteDoAcerto("2026-03-01")).toBe("2026-02-18");
+  });
+});
+
 describe("resumirAPagar", () => {
   const itens = [
     { id: "a", data: d("2026-08-20"), repasseCentavos: 1000, quantidade: 1 },
-    { id: "b", data: d("2026-09-30"), repasseCentavos: 600, quantidade: 1 },
-    { id: "c", data: d("2026-10-01"), repasseCentavos: 400, quantidade: 2 },
+    { id: "b", data: d("2026-09-20"), repasseCentavos: 600, quantidade: 1 },
+    { id: "c", data: d("2026-09-21"), repasseCentavos: 400, quantidade: 2 },
   ];
 
-  it("separa o mês fechado (até 30/09) do mês atual", () => {
+  it("separa o acerto deste mês (vendas até 20/09) do próximo", () => {
     expect(resumirAPagar(itens, "2026-10-02")).toEqual({
       fechadoCentavos: 1600,
       pecasFechadas: 2,
@@ -37,7 +54,7 @@ describe("resumirAPagar", () => {
     expect(resumirAPagar(itens, "2026-11-01").fechadoCentavos).toBe(2000);
   });
 
-  it("vem marcado no formulário só o que é do mês fechado", () => {
+  it("vem marcado no formulário só o que entra no acerto deste mês", () => {
     expect(itens.map((i) => marcadoDeInicio(i, "2026-10-02"))).toEqual([true, true, false]);
   });
 });

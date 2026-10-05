@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { FORMAS_RECEBIMENTO, TIPOS_CHAVE_PIX } from "@/lib/fornecedoras/contrato";
 import type { EstadoFornecedora } from "./acoes";
 import estilos from "../formulario.module.css";
 
@@ -9,7 +10,19 @@ type Acao = (estado: EstadoFornecedora, dados: FormData) => Promise<EstadoFornec
 
 export type ValoresFornecedora = Partial<
   Record<
-    "id" | "nome" | "telefone" | "email" | "documento" | "pix" | "endereco" | "cep" | "cidade" | "estado" | "percentualRepassePadrao",
+    | "id"
+    | "nome"
+    | "telefone"
+    | "email"
+    | "documento"
+    | "pix"
+    | "pixTipo"
+    | "recebimentoPreferido"
+    | "endereco"
+    | "cep"
+    | "cidade"
+    | "estado"
+    | "percentualRepassePadrao",
     string
   >
 > & { ativa?: boolean };
@@ -83,6 +96,28 @@ export function FormularioFornecedora({
                 <label className={estilos.campo}>
                   Chave Pix
                   <input name="pix" maxLength={191} defaultValue={v("pix")} />
+                </label>
+                <label className={estilos.campo}>
+                  Tipo da chave Pix
+                  <select name="pixTipo" defaultValue={v("pixTipo") ?? ""}>
+                    <option value="">Não informado</option>
+                    {TIPOS_CHAVE_PIX.map((t) => (
+                      <option key={t.valor} value={t.valor}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={estilos.campo}>
+                  Prefere receber por
+                  <select name="recebimentoPreferido" defaultValue={v("recebimentoPreferido") ?? ""}>
+                    <option value="">Não informado</option>
+                    {FORMAS_RECEBIMENTO.map((f) => (
+                      <option key={f.valor} value={f.valor}>
+                        {f.nome}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className={estilos.campo}>
                   CPF ou CNPJ

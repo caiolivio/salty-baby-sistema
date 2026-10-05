@@ -1951,3 +1951,35 @@
 .instalarApp p :global(.icone) {
   vertical-align: -3px;
 }
+
+/* Contrato de consignação no aceite: caixa mais alta e cláusulas separadas. */
+.contrato {
+  max-height: 60vh;
+}
+
+.contrato p {
+  margin: 0 0 8px;
+}
+
+.fimDoContrato {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--borda);
+  font-size: 0.85rem;
+  color: var(--texto-suave, #5b6770);
+  text-align: center;
+}
+
+.escolhaRecebimento {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.escolhaRecebimento legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}

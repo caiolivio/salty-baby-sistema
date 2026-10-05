@@ -29,7 +29,7 @@ describe("menu do painel", () => {
     expect(itens[1].filhos?.map((f) => f.chave)).toEqual(["financeiro", "acertos", "indicadores", "relatorios"]);
     expect(itens.at(-1)?.filhos?.map((f) => f.chave)).toEqual(["configuracoes", "equipe", "backup", "importar"]);
     expect(itens.find((i) => i.chave === "paginas")?.filhos?.map((f) => f.nome)).toEqual([
-      "Acordo de consignação",
+      "Contrato de consignação",
       "Termos de uso",
       "Política de troca",
       "Sobre a loja",

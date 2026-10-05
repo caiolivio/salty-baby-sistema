@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { formatarReais } from "../dinheiro";
 import {
   blocosDoTexto,
   lerFormularioPagina,
   linkSeguro,
+  porcentoPorExtenso,
   preencher,
   TEXTOS_INICIAIS,
   trechosDaLinha,
@@ -85,5 +87,36 @@ describe("formulário", () => {
   it("a versão do acordo aceito leva o número da versão salva", () => {
     expect(versaoDoAcordo(null)).toBe("2026-10-v2");
     expect(versaoDoAcordo(3)).toBe("v3");
+  });
+});
+
+describe("contrato final", () => {
+  const loja = {
+    nome: "Salty Baby",
+    nomeCurto: "Salty",
+    whatsapp: "5512981053623",
+    repassePadrao: 4000,
+    mesesDevolucao: 6,
+    mesesSacolinha: 3,
+  };
+
+  it("percentual por extenso", () => {
+    expect(porcentoPorExtenso(4000)).toBe("quarenta por cento");
+    expect(porcentoPorExtenso(6000)).toBe("sessenta por cento");
+    expect(porcentoPorExtenso(3500)).toBe("trinta e cinco por cento");
+    expect(porcentoPorExtenso(1500)).toBe("quinze por cento");
+    expect(porcentoPorExtenso(10000)).toBe("cem por cento");
+    expect(porcentoPorExtenso(3750)).toBe("37,5%");
+  });
+
+  it("divisão, exemplo e nome da loja vêm de Configurações", () => {
+    const texto = preencher(TEXTOS_INICIAIS.contrato.conteudo, loja);
+    expect(texto).toContain("- 40% (quarenta por cento) para a CONSIGNANTE;");
+    expect(texto).toContain("- 60% (sessenta por cento) para a SALTY BABY.");
+    expect(texto).toContain(`resultará em ${formatarReais(3200)} para a CONSIGNANTE e ${formatarReais(4800)} para a Salty Baby.`);
+    expect(preencher(TEXTOS_INICIAIS.contrato.titulo, loja)).toBe("🐳 CONTRATO DE CONSIGNAÇÃO – SALTY BABY");
+    expect(texto).not.toMatch(/\{[a-z_]+\}/);
+    const titulos = blocosDoTexto(texto).filter((b) => b.tipo === "titulo");
+    expect(titulos).toHaveLength(25);
   });
 });

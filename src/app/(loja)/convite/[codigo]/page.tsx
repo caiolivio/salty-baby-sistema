@@ -52,6 +52,8 @@ export default async function Convite({ params }: PageProps<"/convite/[codigo]">
           cidade: f.cidade ?? "",
           estado: f.estado ?? "",
           pix: f.pix ?? "",
+          pixTipo: f.pixTipo ?? "",
+          recebimentoPreferido: f.recebimentoPreferido ?? "",
         }}
       />
     </div>

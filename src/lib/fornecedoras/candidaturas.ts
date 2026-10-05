@@ -4,7 +4,6 @@ import { gerarCodigoDoLink } from "../clientes/conta";
 import { contaComPerfil, gravarLinkDeSenha } from "../clientes/contas";
 import { guardarFotoDeProposta, lerFotoGuardada } from "../fotos";
 import { adicionarFotos, criarPeca } from "../pecas/gravar";
-import { versaoAtualDoAcordo } from "../paginas/servidor";
 import type { DadosInscricao, DadosProposta } from "./candidatura";
 import { criarFornecedoraNaTransacao } from "./gravar";
 import type { Autor } from "../historico/regras";
@@ -102,15 +101,6 @@ export async function tirarProposta(
   await prisma.pecaProposta.deleteMany({ where: { id, ...dono, situacao: "proposta" } });
 }
 
-/** Passo 2 concluído: a candidata aceitou o acordo. A Salty entra em contato para efetivar. */
-export async function aceitarAcordo(candidaturaId: string, agora = new Date()): Promise<boolean> {
-  const r = await prisma.candidatura.updateMany({
-    where: { id: candidaturaId, etapa: "aprovada" },
-    data: { etapa: "acordo_aceito", acordoAceitoEm: agora, acordoVersao: await versaoAtualDoAcordo() },
-  });
-  return r.count === 1;
-}
-
 export type ResultadoEfetivacao =
   | { ok: true; codigo: string; fornecedoraId: string }
   | { ok: false; motivo: "nao-encontrada" | "sem-acordo" | "ja-efetivada" };
@@ -135,6 +125,10 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
       cep: c.cep,
       cidade: c.cidade,
       estado: c.estado,
+      documento: c.documento,
+      pix: c.pix,
+      pixTipo: c.pixTipo,
+      recebimentoPreferido: c.recebimentoPreferido,
       usuarioId: c.usuarioId,
       termosAceitosEm: c.acordoAceitoEm,
       termosVersao: c.acordoVersao,
@@ -142,6 +136,8 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
     });
     await tx.candidatura.update({ where: { id }, data: { etapa: "efetivada", fornecedoraId } });
     await tx.pecaProposta.updateMany({ where: { candidaturaId: id }, data: { fornecedoraId } });
+    // O aceite do contrato (feito como candidata) passa a valer para a fornecedora.
+    await tx.aceiteContrato.updateMany({ where: { candidaturaId: id }, data: { fornecedoraId } });
     return { ok: true as const, codigo, fornecedoraId };
   });
 }
@@ -161,6 +157,9 @@ export async function situacaoNaArea(usuarioId: string) {
       cidade: true,
       estado: true,
       pix: true,
+      pixTipo: true,
+      recebimentoPreferido: true,
+      documento: true,
       termosAceitosEm: true,
       termosVersao: true,
       boasVindasEm: true,
@@ -171,7 +170,18 @@ export async function situacaoNaArea(usuarioId: string) {
   if (fornecedora) return { tipo: "fornecedora" as const, fornecedora };
   const candidatura = await prisma.candidatura.findUnique({
     where: { usuarioId },
-    select: { id: true, nome: true, etapa: true, acordoAceitoEm: true },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      telefone: true,
+      documento: true,
+      pix: true,
+      pixTipo: true,
+      recebimentoPreferido: true,
+      etapa: true,
+      acordoAceitoEm: true,
+    },
   });
   if (candidatura) return { tipo: "candidata" as const, candidatura };
   return { tipo: "sem-cadastro" as const };

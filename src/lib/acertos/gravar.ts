@@ -21,7 +21,13 @@ export async function repassesPendentes() {
       quantidade: true,
       repasseCentavos: true,
       venda: { select: { data: true } },
-      peca: { select: { fornecedora: { select: { id: true, codigo: true, nome: true, pix: true, telefone: true } } } },
+      peca: {
+        select: {
+          fornecedora: {
+            select: { id: true, codigo: true, nome: true, pix: true, pixTipo: true, recebimentoPreferido: true, telefone: true },
+          },
+        },
+      },
     },
   });
 }

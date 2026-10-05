@@ -8,15 +8,13 @@ import { lerNovaSenha } from "@/lib/clientes/conta";
 import { trocarSenha } from "@/lib/clientes/contas";
 import { pedirDevolucao } from "@/lib/fornecedoras/area";
 import { lerProposta } from "@/lib/fornecedoras/candidatura";
-import {
-  aceitarAcordo,
-  marcarBoasVindas,
-  registrarProposta,
-  situacaoNaArea,
-  tirarProposta,
-} from "@/lib/fornecedoras/candidaturas";
+import { marcarBoasVindas, registrarProposta, situacaoNaArea, tirarProposta } from "@/lib/fornecedoras/candidaturas";
 import { etapaDaFornecedora, lerDadosDaFornecedora } from "@/lib/fornecedoras/conta";
-import { aceitarTermos, salvarDadosDaFornecedora } from "@/lib/fornecedoras/convites";
+import { salvarDadosDaFornecedora } from "@/lib/fornecedoras/convites";
+import { contratoParaAceite, registrarAceite, segredoDoAceite } from "@/lib/fornecedoras/aceite";
+import { conferirAbertura, lerAceiteDoContrato, lerLidoEm } from "@/lib/fornecedoras/contrato";
+import { enderecoDeQuemEnviou } from "@/lib/desafio/servidor";
+import { headers } from "next/headers";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { exigirFornecedoraLiberada } from "./liberada";
 import { autorDe } from "@/lib/historico/regras";
@@ -66,15 +64,49 @@ export async function tirar(dados: FormData): Promise<void> {
   refresh();
 }
 
-/** Aceite do acordo: passo 2 da inscrição, ou passo 2 do primeiro acesso das que já eram parceiras. */
-export async function aceitar(dados: FormData): Promise<void> {
+export type EstadoAceite = { erro?: string; valores?: Record<string, string> } | undefined;
+
+/**
+ * Aceite do contrato: passo 2 da inscrição, passo 2 do primeiro acesso das que
+ * já eram parceiras, ou novo aceite quando o contrato muda. Só vale com o
+ * contrato lido até o fim, aberto há menos de 24 horas e sem mudança no texto.
+ */
+export async function aceitar(_estado: EstadoAceite, dados: FormData): Promise<EstadoAceite> {
   const usuario = await exigirAcesso("area-fornecedora", "/fornecedora");
-  if (dados.get("de_acordo") !== "sim") redirect("/fornecedora?faltaAceite=1");
+  const valores = Object.fromEntries([...dados.entries()].filter((par): par is [string, string] => typeof par[1] === "string"));
   const situacao = await situacaoNaArea(usuario.id);
-  if (situacao.tipo === "candidata") await aceitarAcordo(situacao.candidatura.id);
-  if (situacao.tipo === "fornecedora" && etapaDaFornecedora(situacao.fornecedora) === "acordo") {
-    await aceitarTermos(situacao.fornecedora.id);
+  const quem =
+    situacao.tipo === "candidata" && situacao.candidatura.etapa === "aprovada"
+      ? { tipo: "candidata" as const, candidaturaId: situacao.candidatura.id }
+      : situacao.tipo === "fornecedora" && etapaDaFornecedora(situacao.fornecedora) === "acordo"
+        ? { tipo: "fornecedora" as const, fornecedoraId: situacao.fornecedora.id }
+        : null;
+  if (!quem) redirect("/fornecedora");
+
+  const lido = lerAceiteDoContrato(valores);
+  if (!lido.ok) return { erro: lido.erro, valores };
+  const contrato = await contratoParaAceite();
+  const abertura = conferirAbertura(segredoDoAceite(), usuario.id, contrato.hash, valores.abertura ?? "");
+  if (!abertura.ok) {
+    // Mostra o contrato de agora, com uma abertura nova.
+    refresh();
+    return {
+      erro:
+        abertura.motivo === "mudou"
+          ? "O contrato foi atualizado enquanto você lia. Leia a versão nova até o fim e aceite de novo."
+          : "Esta página ficou aberta por muito tempo. Leia o contrato de novo até o fim e aceite.",
+      valores: { ...valores, lido: "" },
+    };
   }
+  const cabecalhos = await headers();
+  const ip = enderecoDeQuemEnviou(cabecalhos);
+  const r = await registrarAceite(usuario.id, quem, lido.dados, contrato, {
+    abertoEm: abertura.abertoEm,
+    lidoAteOFimEm: lerLidoEm(valores.lido_em, abertura.abertoEm),
+    ip: ip === "desconhecido" ? null : ip,
+    navegador: cabecalhos.get("user-agent"),
+  });
+  if (!r.ok) return { erro: r.erro, valores };
   redirect("/fornecedora");
 }
 

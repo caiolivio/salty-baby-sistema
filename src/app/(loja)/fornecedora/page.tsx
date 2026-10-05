@@ -16,7 +16,12 @@ import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarTelefone } from "@/lib/pedidos/regras";
 import estilos from "../loja.module.css";
-import { aceitar, concluirBoasVindas } from "./acoes";
+import { concluirBoasVindas } from "./acoes";
+import { FormularioAceite } from "./formulario-aceite";
+import { TextoDaPagina } from "@/componentes/texto-da-pagina";
+import { formatarCpf } from "@/lib/clientes/dados";
+import { aberturaDoContrato, contratoParaAceite } from "@/lib/fornecedoras/aceite";
+import { textoDoCheckbox } from "@/lib/fornecedoras/contrato";
 import { ComoFuncionaAArea, TextoDoAcordo } from "./acordo-texto";
 import { EscolherPeriodo } from "./escolher-periodo";
 import { FormularioDados } from "./formulario-dados";
@@ -25,26 +30,41 @@ import { lerLoja } from "@/lib/loja/servidor";
 
 export const metadata: Metadata = { title: "Área da fornecedora", robots: { index: false } };
 
-async function AceiteDoAcordo({ falta, texto }: { falta: boolean; texto: string }) {
-  const loja = await lerLoja();
+type DadosParaAceite = {
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  documento: string | null;
+  pix: string | null;
+  pixTipo: string | null;
+  recebimentoPreferido: string | null;
+};
+
+/** O contrato com os dados e o aceite (CLAUDE.md, "contrato de consignação digital"). */
+async function AceiteDoContrato({ usuarioId, dados }: { usuarioId: string; dados: DadosParaAceite }) {
+  const [loja, contrato] = await Promise.all([lerLoja(), contratoParaAceite()]);
+  const abertura = aberturaDoContrato(usuarioId, contrato.hash);
   return (
-    <section className={estilos.secaoArea} aria-labelledby="regras">
-      <h2 id="regras">Regras da consignação</h2>
-      <TextoDoAcordo />
-      {falta && (
-        <p className={estilos.erro} role="alert">
-          Para continuar, marque que leu e está de acordo.
-        </p>
-      )}
-      <form action={aceitar} className={estilos.formConta}>
-        <label className={estilos.marcarLinha}>
-          <input type="checkbox" name="de_acordo" value="sim" required />
-          <span>Li e estou de acordo com as regras da consignação da {loja.nome}.</span>
-        </label>
-        <button type="submit" className={estilos.botaoWhats}>
-          {texto}
-        </button>
-      </form>
+    <section className={estilos.secaoArea} aria-labelledby="contrato">
+      <h2 id="contrato">{contrato.titulo}</h2>
+      <p className={estilos.dica}>
+        Versão {contrato.versao}. Leia com atenção: ao aceitar, guardamos a versão, a data e a hora do seu aceite.
+      </p>
+      <FormularioAceite
+        contrato={<TextoDaPagina blocos={contrato.blocos} nivel={3} />}
+        abertura={abertura}
+        textoCheckbox={textoDoCheckbox(loja.nome)}
+        nomeLoja={loja.nome}
+        iniciais={{
+          nome: dados.nome,
+          documento: dados.documento ? formatarCpf(dados.documento) : "",
+          telefone: dados.telefone ? formatarTelefone(dados.telefone) : "",
+          email: dados.email ?? "",
+          pix: dados.pix ?? "",
+          pixTipo: dados.pixTipo ?? "",
+          recebimento: dados.recebimentoPreferido ?? "",
+        }}
+      />
     </section>
   );
 }
@@ -107,7 +127,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
-        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e concluir o passo 2" />
+        <AceiteDoContrato usuarioId={usuario.id} dados={candidatura} />
       </>
     );
   }
@@ -149,13 +169,13 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
     // Já usava a área: o acordo mudou e a loja pediu um novo aceite.
     return (
       <>
-        <h1 className={estilos.tituloPagina}>O acordo de consignação mudou</h1>
+        <h1 className={estilos.tituloPagina}>O contrato de consignação mudou</h1>
         <section className={estilos.explicacao}>
           <p>
             A {loja.nomeCurto} atualizou as regras da consignação. Leia o texto novo e aceite para continuar usando a sua área.
           </p>
         </section>
-        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e continuar" />
+        <AceiteDoContrato usuarioId={usuario.id} dados={fornecedora} />
       </>
     );
   }
@@ -163,12 +183,12 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
   if (etapa === "acordo") {
     return (
       <>
-        <h1 className={estilos.tituloPagina}>Leia e aceite o acordo</h1>
+        <h1 className={estilos.tituloPagina}>Leia e aceite o contrato</h1>
         <Passos nomes={PASSOS_PRIMEIRO_ACESSO} situacoes={["feito", "atual", "pendente"]} />
         <section className={estilos.explicacao}>
           <p>Seus dados foram salvos. Falta só ler e aceitar as regras da consignação para liberar a sua área.</p>
         </section>
-        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e continuar" />
+        <AceiteDoContrato usuarioId={usuario.id} dados={fornecedora} />
       </>
     );
   }

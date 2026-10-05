@@ -17,6 +17,8 @@ describe("dados da fornecedora", () => {
         cidade: null,
         estado: null,
         pix: null,
+        pixTipo: null,
+        recebimentoPreferido: null,
       },
     });
     expect(lerDadosDaFornecedora({ ...base, email: "" })).toEqual({
