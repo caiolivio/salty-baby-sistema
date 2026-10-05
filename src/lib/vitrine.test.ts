@@ -43,6 +43,11 @@ describe("vitrine", () => {
     expect(linkDaVitrine(f, { pagina: 3 })).toBe("/?tamanho=RN&pagina=3");
     expect(linkDaVitrine(f, { publico: "menino" })).toBe("/?tamanho=RN&publico=menino");
     expect(linkDaVitrine(f, { tamanho: undefined })).toBe("/");
+    // Só promoções: ?promocao=1, mantido nos links.
+    const p = lerFiltros({ promocao: "1", pagina: "2" });
+    expect(p.promocao).toBe(true);
+    expect(linkDaVitrine(p, { pagina: 2 })).toBe("/?promocao=1&pagina=2");
+    expect(lerFiltros({ promocao: "x" }).promocao).toBeUndefined();
   });
 
   it("menina e menino incluem as peças unissex", () => {

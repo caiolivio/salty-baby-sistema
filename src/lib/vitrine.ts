@@ -16,6 +16,8 @@ export type FiltrosVitrine = {
   publico?: Publico;
   categoria?: string;
   busca?: string;
+  /** Só peças em promoção. */
+  promocao?: boolean;
   pagina: number;
 };
 
@@ -28,7 +30,8 @@ export function lerFiltros(parametros: Parametros): FiltrosVitrine {
   const categoria = primeiro(parametros.categoria)?.slice(0, 40);
   const busca = primeiro(parametros.q)?.slice(0, 60);
   const pagina = Math.min(1000, Math.max(1, Math.floor(Number(primeiro(parametros.pagina))) || 1));
-  return { tamanho, publico, categoria, busca, pagina };
+  const promocao = primeiro(parametros.promocao) === "1" || undefined;
+  return { tamanho, publico, categoria, busca, promocao, pagina };
 }
 
 /** Endereço da vitrine com os filtros atuais e uma mudança. Mudar um filtro volta para a página 1. */
@@ -39,6 +42,7 @@ export function linkDaVitrine(atuais: FiltrosVitrine, mudanca: Partial<FiltrosVi
   if (f.publico) busca.set("publico", f.publico);
   if (f.categoria) busca.set("categoria", f.categoria);
   if (f.busca) busca.set("q", f.busca);
+  if (f.promocao) busca.set("promocao", "1");
   if (f.pagina > 1) busca.set("pagina", String(f.pagina));
   const texto = busca.toString();
   return texto ? `/?${texto}` : "/";

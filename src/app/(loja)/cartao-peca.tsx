@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { CONSERVACOES } from "@/lib/pecas/dados";
+import type { PrecoDaPromocao } from "@/lib/promocoes/regras";
 import { enderecoDaPeca } from "@/lib/vitrine";
 import { Estrela } from "./estrela";
 import estilos from "./loja.module.css";
@@ -37,8 +38,11 @@ export function CartaoPeca({
   favorita,
   estrela,
   voltar,
+  promocao,
 }: {
   peca: PecaDoCartao;
+  /** Preço da promoção que vale hoje, quando a peça está numa. */
+  promocao?: PrecoDaPromocao | null;
   favorita: boolean;
   /** A estrela aparece para visitantes e clientes (não para quem está no painel). */
   estrela: boolean;
@@ -58,7 +62,14 @@ export function CartaoPeca({
         )}
         <span className={estilos.nome}>{peca.nome}</span>
         <span className={estilos.detalhe}>{[peca.tamanho && `Tam. ${peca.tamanho}`, peca.marca].filter(Boolean).join(" · ")}</span>
-        <strong className={estilos.preco}>{formatarReais(peca.precoCentavos)}</strong>
+        {promocao ? (
+          <span className={estilos.precoPromocao}>
+            <s aria-label={`Antes ${formatarReais(peca.precoCentavos)}`}>{formatarReais(peca.precoCentavos)}</s>
+            <strong className={estilos.preco}>{formatarReais(promocao.precoCentavos)}</strong>
+          </span>
+        ) : (
+          <strong className={estilos.preco}>{formatarReais(peca.precoCentavos)}</strong>
+        )}
       </Link>
       {estrela && <Estrela pecaId={peca.id} favorita={favorita} voltar={voltar} nome={peca.nome} />}
     </div>

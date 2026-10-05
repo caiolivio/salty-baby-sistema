@@ -32,11 +32,14 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       status: true,
       reservadoAte: true,
       totalCentavos: true,
+      cupomCodigo: true,
+      descontoCupomCentavos: true,
       creditoFornecedora: { select: { codigo: true } },
       itens: {
         orderBy: { ordem: "asc" },
         select: {
           precoCentavos: true,
+          descontoCentavos: true,
           peca: { select: { codigo: true, nome: true, tamanho: true } },
         },
       },
@@ -54,9 +57,15 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
         nomeCliente: pedido.nomeCliente,
         total,
         saldoDe: pedido.creditoFornecedora?.codigo,
+        cupom:
+          pedido.cupomCodigo && pedido.descontoCupomCentavos > 0
+            ? { codigo: pedido.cupomCodigo, desconto: formatarReais(pedido.descontoCupomCentavos) }
+            : null,
         itens: pedido.itens.map((i) => ({
           ...i.peca,
-          preco: formatarReais(i.precoCentavos),
+          preco: i.descontoCentavos
+            ? `${formatarReais(i.precoCentavos - i.descontoCentavos)} (de ${formatarReais(i.precoCentavos)})`
+            : formatarReais(i.precoCentavos),
         })),
       },
       origemDaRequisicao(await headers()),
@@ -93,10 +102,22 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
                 {[i.peca.codigo, i.peca.tamanho && `Tam. ${i.peca.tamanho}`].filter(Boolean).join(" · ")}
               </span>
             </div>
-            <strong className={estilos.preco}>{formatarReais(i.precoCentavos)}</strong>
+            {i.descontoCentavos ? (
+              <span className={estilos.precoPromocao}>
+                <s aria-label={`Antes ${formatarReais(i.precoCentavos)}`}>{formatarReais(i.precoCentavos)}</s>
+                <strong className={estilos.preco}>{formatarReais(i.precoCentavos - i.descontoCentavos)}</strong>
+              </span>
+            ) : (
+              <strong className={estilos.preco}>{formatarReais(i.precoCentavos)}</strong>
+            )}
           </li>
         ))}
       </ul>
+      {pedido.cupomCodigo && pedido.descontoCupomCentavos > 0 && (
+        <p>
+          Cupom {pedido.cupomCodigo}: −{formatarReais(pedido.descontoCupomCentavos)}
+        </p>
+      )}
       <p className={estilos.total}>
         Total: <strong>{total}</strong>
       </p>

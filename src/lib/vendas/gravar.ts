@@ -6,6 +6,8 @@ import { formatarReais } from "../dinheiro";
 import { mudancaDeStatus, type Autor, type Mudanca } from "../historico/regras";
 import { formaComCredito, type PedidoDeCredito } from "../fornecedoras/credito";
 import { gastarSaldo } from "../fornecedoras/saldo-para-compras";
+import { calcularTaxa } from "../financeiro/regras";
+import { taxasAtuais } from "../financeiro/servidor";
 import { NOMES_QUEM_PAGA } from "./descontos";
 import {
   calcularItens,
@@ -82,7 +84,10 @@ async function venderPecas(
     });
     if (r.count === 0) throw new Recusa(`A peça ${peca.codigo} não está mais disponível.`);
     const mudancas: Mudanca[] = [];
-    const status = mudancaDeStatus({ status: statusAceito, naoListada: peca.naoListada }, { status: novoStatus, naoListada: peca.naoListada });
+    const status = mudancaDeStatus(
+      { status: statusAceito, naoListada: peca.naoListada },
+      { status: novoStatus, naoListada: peca.naoListada },
+    );
     if (status) mudancas.push(status);
     if (sobra !== peca.quantidade) {
       mudancas.push({ campo: "Quantidade", antes: String(peca.quantidade), depois: String(sobra), restrito: false });
@@ -148,7 +153,10 @@ export async function confirmarPagamento(
           ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`)
           : erro;
       });
-      const total = pedido.totalCentavos - descontoCentavos;
+      // O total do pedido já vem com a promoção; a venda parte do preço cheio
+      // das peças, e todo desconto (promoção incluída) está no plano.
+      const subtotal = pedido.itens.reduce((s, i) => s + i.precoCentavos, 0);
+      const total = subtotal - descontoCentavos;
       const forma = formaDaVenda(dados.forma, credito, total);
       const venda = await tx.venda.create({
         data: {
@@ -160,7 +168,8 @@ export async function confirmarPagamento(
           clienteId: pedido.clienteId,
           formaPagamento: forma,
           ...camposDoCredito(credito),
-          subtotalCentavos: pedido.totalCentavos,
+          taxaCentavos: calcularTaxa({ forma, totalCentavos: total, creditoCentavos: credito?.valorCentavos }, await taxasAtuais(tx)),
+          subtotalCentavos: subtotal,
           descontoCentavos,
           totalCentavos: total,
           motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,
@@ -215,6 +224,7 @@ export async function registrarVendaDireta(
           clienteId,
           formaPagamento: forma,
           ...camposDoCredito(credito),
+          taxaCentavos: calcularTaxa({ forma, totalCentavos: total, creditoCentavos: credito?.valorCentavos }, await taxasAtuais(tx)),
           subtotalCentavos: subtotal,
           descontoCentavos,
           totalCentavos: total,
@@ -268,16 +278,22 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
       // A parte paga com o saldo não muda: o novo total precisa cobrir esse valor.
       // (Vendas antigas do Notion podem estar como "crédito" sem saldo gravado.)
       const novoTotal = venda.subtotalCentavos - calculo.descontoCentavos;
-      const credito = venda.creditoFornecedoraId ? { fornecedoraId: venda.creditoFornecedoraId, valorCentavos: venda.creditoCentavos } : null;
+      const credito = venda.creditoFornecedoraId
+        ? { fornecedoraId: venda.creditoFornecedoraId, valorCentavos: venda.creditoCentavos }
+        : null;
       const forma = credito ? formaDaVenda(dados.forma, credito, novoTotal) : dados.forma;
       if (forma === "credito_fornecedora" && !credito && venda.formaPagamento !== "credito_fornecedora") {
-        throw new Recusa("Para pagar com o saldo de uma fornecedora, registre a venda com o saldo. Aqui, escolha outra forma de pagamento.");
+        throw new Recusa(
+          "Para pagar com o saldo de uma fornecedora, registre a venda com o saldo. Aqui, escolha outra forma de pagamento.",
+        );
       }
 
       const nomeForma = (f: string | null) => FORMAS_PAGAMENTO.find((x) => x.valor === f)?.nome ?? null;
       const dataAntiga = venda.data.toISOString().slice(0, 10);
       const descricao = (centavos: number, porConta: string | null) =>
-        centavos > 0 ? `${formatarReais(centavos)} (${NOMES_QUEM_PAGA[(porConta ?? "dividido") as keyof typeof NOMES_QUEM_PAGA]})` : "sem desconto";
+        centavos > 0
+          ? `${formatarReais(centavos)} (${NOMES_QUEM_PAGA[(porConta ?? "dividido") as keyof typeof NOMES_QUEM_PAGA]})`
+          : "sem desconto";
 
       for (const [indice, antigo] of venda.itens.entries()) {
         const novo = calculo.itens[indice];
@@ -314,10 +330,20 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
           });
         }
         if (venda.formaPagamento !== forma) {
-          mudancas.push({ campo: "Forma de pagamento da venda", antes: nomeForma(venda.formaPagamento), depois: nomeForma(forma), restrito: false });
+          mudancas.push({
+            campo: "Forma de pagamento da venda",
+            antes: nomeForma(venda.formaPagamento),
+            depois: nomeForma(forma),
+            restrito: false,
+          });
         }
         if (dataAntiga !== dados.data) {
-          mudancas.push({ campo: "Data da venda", antes: formatarData(venda.data), depois: formatarData(data(dados.data)), restrito: false });
+          mudancas.push({
+            campo: "Data da venda",
+            antes: formatarData(venda.data),
+            depois: formatarData(data(dados.data)),
+            restrito: false,
+          });
         }
         const rotulo = rotuloDaPeca(antigo.peca);
         await registrar(tx, { tabela: "peca", id: antigo.pecaId, rotulo }, mudancas, autor, "Venda corrigida");
@@ -330,6 +356,15 @@ export async function corrigirVenda(vendaId: string, dados: DadosCorrecao, autor
           formaPagamento: forma,
           descontoCentavos: calculo.descontoCentavos,
           totalCentavos: novoTotal,
+          // A taxa acompanha a correção, a não ser que tenha sido acertada à mão no Financeiro.
+          ...(venda.taxaAjustada
+            ? {}
+            : {
+                taxaCentavos: calcularTaxa(
+                  { forma, totalCentavos: novoTotal, creditoCentavos: venda.creditoCentavos },
+                  await taxasAtuais(tx),
+                ),
+              }),
           motivoDesconto: calculo.descontoCentavos > 0 ? dados.desconto.motivo : null,
         },
       });

@@ -22,6 +22,10 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
     ...(acesso.administradora ? [
           { chave: "acertos", nome: "Contas a pagar" },
           { chave: "relatorios", nome: "Relatórios" },
+          { chave: "financeiro", nome: "Financeiro" },
+          { chave: "indicadores", nome: "Indicadores" },
+          { chave: "promocoes", nome: "Promoções" },
+          { chave: "cupons", nome: "Cupons" },
         ] : []),
     ...(temExtra(acesso, "backup") ? [{ chave: "backup", nome: "Backup" }] : []),
     ...(acesso.administradora

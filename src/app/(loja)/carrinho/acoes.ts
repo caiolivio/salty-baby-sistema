@@ -11,6 +11,7 @@ import { fecharPedido, liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, incluirNoCarrinho, lerCarrinho, lerNomeCliente, lerTelefoneCliente, tirarDoCarrinho } from "@/lib/pedidos/regras";
 import { autorDoSite } from "@/lib/historico/regras";
 import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
+import { COOKIE_CUPOM, lerCodigoDoCupom } from "@/lib/cupons/regras";
 
 // Ações públicas da loja (não pedem login). O carrinho fica num cookie da
 // própria cliente; o banco só é alterado ao fechar o pedido.
@@ -40,6 +41,29 @@ export async function tirar(dados: FormData) {
   await gravarCarrinho(tirarDoCarrinho(await carrinhoAtual(), String(dados.get("id") ?? "")));
 }
 
+/** Guarda o código do cupom digitado; o carrinho mostra se ele vale e quanto desconta. */
+export async function usarCupom(dados: FormData) {
+  const codigo = lerCodigoDoCupom(dados.get("cupom"));
+  const biscoitos = await cookies();
+  if (codigo) {
+    biscoitos.set(COOKIE_CUPOM, codigo, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    redirect("/carrinho");
+  }
+  biscoitos.delete(COOKIE_CUPOM);
+  redirect("/carrinho?cupom=invalido");
+}
+
+export async function tirarCupom() {
+  (await cookies()).delete(COOKIE_CUPOM);
+  redirect("/carrinho");
+}
+
 export type EstadoFechar = { erro?: string; nome?: string; telefone?: string } | undefined;
 
 export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<EstadoFechar> {
@@ -63,12 +87,17 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
       ? await prisma.fornecedora.findFirst({ where: { usuarioId: usuario.id }, select: { id: true } })
       : null;
   const comSaldo = fornecedora && (await saldoParaCompras(fornecedora.id)).disponivelCentavos > 0 ? fornecedora.id : null;
+  const cupom = lerCodigoDoCupom((await cookies()).get(COOKIE_CUPOM)?.value);
   const resultado = await fecharPedido(
     ids,
     { nome, telefone, clienteId: ficha?.id, creditoFornecedoraId: comSaldo },
     grupo?.id ?? null,
+    cupom,
     autorDoSite(nome, usuario?.id ?? null),
   );
+  if (!resultado.ok && resultado.erroCupom) {
+    return { erro: `O cupom não foi aplicado: ${resultado.erroCupom} Tire o cupom para fechar o pedido sem ele.`, ...digitado };
+  }
   if (!resultado.ok) {
     return {
       erro: "Algumas peças acabaram de sair e foram marcadas abaixo. Tire-as do carrinho e feche o pedido de novo.",
@@ -77,5 +106,6 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   }
   await gravarCarrinho([]);
   (await cookies()).delete(COOKIE_GRUPO);
+  (await cookies()).delete(COOKIE_CUPOM);
   redirect(`/pedido/${resultado.id}?novo=1`);
 }

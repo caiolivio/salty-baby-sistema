@@ -1,0 +1,47 @@
+.incluir {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 640px;
+  margin-bottom: 16px;
+}
+
+.incluir label {
+  flex: 1 1 280px;
+}
+
+.pecas {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  max-width: 720px;
+}
+
+.pecas li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--borda);
+}
+
+.pecas img,
+.semFoto {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--raio-p);
+  object-fit: cover;
+  background: var(--fundo-suave);
+}
+
+.dados {
+  flex: 1;
+  min-width: 0;
+}
+
+.dados small {
+  display: block;
+  color: var(--texto-suave);
+}

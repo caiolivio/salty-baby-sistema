@@ -119,3 +119,19 @@ describe("dados da cliente", () => {
     expect(lerCodigoPeca("F06 00001")).toBeUndefined();
   });
 });
+
+describe("mensagem com cupom", () => {
+  it("mostra o cupom antes do total", () => {
+    const texto = mensagemDoPedido(
+      {
+        numero: 4,
+        nomeCliente: "Bia",
+        total: "R$ 22,50",
+        cupom: { codigo: "BEMVINDA10", desconto: "R$ 2,50" },
+        itens: [{ codigo: "F45-00005", nome: "Body", tamanho: null, preco: "R$ 25,00" }],
+      },
+      "https://teste.saltybaby.com.br",
+    );
+    expect(texto).toContain("\n\nCupom BEMVINDA10: −R$ 2,50\nTotal: R$ 22,50\n");
+  });
+});

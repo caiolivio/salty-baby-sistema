@@ -16,8 +16,11 @@ export function FormularioVenda({
   pecas,
   mostrarValores,
   saldos,
+  iniciais,
 }: {
   hoje: string;
+  /** Campos já preenchidos (o desconto das promoções). */
+  iniciais?: Record<string, string>;
   clientes: Opcao[];
   grupos: { id: string; nome: string }[];
   pecas: PecaDoDesconto[];
@@ -26,7 +29,7 @@ export function FormularioVenda({
 }) {
   const vazia = pecas.length === 0;
   const [estado, acao, enviando] = useActionState(registrarVenda, undefined);
-  const v = estado?.valores ?? {};
+  const v = estado?.valores ?? iniciais ?? {};
   const [canal, setCanal] = useState(v.canal ?? "");
   const [cliente, setCliente] = useState(v.clienteId ?? "");
   return (
