@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -99,7 +100,13 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
 
   return (
     <>
-      <h1 className={estilos.titulo}>WhatsApp Marketing</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>WhatsApp Marketing</h1>
+        <Link href="/painel/marketing/resumo" className={proprios.botao}>
+          <Sparkles className="icone" aria-hidden />
+          Lançamentos da semana
+        </Link>
+      </div>
       <p>
         Escolha as peças, escreva um título e um texto e mande tudo junto para o grupo. Cada peça vai com o link dela, marcado
         com o grupo, para a venda contar para ele.

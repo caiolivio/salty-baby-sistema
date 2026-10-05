@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { baixarArquivo, fotoEmJpeg, usePodeCompartilhar } from "@/componentes/compartilhar";
+import { baixarArquivo, fotoEmJpeg, linkDoWhatsApp } from "@/componentes/compartilhar";
 import estilos from "../formulario.module.css";
 
 export type PostDoGrupo = { id: string; nome: string; sugerido: boolean; texto: string };
@@ -9,7 +9,7 @@ export type PostDoGrupo = { id: string; nome: string; sugerido: boolean; texto: 
 /**
  * Post pronto para os grupos de WhatsApp: escolhe o grupo (o sugerido vem
  * marcado), mostra o texto com o link marcado e deixa copiar, baixar a foto
- * ou, no celular, compartilhar foto e texto direto no WhatsApp.
+ * ou abrir o WhatsApp com o texto pronto.
  */
 export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: { url: string; nome: string } | null }) {
   const [grupoId, setGrupoId] = useState((posts.find((p) => p.sugerido) ?? posts[0])?.id ?? "");
@@ -37,8 +37,6 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
       ativo = false;
     };
   }, [fotoUrl, fotoNome]);
-  const podeCompartilhar = usePodeCompartilhar();
-  const vaiComFoto = !!arquivo && typeof navigator !== "undefined" && navigator.canShare?.({ files: [arquivo] }) === true;
 
   async function copiar() {
     try {
@@ -46,19 +44,6 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
       setAviso("Texto copiado. Agora é só colar no grupo.");
     } catch {
       setAviso("Não deu para copiar sozinho. Selecione o texto e copie.");
-    }
-  }
-
-  async function compartilhar() {
-    // O texto também vai para a área de transferência, caso o WhatsApp não o mostre junto da foto.
-    await navigator.clipboard?.writeText(texto).catch(() => {});
-    try {
-      await navigator.share(arquivo && vaiComFoto ? { files: [arquivo], text: texto } : { text: texto });
-      setAviso("");
-    } catch (erro) {
-      if (!(erro instanceof DOMException && erro.name === "AbortError")) {
-        setAviso("Não deu para compartilhar. Copie o texto e baixe a foto.");
-      }
     }
   }
 
@@ -102,12 +87,10 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
         />
       </label>
       <div className={estilos.acoes}>
-        {podeCompartilhar && (
-          <button type="button" className={estilos.botao} onClick={compartilhar}>
-            Compartilhar {vaiComFoto ? "foto e texto" : "texto"}
-          </button>
-        )}
-        <button type="button" className={podeCompartilhar ? estilos.botaoSecundario : estilos.botao} onClick={copiar}>
+        <a className={estilos.botao} href={linkDoWhatsApp(texto)} target="_blank" rel="noopener noreferrer">
+          Compartilhar no WhatsApp
+        </a>
+        <button type="button" className={estilos.botaoSecundario} onClick={copiar}>
           Copiar texto
         </button>
         {foto && (
@@ -126,8 +109,8 @@ export function DivulgarNoGrupo({ posts, foto }: { posts: PostDoGrupo[]; foto: {
         </p>
       )}
       <p className={estilos.dica}>
-        No celular, &quot;Compartilhar&quot; abre o WhatsApp com a foto e o texto. No computador, copie o texto e baixe a foto.
-        O link do post leva a marca do grupo, e a compra por ele conta para o grupo.
+        &quot;Compartilhar no WhatsApp&quot; abre o WhatsApp com o texto pronto, para escolher o grupo. Baixe a foto para mandar
+        junto. O link do post leva a marca do grupo, e a compra por ele conta para o grupo.
       </p>
     </div>
   );

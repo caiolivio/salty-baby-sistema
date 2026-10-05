@@ -1215,6 +1215,26 @@
   line-height: 1.55;
 }
 
+.resumoContrato {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  line-height: 1.55;
+}
+
+.resumoContrato :is(h2, p, ul) {
+  margin: 0;
+}
+
+.resumoContrato h2 {
+  font-family: var(--fonte-titulo);
+  font-size: 1.15rem;
+}
+
 .listaPassos {
   padding-left: 22px;
   display: flex;

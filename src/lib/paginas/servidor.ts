@@ -7,6 +7,7 @@ import { formatarDataHora } from "../datas";
 import { lerLoja } from "../loja/servidor";
 import {
   blocosDoTexto,
+  FORA_DO_RODAPE,
   NO_AR_SEM_SALVAR,
   PAGINAS_EDITAVEIS,
   preencher,
@@ -52,6 +53,7 @@ export async function paginaParaMostrar(chave: ChavePagina): Promise<{ titulo: s
 export async function paginasNoAr(): Promise<{ nome: string; endereco: string }[]> {
   const salvas = await prisma.pagina.findMany({ select: { chave: true, publicada: true } });
   return PAGINAS_EDITAVEIS.filter((p) => {
+    if (FORA_DO_RODAPE.includes(p.chave)) return false;
     const salva = salvas.find((s) => s.chave === p.chave);
     return salva ? salva.publicada : NO_AR_SEM_SALVAR.includes(p.chave);
   }).map((p) => ({ nome: p.nome, endereco: p.endereco }));

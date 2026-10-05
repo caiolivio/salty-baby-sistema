@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { baixarArquivo, fotoEmJpeg, usePodeCompartilhar } from "@/componentes/compartilhar";
+import {
+  baixarArquivo,
+  compartilharNoCelular,
+  emLevas,
+  fotoEmJpeg,
+  linkDoWhatsApp,
+  usePodeCompartilhar,
+} from "@/componentes/compartilhar";
 import { aberturaDaDivulgacao, linkDaPeca, textoDaDivulgacao, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
 import estilos from "../formulario.module.css";
 import proprios from "./marketing.module.css";
@@ -33,14 +40,17 @@ export function MontarPost({
   sugeridoId,
   pecas,
   origem,
+  inicial,
 }: {
   grupos: { id: string; nome: string; codigo: string }[];
   sugeridoId?: string;
   pecas: PecaComFoto[];
   origem: string;
+  /** Título e texto já prontos (resumo semanal): não usa o que está guardado no navegador. */
+  inicial?: { titulo: string; texto: string };
 }) {
-  const [titulo, setTitulo] = useState("");
-  const [texto, setTexto] = useState("");
+  const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
+  const [texto, setTexto] = useState(inicial?.texto ?? "");
   // Enquanto a administradora não escolhe, vale o grupo sugerido para as peças da lista.
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const grupoId = escolhido ?? sugeridoId ?? "";
@@ -49,14 +59,18 @@ export function MontarPost({
   const podeCompartilhar = usePodeCompartilhar();
 
   useEffect(() => {
+    if (inicial) return;
     const guardado = lerGuardado();
     queueMicrotask(() => {
       setTitulo(guardado.titulo);
       setTexto(guardado.texto);
     });
+    // Só na primeira vez: o texto pronto não muda depois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function guardar(mudanca: { titulo?: string; texto?: string }) {
+    if (inicial) return;
     try {
       localStorage.setItem(GUARDADO, JSON.stringify({ titulo, texto, ...mudanca }));
     } catch {
@@ -93,7 +107,9 @@ export function MontarPost({
   const arquivos = pecas.map((p) => fotoDe(p.codigo)).filter((f): f is File => Boolean(f));
   const aceitaFotos = (lista: File[]) =>
     lista.length > 0 && typeof navigator !== "undefined" && navigator.canShare?.({ files: lista }) === true;
-  const vaiComFotos = aceitaFotos(arquivos);
+  // O Android aceita no máximo 10 fotos por vez: com mais, o envio é feito em levas.
+  const levas = emLevas(arquivos);
+  const vaiComFotos = levas.length === 1 && aceitaFotos(arquivos);
   const textoDaPeca = (p: PecaComFoto) => textoDoPost(p, linkDaPeca(origem, p.codigo, grupo?.codigo));
 
   async function copiar(conteudo: string, oQue = "Texto") {
@@ -105,18 +121,18 @@ export function MontarPost({
     }
   }
 
-  async function compartilhar(conteudo: string, fotos: File[]) {
-    // O texto também vai para a área de transferência, caso o WhatsApp mostre só as fotos.
-    await navigator.clipboard?.writeText(conteudo).catch(() => {});
+  // Sem nenhuma espera antes: o celular só abre o compartilhamento logo depois do toque.
+  function compartilhar(conteudo: string, fotos: File[]) {
     const comFotos = aceitaFotos(fotos);
-    try {
-      await navigator.share(comFotos ? { files: fotos, text: conteudo } : { text: conteudo });
-      setAviso(comFotos ? "Se o texto não aparecer junto da foto, ele já está copiado: é só colar." : "");
-    } catch (erro) {
-      if (!(erro instanceof DOMException && erro.name === "AbortError")) {
-        setAviso("Não deu para compartilhar. Copie o texto e baixe a foto.");
+    compartilharNoCelular(conteudo, fotos).then((resultado) => {
+      if (resultado === "ok") {
+        setAviso(comFotos && conteudo ? "Se o texto não aparecer junto da foto, ele já está copiado: é só colar." : "");
+      } else if (resultado === "erro") {
+        setAviso(
+          "O celular não abriu o compartilhamento. Toque em \"Compartilhar no WhatsApp\" para mandar o texto e anexe as fotos baixadas.",
+        );
       }
-    }
+    });
   }
 
   async function baixarFotos() {
@@ -176,19 +192,40 @@ export function MontarPost({
         <pre className={proprios.previa}>{post}</pre>
       </div>
       <div className={estilos.acoes}>
-        {podeCompartilhar && (
+        {pecas.length > 0 && (
+          <a className={estilos.botao} href={linkDoWhatsApp(post)} target="_blank" rel="noopener noreferrer">
+            Compartilhar no WhatsApp
+          </a>
+        )}
+        {podeCompartilhar && levas.length <= 1 && (
           <button
             type="button"
-            className={estilos.botao}
+            className={estilos.botaoSecundario}
             onClick={() => compartilhar(post, arquivos)}
             disabled={pecas.length === 0}
           >
-            Compartilhar tudo ({vaiComFotos ? `${arquivos.length} foto(s) e texto` : "texto"})
+            {vaiComFotos ? `Enviar com as ${arquivos.length} foto(s)` : "Enviar pelo celular"}
           </button>
         )}
+        {podeCompartilhar &&
+          levas.length > 1 &&
+          levas.map((leva, i) => {
+            const primeira = i * 10 + 1;
+            const ultima = primeira + leva.length - 1;
+            return (
+              <button
+                key={primeira}
+                type="button"
+                className={estilos.botaoSecundario}
+                onClick={() => compartilhar(i === 0 ? post : "", leva)}
+              >
+                {i === 0 ? `Enviar com as fotos ${primeira} a ${ultima}` : `Enviar as fotos ${primeira} a ${ultima}`}
+              </button>
+            );
+          })}
         <button
           type="button"
-          className={podeCompartilhar ? estilos.botaoSecundario : estilos.botao}
+          className={estilos.botaoSecundario}
           onClick={() => copiar(post)}
           disabled={pecas.length === 0}
         >
@@ -206,9 +243,9 @@ export function MontarPost({
         </p>
       )}
       <p className={estilos.dica}>
-        &quot;Compartilhar tudo&quot; manda as fotos juntas e o texto inteiro numa mensagem só. Para cada foto ir com o texto
-        dela embaixo, use &quot;Enviar peça por peça&quot;. Cada link leva a marca do grupo, e a compra por ele conta para o
-        grupo.
+        &quot;Compartilhar no WhatsApp&quot; abre o WhatsApp com o texto pronto, para escolher o grupo. &quot;Enviar com as
+        fotos&quot; (no celular) manda as fotos e o texto juntos; o Android aceita até 10 fotos por vez. Cada link leva a marca
+        do grupo, e a compra por ele conta para o grupo.
       </p>
       {pecas.length > 0 && (
         <div>
@@ -218,11 +255,9 @@ export function MontarPost({
               <li>
                 <pre className={proprios.previa}>{abertura}</pre>
                 <div className={estilos.acoes}>
-                  {podeCompartilhar && (
-                    <button type="button" className={estilos.botaoSecundario} onClick={() => compartilhar(abertura, [])}>
-                      Compartilhar título e texto
-                    </button>
-                  )}
+                  <a className={estilos.botao} href={linkDoWhatsApp(abertura)} target="_blank" rel="noopener noreferrer">
+                    Compartilhar no WhatsApp
+                  </a>
                   <button type="button" className={estilos.botaoSecundario} onClick={() => copiar(abertura, "Título e texto")}>
                     Copiar título e texto
                   </button>
@@ -244,20 +279,10 @@ export function MontarPost({
                     <pre className={proprios.previa}>{legenda}</pre>
                   </div>
                   <div className={estilos.acoes}>
-                    {podeCompartilhar && (
-                      <button
-                        type="button"
-                        className={estilos.botao}
-                        onClick={() => compartilhar(legenda, foto ? [foto] : [])}
-                      >
-                        Compartilhar {foto ? "foto e texto" : "texto"}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className={podeCompartilhar ? estilos.botaoSecundario : estilos.botao}
-                      onClick={() => copiar(legenda)}
-                    >
+                    <a className={estilos.botao} href={linkDoWhatsApp(legenda)} target="_blank" rel="noopener noreferrer">
+                      Compartilhar no WhatsApp
+                    </a>
+                    <button type="button" className={estilos.botaoSecundario} onClick={() => copiar(legenda)}>
                       Copiar texto
                     </button>
                     {foto && (

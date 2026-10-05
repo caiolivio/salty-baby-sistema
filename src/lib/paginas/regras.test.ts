@@ -82,6 +82,7 @@ describe("formulário", () => {
     });
     expect(lerFormularioPagina({ ...base, publicada: "sim" }, "sobre")).toMatchObject({ ok: true, dados: { publicada: true } });
     expect(lerFormularioPagina(base, "privacidade")).toMatchObject({ ok: true, dados: { publicada: true } });
+    expect(lerFormularioPagina(base, "resumo")).toMatchObject({ ok: true, dados: { publicada: true, exigirAceite: false } });
   });
 
   it("a versão do acordo aceito leva o número da versão salva", () => {

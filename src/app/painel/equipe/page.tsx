@@ -19,10 +19,16 @@ export default async function Equipe({ searchParams }: PageProps<"/painel/equipe
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Equipe</h1>
-        <Link href="/painel/equipe/novo" className={proprios.botao}>
-          <Plus className="icone" aria-hidden />
-          Novo suporte
-        </Link>
+        <div className={proprios.acoes}>
+          <Link href="/painel/equipe/novo" className={proprios.botao}>
+            <Plus className="icone" aria-hidden />
+            Novo suporte
+          </Link>
+          <Link href="/painel/equipe/nova-administradora" className={proprios.botaoSecundario}>
+            <Plus className="icone" aria-hidden />
+            Nova administradora
+          </Link>
+        </div>
       </div>
       {saiu && (
         <p className={proprios.aviso} role="status">
@@ -31,7 +37,8 @@ export default async function Equipe({ searchParams }: PageProps<"/painel/equipe
       )}
       <p>
         O suporte é alguém que ajuda a alimentar o sistema. Ele só usa as páginas que você escolher, e você pode mudar ou
-        tirar o acesso quando quiser. Tudo o que ele faz fica no Histórico.
+        tirar o acesso quando quiser. Tudo o que ele faz fica no Histórico. A administradora tem todos os poderes, os
+        mesmos que você.
       </p>
       <div className={estilos.tabelaCaixa}>
         <table className={estilos.tabela}>
@@ -47,7 +54,7 @@ export default async function Equipe({ searchParams }: PageProps<"/painel/equipe
             {equipe.map((p) => (
               <tr key={p.id}>
                 <td>
-                  {p.administradora ? p.nome : <Link href={`/painel/equipe/${p.id}`}>{p.nome}</Link>}
+                  <Link href={`/painel/equipe/${p.id}`}>{p.nome}</Link>
                   <br />
                   <span className={proprios.dica}>{p.email}</span>
                 </td>
