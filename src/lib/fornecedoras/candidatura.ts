@@ -105,7 +105,8 @@ export function lerProposta(
 }
 
 /** Os 4 passos mostrados no topo das páginas. */
-export const PASSOS = ["Inscrição", "Peças e acordo", "Parceria", "Concluído"] as const;
+// O contrato completo é lido e aceito no passo 3 (decisão do Caio, 06/10/2026); o passo 1 mostra o resumo.
+export const PASSOS = ["Inscrição", "Peças", "Contrato", "Concluído"] as const;
 export type SituacaoPasso = "feito" | "atual" | "pendente";
 
 /**
@@ -138,8 +139,8 @@ export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3 | 4; concluido: 
 
 export const NOMES_ETAPA: Record<string, string> = {
   enviada: "Aguardando curadoria",
-  aprovada: "Aprovada no passo 1 (fazendo o passo 2)",
-  acordo_aceito: "Passo 2 feito (falta efetivar)",
+  aprovada: "No passo 2: mandando peças (falta efetivar)",
+  acordo_aceito: "Contrato aceito (falta efetivar)",
   efetivada: "Parceira (fornecedora)",
   recusada: "Recusada",
 };
@@ -149,7 +150,7 @@ export function mensagemDeAprovacao(nome: string, link: string, novaConta: boole
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
-    "Suas peças foram aprovadas na curadoria! Agora falta o passo 2: mostrar mais peças, com os detalhes, e ler e aceitar as regras da consignação.",
+    "Suas peças foram aprovadas na curadoria! Agora é o passo 2: mostrar mais peças, com os detalhes de cada uma.",
     novaConta
       ? "Toque no link para criar sua senha e entrar na sua área de fornecedora (o link vale por 7 dias):"
       : "Toque no link para criar uma nova senha e entrar na sua área de fornecedora (o link vale por 7 dias):",

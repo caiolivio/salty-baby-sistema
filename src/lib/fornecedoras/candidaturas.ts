@@ -116,7 +116,8 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
     const c = await tx.candidatura.findUnique({ where: { id } });
     if (!c) return { ok: false as const, motivo: "nao-encontrada" as const };
     if (c.fornecedoraId || c.etapa === "efetivada") return { ok: false as const, motivo: "ja-efetivada" as const };
-    if (c.etapa !== "acordo_aceito" || !c.acordoAceitoEm) return { ok: false as const, motivo: "sem-acordo" as const };
+    // O contrato é aceito depois (passo 3), já como fornecedora. Quem aceitou antes, como candidata, já entra com o aceite.
+    if (c.etapa !== "aprovada" && c.etapa !== "acordo_aceito") return { ok: false as const, motivo: "sem-acordo" as const };
     const { id: fornecedoraId, codigo } = await criarFornecedoraNaTransacao(tx, {
       nome: c.nome,
       email: c.email,

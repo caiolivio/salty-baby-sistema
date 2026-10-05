@@ -128,12 +128,12 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
     if (candidatura.etapa === "acordo_aceito") {
       return (
         <>
-          <h1 className={estilos.tituloPagina}>Passo 2 concluído!</h1>
+          <h1 className={estilos.tituloPagina}>Suas peças foram aprovadas!</h1>
           <Passos nomes={PASSOS} situacoes={situacaoDosPassos(2, true)} />
           <section className={estilos.explicacao}>
             <p>
-              Você aceitou o acordo de consignação. Agora <strong>a {loja.nomeCurto} entra em contato pelo WhatsApp</strong> para combinar
-              a entrega das peças e finalizar a sua parceria (passo 3).
+              Você já aceitou o contrato de consignação. Agora <strong>a {loja.nomeCurto} entra em contato pelo WhatsApp</strong> para
+              combinar a entrega das peças e finalizar a sua parceria.
             </p>
             <p>Enquanto isso, você pode continuar mandando peças.</p>
           </section>
@@ -141,7 +141,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         </>
       );
     }
-    // Etapa "aprovada": passo 2.
+    // Etapa "aprovada": passo 2, só as peças. O contrato vem no passo 3, depois de a loja efetivar a parceria.
     return (
       <>
         <h1 className={estilos.tituloPagina}>Suas peças foram aprovadas!</h1>
@@ -149,11 +149,14 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <section className={estilos.explicacao}>
           <p>
             Agora é o <strong>passo 2</strong>: mostre mais peças que você quer deixar com a {loja.nomeCurto}, com os detalhes de cada
-            uma, e leia e aceite as regras da consignação no fim da página.
+            uma.
+          </p>
+          <p>
+            Depois, <strong>a {loja.nomeCurto} entra em contato pelo WhatsApp</strong> para combinar a entrega e finalizar a sua
+            parceria. Aí você lê e aceita o contrato completo (passo 3).
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
-        <AceiteDoContrato usuarioId={usuario.id} dados={candidatura} />
       </>
     );
   }
@@ -199,6 +202,23 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
         <section className={estilos.explicacao}>
           <p>
             A {loja.nomeCurto} atualizou as regras da consignação. Leia o texto novo e aceite para continuar usando a sua área.
+          </p>
+        </section>
+        <AceiteDoContrato usuarioId={usuario.id} dados={fornecedora} />
+      </>
+    );
+  }
+
+  if (etapa === "acordo" && veioDaInscricao) {
+    // Passo 3 da inscrição: a parceria foi efetivada e falta o contrato completo.
+    return (
+      <>
+        <h1 className={estilos.tituloPagina}>Passo 3: leia e aceite o contrato</h1>
+        <Passos nomes={PASSOS} situacoes={situacaoDosPassos(3)} />
+        <section className={estilos.explicacao}>
+          <p>
+            A {loja.nomeCurto} finalizou o seu cadastro. Falta só ler o contrato completo de consignação, confirmar os seus dados e
+            aceitar para virar parceira.
           </p>
         </section>
         <AceiteDoContrato usuarioId={usuario.id} dados={fornecedora} />
