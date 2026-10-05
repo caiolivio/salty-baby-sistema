@@ -15,6 +15,8 @@ import { enderecoDaPeca } from "@/lib/vitrine";
 import estilos from "../../painel.module.css";
 import proprio from "../../sacolinhas/sacolinhas.module.css";
 import { EnviarAvisoDeChegada } from "./enviar";
+import { mensagemDaFila, ordinal } from "@/lib/fila/regras";
+import { filasParaAvisar } from "@/lib/fila/servidor";
 
 export const metadata: Metadata = { title: "Avisos de chegada" };
 
@@ -23,11 +25,12 @@ export const metadata: Metadata = { title: "Avisos de chegada" };
 export default async function AvisosDeChegada() {
   const usuario = await exigirPagina("clientes", "ver", "/painel/clientes/avisos");
   const pode = podeAlterar(usuario.acesso, "clientes");
-  const [pendentes, loja, categorias, totalAlertas] = await Promise.all([
+  const [pendentes, loja, categorias, totalAlertas, filas] = await Promise.all([
     avisosPendentes(),
     lerLoja(),
     prisma.categoria.findMany({ select: { id: true, nome: true } }),
     prisma.alerta.count(),
+    filasParaAvisar(),
   ]);
   const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
   const nomeDa = (id: string | null) => categorias.find((c) => c.id === id)?.nome ?? null;
@@ -42,6 +45,45 @@ export default async function AvisosDeChegada() {
         Clientes que pediram &quot;me avise quando chegar&quot; e têm peça nova do jeito que pediram. Toque em &quot;Enviar no
         WhatsApp&quot;: a mensagem já vem pronta, e essas peças não entram de novo no próximo aviso.
       </p>
+      {filas.length > 0 && (
+        <>
+          <h2>Fila de espera: peças que voltaram</h2>
+          <p>
+            Estas peças estavam reservadas, a reserva não foi paga e elas voltaram para a vitrine. Avise quem estava na fila, na
+            ordem. Quem fechar o pedido primeiro leva.
+          </p>
+          {filas.map(({ peca, clientes }) => (
+            <section key={peca.id} className={proprio.aviso} aria-label={`Fila de ${peca.codigo}`}>
+              <h3>
+                <Link href={`/painel/pecas/${peca.id}`}>
+                  {peca.codigo} · {peca.nome}
+                </Link>
+              </h3>
+              {clientes.map((c, i) => (
+                <div key={c.entradaId}>
+                  <p>
+                    <strong>{ordinal(i + 1)}</strong> <Link href={`/painel/clientes/${c.id}`}>{c.nome}</Link>
+                    {c.telefone ? ` · ${formatarTelefone(c.telefone)}` : " · sem WhatsApp na ficha"}
+                  </p>
+                  {pode && (
+                    <EnviarAvisoDeChegada
+                      clienteId={c.id}
+                      entradaFila={c.entradaId}
+                      telefone={c.telefone}
+                      texto={mensagemDaFila({
+                        nomeCliente: c.nome,
+                        nomeCurto: loja.nomeCurto,
+                        peca: { ...peca, link: `${origem}${enderecoDaPeca(peca.codigo)}` },
+                      })}
+                    />
+                  )}
+                </div>
+              ))}
+            </section>
+          ))}
+          <h2>Me avise quando chegar</h2>
+        </>
+      )}
       <p className={estilos.contagem}>
         {totalAlertas === 1 ? "1 aviso pedido" : `${totalAlertas} avisos pedidos`} ·{" "}
         {pendentes.length === 1 ? "1 cliente para avisar hoje" : `${pendentes.length} clientes para avisar hoje`}

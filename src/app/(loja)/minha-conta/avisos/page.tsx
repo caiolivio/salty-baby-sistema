@@ -12,7 +12,10 @@ import { TAMANHOS } from "@/lib/tamanhos";
 import { PUBLICOS } from "@/lib/vitrine";
 import { CartaoPeca, SELECAO_CARTAO } from "../../cartao-peca";
 import estilos from "../../loja.module.css";
-import { apagarAviso, criarAviso } from "../acoes";
+import { apagarAviso, criarAviso, sairDaFilaDeEspera } from "../acoes";
+import { filasDaCliente } from "@/lib/fila/servidor";
+import { ordinal, posicaoNaFila, situacaoNaFila, TEXTO_DA_SITUACAO } from "@/lib/fila/regras";
+import { enderecoDaPeca } from "@/lib/vitrine";
 
 export const metadata: Metadata = { title: "Me avise quando chegar" };
 
@@ -25,7 +28,7 @@ export default async function Avisos({ searchParams }: PageProps<"/minha-conta/a
   const ficha = await fichaDaCliente(usuario);
   await liberarReservasVencidas();
   const busca = await searchParams;
-  const [alertas, categorias, marcas, combinam] = await Promise.all([
+  const [alertas, categorias, marcas, combinam, filas] = await Promise.all([
     alertasDaCliente(ficha.id),
     prisma.categoria.findMany({ where: { ativa: true }, orderBy: [{ ordem: "asc" }, { nome: "asc" }], select: { id: true, nome: true } }),
     prisma.peca.findMany({
@@ -36,6 +39,7 @@ export default async function Avisos({ searchParams }: PageProps<"/minha-conta/a
       select: { marca: true },
     }),
     pecasDosAlertas(ficha.id),
+    filasDaCliente(ficha.id),
   ]);
   const ids = combinam.map((p) => p.id);
   const cartoes = ids.length ? await prisma.peca.findMany({ where: { id: { in: ids } }, select: SELECAO_CARTAO }) : [];
@@ -143,6 +147,39 @@ export default async function Avisos({ searchParams }: PageProps<"/minha-conta/a
         )}
         {cheio && <p className={estilos.contagem}>Você pode ter até {MAXIMO_DE_ALERTAS} avisos. Apague um para criar outro.</p>}
       </section>
+
+      {filas.length > 0 && (
+        <section className={estilos.secao} aria-labelledby="fila-de-espera">
+          <h2 id="fila-de-espera">Fila de espera</h2>
+          <p className={estilos.contagem}>Peças reservadas por outra cliente que você está esperando. Se voltarem, a gente avisa.</p>
+          <ul className={estilos.listaAvisos}>
+            {filas.map(({ peca }) => {
+              const situacao = situacaoNaFila(peca);
+              const posicao = posicaoNaFila(peca.filaEspera, ficha.id);
+              return (
+                <li key={peca.id}>
+                  <span>
+                    {situacao === "saiu" ? peca.nome : <Link href={enderecoDaPeca(peca.codigo)}>{peca.nome}</Link>}
+                    {peca.tamanho && ` · tam. ${peca.tamanho}`}
+                    <br />
+                    <span className={estilos.filaSituacao}>
+                      {TEXTO_DA_SITUACAO[situacao]}
+                      {situacao === "aguardando" && posicao && ` · você é a ${ordinal(posicao)} da fila`}
+                    </span>
+                  </span>
+                  <form action={sairDaFilaDeEspera}>
+                    <input type="hidden" name="pecaId" value={peca.id} />
+                    <button type="submit" aria-label={`Sair da fila de ${peca.nome}`}>
+                      <Trash2 className="icone" aria-hidden />
+                      {situacao === "aguardando" ? "Sair da fila" : "Tirar da lista"}
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {alertas.length > 0 && (
         <section className={estilos.secao} aria-labelledby="ja-a-venda">

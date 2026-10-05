@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
 import { exigirPagina } from "@/lib/acesso";
 import { avisosPendentes } from "@/lib/alertas/servidor";
+import { filasParaAvisar } from "@/lib/fila/servidor";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -47,7 +48,7 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
       select: { id: true, nome: true, telefone: true, cidade: true },
     }),
   ]);
-  const avisos = (await avisosPendentes()).length;
+  const avisos = (await avisosPendentes()).length + (await filasParaAvisar()).reduce((n, f) => n + f.clientes.length, 0);
   const compras = await prisma.venda.groupBy({
     by: ["clienteId"],
     where: { clienteId: { in: clientes.map((c) => c.id) } },
