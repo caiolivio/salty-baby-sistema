@@ -494,50 +494,57 @@ enum StatusPedido {
 
 /// Pedido montado no carrinho do site e enviado pelo WhatsApp.
 model Pedido {
-  id                   String         @id @default(cuid())
+  id                    String         @id @default(cuid())
   /// Número curto que a cliente cita no WhatsApp (tabela sequencias, chave "pedido").
-  numero               Int            @unique
-  nomeCliente          String         @map("nome_cliente") @db.VarChar(120)
+  numero                Int            @unique
+  nomeCliente           String         @map("nome_cliente") @db.VarChar(120)
   /// WhatsApp que a cliente digitou ao fechar o pedido (a administradora pode corrigir).
-  telefoneCliente      String?        @map("telefone_cliente") @db.VarChar(40)
+  telefoneCliente       String?        @map("telefone_cliente") @db.VarChar(40)
   /// Cliente do cadastro ligada ao pedido pela administradora; passa para a venda.
-  clienteId            String?        @map("cliente_id")
-  observacao           String?        @db.Text
+  clienteId             String?        @map("cliente_id")
+  observacao            String?        @db.Text
   /// Grupo de WhatsApp de onde a cliente veio (link do post com ?g=...).
-  grupoId              String?        @map("grupo_id")
-  status               StatusPedido   @default(reservado)
+  grupoId               String?        @map("grupo_id")
+  status                StatusPedido   @default(reservado)
   /// Até quando as peças ficam reservadas.
-  reservadoAte         DateTime       @map("reservado_ate")
-  totalCentavos        Int            @map("total_centavos")
+  reservadoAte          DateTime       @map("reservado_ate")
+  totalCentavos         Int            @map("total_centavos")
   /// Venda criada ao confirmar o pagamento.
-  vendaId              String?        @unique @map("venda_id")
-  criadoEm             DateTime       @default(now()) @map("criado_em")
-  atualizadoEm         DateTime       @updatedAt @map("atualizado_em")
-  itens                ItemPedido[]
-  venda                Venda?         @relation(fields: [vendaId], references: [id])
-  cliente              Cliente?       @relation(fields: [clienteId], references: [id])
-  grupo                GrupoWhatsapp? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  vendaId               String?        @unique @map("venda_id")
+  criadoEm              DateTime       @default(now()) @map("criado_em")
+  atualizadoEm          DateTime       @updatedAt @map("atualizado_em")
+  itens                 ItemPedido[]
+  venda                 Venda?         @relation(fields: [vendaId], references: [id])
+  cliente               Cliente?       @relation(fields: [clienteId], references: [id])
+  grupo                 GrupoWhatsapp? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
   /// A fornecedora logada pediu para pagar com o saldo dela.
-  creditoFornecedoraId String?        @map("credito_fornecedora_id")
-  creditoFornecedora   Fornecedora?   @relation("CreditoDoPedido", fields: [creditoFornecedoraId], references: [id], onDelete: SetNull)
+  creditoFornecedoraId  String?        @map("credito_fornecedora_id")
+  creditoFornecedora    Fornecedora?   @relation("CreditoDoPedido", fields: [creditoFornecedoraId], references: [id], onDelete: SetNull)
+  /// Cupom usado ao fechar o pedido e o desconto total dele (já fora do total).
+  cupomId               String?        @map("cupom_id")
+  cupomCodigo           String?        @map("cupom_codigo") @db.VarChar(30)
+  descontoCupomCentavos Int            @default(0) @map("desconto_cupom_centavos")
+  cupom                 Cupom?         @relation(fields: [cupomId], references: [id], onDelete: SetNull)
 
   @@index([status, reservadoAte])
   @@map("pedidos")
 }
 
 model ItemPedido {
-  pedidoId         String    @map("pedido_id")
-  pecaId           String    @map("peca_id")
+  pedidoId              String    @map("pedido_id")
+  pecaId                String    @map("peca_id")
   /// Ordem em que a cliente escolheu as peças.
-  ordem            Int       @default(0)
+  ordem                 Int       @default(0)
   /// Preço da peça no momento do pedido.
-  precoCentavos    Int       @map("preco_centavos")
+  precoCentavos         Int       @map("preco_centavos")
   /// Desconto da promoção em que a peça estava ao fechar o pedido.
-  descontoCentavos Int       @default(0) @map("desconto_centavos")
-  promocaoId       String?   @map("promocao_id")
-  pedido           Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  peca             Peca      @relation(fields: [pecaId], references: [id])
-  promocao         Promocao? @relation(fields: [promocaoId], references: [id], onDelete: SetNull)
+  descontoCentavos      Int       @default(0) @map("desconto_centavos")
+  /// Parte do cupom do pedido que coube a esta peça.
+  descontoCupomCentavos Int       @default(0) @map("desconto_cupom_centavos")
+  promocaoId            String?   @map("promocao_id")
+  pedido                Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  peca                  Peca      @relation(fields: [pecaId], references: [id])
+  promocao              Promocao? @relation(fields: [promocaoId], references: [id], onDelete: SetNull)
 
   @@id([pedidoId, pecaId])
   @@index([pecaId])
@@ -842,4 +849,35 @@ model PromocaoPeca {
   @@id([promocaoId, pecaId])
   @@index([pecaId])
   @@map("promocoes_pecas")
+}
+
+/// Cupom de desconto que a cliente digita no carrinho do site.
+model Cupom {
+  id                   String       @id @default(cuid())
+  /// Sempre em maiúsculas (ex.: BEMVINDA10).
+  codigo               String       @unique @db.VarChar(30)
+  tipo                 TipoDesconto
+  /// Centavos (reais) ou pontos-base (percentual, 1000 = 10%).
+  valor                Int
+  inicio               DateTime?    @db.Date
+  fim                  DateTime?    @db.Date
+  /// Quantos pedidos podem usar o cupom (vazio: sem limite).
+  limiteUsos           Int?         @map("limite_usos")
+  pedidoMinimoCentavos Int          @default(0) @map("pedido_minimo_centavos")
+  /// Desconto por conta da loja (repasse sobre o preço cheio); senão, dividido.
+  porContaDaLoja       Boolean      @default(false) @map("por_conta_da_loja")
+  ativo                Boolean      @default(true)
+  /// Restrições (vazias: vale para todos). Sem chave estrangeira: se a cliente
+  /// ou a fornecedora sumir, o cupom só deixa de servir.
+  clienteId            String?      @map("cliente_id")
+  marca                String?      @db.VarChar(80)
+  tamanho              String?      @db.VarChar(30)
+  genero               Genero?
+  fornecedoraId        String?      @map("fornecedora_id")
+  quem                 String       @db.VarChar(191)
+  criadoEm             DateTime     @default(now()) @map("criado_em")
+  atualizadoEm         DateTime     @updatedAt @map("atualizado_em")
+  pedidos              Pedido[]
+
+  @@map("cupons")
 }

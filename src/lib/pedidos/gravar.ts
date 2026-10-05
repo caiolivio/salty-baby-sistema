@@ -3,6 +3,7 @@ import { prisma } from "../banco";
 import { registrarStatus, SELECAO_STATUS } from "../historico/gravar";
 import { AUTOR_SISTEMA, type Autor } from "../historico/regras";
 import { lerLoja } from "../loja/servidor";
+import { cupomNoCarrinho } from "../cupons/servidor";
 import { promocoesDasPecas } from "../promocoes/servidor";
 import { fimDaReserva } from "./regras";
 
@@ -50,7 +51,10 @@ export async function encerrarPedido(id: string, como: "expirado" | "cancelado",
   });
 }
 
-export type ResultadoFechar = { ok: true; id: string } | { ok: false; indisponiveis: string[] };
+/** Erro usado para desfazer a transação quando o cupom deixou de valer. */
+class CupomRecusado extends Error {}
+
+export type ResultadoFechar = { ok: true; id: string } | { ok: false; indisponiveis: string[]; erroCupom?: string };
 
 /**
  * Fecha o pedido: reserva cada peça (só se ainda estiver à venda) e cria o
@@ -60,6 +64,7 @@ export async function fecharPedido(
   pecaIds: string[],
   cliente: { nome: string; telefone: string; clienteId?: string | null; creditoFornecedoraId?: string | null },
   grupoId: string | null,
+  cupomCodigo: string | null,
   autor: Autor,
   agora = new Date(),
 ): Promise<ResultadoFechar> {
@@ -68,7 +73,7 @@ export async function fecharPedido(
     const id = await prisma.$transaction(async (tx) => {
       const pecas = await tx.peca.findMany({
         where: { id: { in: pecaIds } },
-        select: { ...SELECAO_STATUS, precoCentavos: true },
+        select: { ...SELECAO_STATUS, precoCentavos: true, marca: true, tamanho: true, genero: true, fornecedoraId: true },
       });
       const faltando = pecaIds.filter((id) => !pecas.some((p) => p.id === id));
       const indisponiveis = [...faltando];
@@ -83,6 +88,18 @@ export async function fecharPedido(
       if (indisponiveis.length > 0) throw new PecasIndisponiveis(indisponiveis);
       // O desconto da promoção que vale agora fica guardado em cada item do pedido.
       const promocoes = await promocoesDasPecas(pecas, tx);
+      const preco = (p: (typeof pecas)[number]) => p.precoCentavos - (promocoes.get(p.id)?.descontoCentavos ?? 0);
+      // O cupom é conferido de novo aqui (validade, usos, cliente), sobre o preço com a promoção.
+      const cupom = cupomCodigo
+        ? await cupomNoCarrinho(
+            cupomCodigo,
+            pecas.map((p) => ({ ...p, precoCentavos: preco(p) })),
+            cliente.clienteId ?? null,
+            tx,
+          )
+        : null;
+      if (cupom && !cupom.ok) throw new CupomRecusado(cupom.erro);
+      const doCupom = cupom?.ok ? cupom.cupom : null;
 
       await tx.sequencia.upsert({
         where: { chave: "pedido" },
@@ -104,7 +121,10 @@ export async function fecharPedido(
           creditoFornecedoraId: cliente.creditoFornecedoraId ?? null,
           grupoId,
           reservadoAte: fimDaReserva(agora, minutosReserva),
-          totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos - (promocoes.get(p.id)?.descontoCentavos ?? 0), 0),
+          totalCentavos: pecas.reduce((soma, p) => soma + preco(p), 0) - (doCupom?.descontoCentavos ?? 0),
+          cupomId: doCupom?.cupomId ?? null,
+          cupomCodigo: doCupom?.codigo ?? null,
+          descontoCupomCentavos: doCupom?.descontoCentavos ?? 0,
           itens: {
             create: pecaIds.map((pecaId, ordem) => ({
               pecaId,
@@ -112,6 +132,7 @@ export async function fecharPedido(
               precoCentavos: pecas.find((p) => p.id === pecaId)!.precoCentavos,
               descontoCentavos: promocoes.get(pecaId)?.descontoCentavos ?? 0,
               promocaoId: promocoes.get(pecaId)?.promocaoId ?? null,
+              descontoCupomCentavos: doCupom?.porPeca[pecaId] ?? 0,
             })),
           },
         },
@@ -122,6 +143,7 @@ export async function fecharPedido(
     return { ok: true, id };
   } catch (erro) {
     if (erro instanceof PecasIndisponiveis) return { ok: false, indisponiveis: erro.ids };
+    if (erro instanceof CupomRecusado) return { ok: false, indisponiveis: [], erroCupom: erro.message };
     throw erro;
   }
 }
@@ -144,10 +166,17 @@ async function editar(pedidoId: string, mudar: (tx: Transacao, pedido: PedidoAbe
         throw new Recusa(pedido.status === "pago" ? "Este pedido já foi pago." : "Este pedido foi cancelado.");
       }
       await mudar(tx, { ...pedido, status: pedido.status });
-      const itens = await tx.itemPedido.findMany({ where: { pedidoId }, select: { precoCentavos: true, descontoCentavos: true } });
+      const itens = await tx.itemPedido.findMany({
+        where: { pedidoId },
+        select: { precoCentavos: true, descontoCentavos: true, descontoCupomCentavos: true },
+      });
+      // O cupom continua só nas peças que já tinham a parte dele.
       await tx.pedido.update({
         where: { id: pedidoId },
-        data: { totalCentavos: itens.reduce((soma, i) => soma + i.precoCentavos - i.descontoCentavos, 0) },
+        data: {
+          totalCentavos: itens.reduce((soma, i) => soma + i.precoCentavos - i.descontoCentavos - i.descontoCupomCentavos, 0),
+          descontoCupomCentavos: itens.reduce((soma, i) => soma + i.descontoCupomCentavos, 0),
+        },
       });
     });
     return { ok: true };

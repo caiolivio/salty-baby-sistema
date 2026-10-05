@@ -10,16 +10,21 @@ import { enderecoDaFoto } from "@/lib/fotos";
 import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, formatarTelefone, lerCarrinho } from "@/lib/pedidos/regras";
+import { COOKIE_CUPOM, lerCodigoDoCupom } from "@/lib/cupons/regras";
+import { cupomNoCarrinho } from "@/lib/cupons/servidor";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { enderecoDaPeca } from "@/lib/vitrine";
 import estilos from "../loja.module.css";
-import { tirar } from "./acoes";
+import { tirar, tirarCupom, usarCupom } from "./acoes";
 import { FecharPedido } from "./fechar-pedido";
 
 export const metadata: Metadata = { title: "Carrinho" };
 
-export default async function Carrinho() {
-  const ids = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value);
+export default async function Carrinho({ searchParams }: PageProps<"/carrinho">) {
+  const biscoitos = await cookies();
+  const ids = lerCarrinho(biscoitos.get(COOKIE_CARRINHO)?.value);
+  const codigoCupom = lerCodigoDoCupom(biscoitos.get(COOKIE_CUPOM)?.value);
+  const cupomInvalido = (await searchParams).cupom === "invalido";
   await liberarReservasVencidas();
   const encontradas = await prisma.peca.findMany({
     where: { id: { in: ids } },
@@ -31,6 +36,10 @@ export default async function Carrinho() {
       status: true,
       quantidade: true,
       precoCentavos: true,
+      // Só para conferir o cupom no servidor; não aparecem na página.
+      marca: true,
+      genero: true,
+      fornecedoraId: true,
       fotos: { orderBy: { ordem: "asc" }, take: 1, select: { arquivo: true } },
     },
   });
@@ -47,6 +56,16 @@ export default async function Carrinho() {
   // Fornecedora logada: pode pagar com o saldo dela.
   const fornecedora = usuario ? await prisma.fornecedora.findFirst({ where: { usuarioId: usuario.id }, select: { id: true } }) : null;
   const saldo = fornecedora ? (await saldoParaCompras(fornecedora.id)).disponivelCentavos : 0;
+  const cupom =
+    codigoCupom && pecas.some(disponivel)
+      ? await cupomNoCarrinho(
+          codigoCupom,
+          pecas.filter(disponivel).map((p) => ({ ...p, precoCentavos: preco(p) })),
+          ficha?.id ?? null,
+        )
+      : null;
+  const descontoCupom = cupom?.ok ? cupom.cupom.descontoCentavos : 0;
+  const aPagar = total - descontoCupom;
 
   return (
     <>
@@ -110,17 +129,49 @@ export default async function Carrinho() {
             ))}
           </ul>
           <aside className={estilos.resumo}>
+            {codigoCupom ? (
+              <div className={estilos.cupom}>
+                <p>
+                  <span>
+                    Cupom <strong>{codigoCupom}</strong>
+                  </span>
+                  {cupom?.ok && <strong>−{formatarReais(descontoCupom)}</strong>}
+                </p>
+                {cupom && !cupom.ok && <p className={estilos.aviso}>{cupom.erro}</p>}
+                <form action={tirarCupom}>
+                  <button type="submit" className={estilos.linkBotao}>
+                    Tirar cupom
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <form action={usarCupom} className={estilos.cupomForm}>
+                <label>
+                  Cupom de desconto
+                  <span>
+                    <input name="cupom" maxLength={30} autoCapitalize="characters" autoComplete="off" placeholder="Código" required />
+                    <button type="submit">Aplicar</button>
+                  </span>
+                </label>
+                {cupomInvalido && <p className={estilos.aviso}>Confira o código: use só letras e números, sem espaços.</p>}
+              </form>
+            )}
             <p className={estilos.total}>
-              <span>Total</span> <strong>{formatarReais(total)}</strong>
+              <span>Total</span> <strong>{formatarReais(aPagar)}</strong>
             </p>
-            {economia > 0 && <p className={estilos.economia}>Você economiza {formatarReais(economia)} com a promoção.</p>}
+            {economia + descontoCupom > 0 && (
+              <p className={estilos.economia}>
+                Você economiza {formatarReais(economia + descontoCupom)}
+                {economia > 0 && descontoCupom > 0 ? " com a promoção e o cupom." : economia > 0 ? " com a promoção." : " com o cupom."}
+              </p>
+            )}
             {todasDisponiveis ? (
               <>
                 <FecharPedido
                   nome={ficha?.nome}
                   telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
                   saldoCentavos={saldo}
-                  totalCentavos={total}
+                  totalCentavos={aPagar}
                 />
                 {!usuario && (
                   <p className={estilos.dica}>

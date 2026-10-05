@@ -8,7 +8,7 @@ import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { minutosRestantes } from "@/lib/pedidos/regras";
-import { valoresDaPromocao } from "@/lib/promocoes/regras";
+import { restrito, valoresDoPedido } from "@/lib/cupons/regras";
 import { opcoesDeSaldo } from "@/lib/fornecedoras/saldo-para-compras";
 import proprios from "../../../formulario.module.css";
 import estilos from "../../../painel.module.css";
@@ -29,7 +29,10 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
   const pedido = await prisma.pedido.findUnique({
     where: { id },
     include: {
-      itens: { orderBy: { ordem: "asc" }, include: {
+      cupom: { select: { porContaDaLoja: true, marca: true, tamanho: true, genero: true, fornecedoraId: true } },
+      itens: {
+        orderBy: { ordem: "asc" },
+        include: {
           promocao: { select: { nome: true, porContaDaLoja: true } },
           peca: {
             select: {
@@ -73,7 +76,10 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
         {formatarDataHora(pedido.criadoEm)}
       </p>
       {pedido.status === "expirado" && (
-        <p>A reserva venceu e as peças voltaram para a vitrine. Se a cliente pagou, ainda dá para confirmar enquanto as peças estiverem à venda.</p>
+        <p>
+          A reserva venceu e as peças voltaram para a vitrine. Se a cliente pagou, ainda dá para confirmar enquanto as peças estiverem à
+          venda.
+        </p>
       )}
 
       <div className={estilos.tabelaCaixa}>
@@ -87,33 +93,38 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
           </thead>
           <tbody>
             {pedido.itens.map((i) => (
-                <tr key={i.pecaId}>
-                  <td className={estilos.curta}>
-                    <Link href={`/painel/pecas/${i.peca.id}`} className={estilos.codigo}>
-                      {i.peca.codigo}
-                    </Link>
-                  </td>
-                  <td>
-                    {i.peca.nome}
-                    {i.peca.tamanho && <span className={estilos.antigo}>Tam. {i.peca.tamanho}</span>}
-                  </td>
-                  <td className={estilos.numero} data-rotulo="Preço">
-                    {formatarReais(i.precoCentavos - i.descontoCentavos)}
-                    {i.descontoCentavos > 0 && <span className={estilos.antigo}>Promoção · antes {formatarReais(i.precoCentavos)}</span>}
-                  </td>
-                </tr>
+              <tr key={i.pecaId}>
+                <td className={estilos.curta}>
+                  <Link href={`/painel/pecas/${i.peca.id}`} className={estilos.codigo}>
+                    {i.peca.codigo}
+                  </Link>
+                </td>
+                <td>
+                  {i.peca.nome}
+                  {i.peca.tamanho && <span className={estilos.antigo}>Tam. {i.peca.tamanho}</span>}
+                </td>
+                <td className={estilos.numero} data-rotulo="Preço">
+                  {formatarReais(i.precoCentavos - i.descontoCentavos)}
+                  {i.descontoCentavos > 0 && <span className={estilos.antigo}>Promoção · antes {formatarReais(i.precoCentavos)}</span>}
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {pedido.cupomCodigo && pedido.descontoCupomCentavos > 0 && (
+        <p>
+          Cupom {pedido.cupomCodigo}: −{formatarReais(pedido.descontoCupomCentavos)} (já preenchido nos descontos abaixo)
+        </p>
+      )}
       <p>
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
       </p>
 
       {pediuSaldo && (
         <p className={proprios.aviso} role="status">
-          A cliente é a fornecedora {pediuSaldo.rotulo} e pediu para pagar com o saldo dela (disponível: {formatarReais(pediuSaldo.disponivelCentavos)}).
-          Confira o valor em “Pagar com o saldo de uma fornecedora”.
+          A cliente é a fornecedora {pediuSaldo.rotulo} e pediu para pagar com o saldo dela (disponível:{" "}
+          {formatarReais(pediuSaldo.disponivelCentavos)}). Confira o valor em “Pagar com o saldo de uma fornecedora”.
         </p>
       )}
       {aberto && (
@@ -123,13 +134,28 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
           saldos={saldos}
           saldoPedido={pedido.creditoFornecedoraId}
           // O desconto das promoções já vem preenchido em cada peça.
-          iniciais={valoresDaPromocao(
+          iniciais={valoresDoPedido(
             pedido.itens.map((i) => ({
               pecaId: i.pecaId,
-              descontoCentavos: i.descontoCentavos,
-              porContaDaLoja: i.promocao?.porContaDaLoja ?? false,
-              nome: i.promocao?.nome ?? "promoção",
+              promocao:
+                i.descontoCentavos > 0
+                  ? {
+                      descontoCentavos: i.descontoCentavos,
+                      porContaDaLoja: i.promocao?.porContaDaLoja ?? false,
+                      nome: i.promocao?.nome ?? "promoção",
+                    }
+                  : null,
+              descontoCupomCentavos: i.descontoCupomCentavos,
             })),
+            pedido.cupomCodigo && pedido.descontoCupomCentavos > 0
+              ? {
+                  codigo: pedido.cupomCodigo,
+                  porContaDaLoja: pedido.cupom?.porContaDaLoja ?? false,
+                  // Cupom excluído depois: usa a parte gravada em cada peça.
+                  restrito: pedido.cupom ? restrito(pedido.cupom) : true,
+                  descontoCentavos: pedido.descontoCupomCentavos,
+                }
+              : null,
           )}
           pecas={pedido.itens.map((i) => ({
             id: i.pecaId,

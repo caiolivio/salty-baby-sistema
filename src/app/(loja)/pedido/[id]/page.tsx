@@ -32,6 +32,8 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       status: true,
       reservadoAte: true,
       totalCentavos: true,
+      cupomCodigo: true,
+      descontoCupomCentavos: true,
       creditoFornecedora: { select: { codigo: true } },
       itens: {
         orderBy: { ordem: "asc" },
@@ -55,6 +57,10 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
         nomeCliente: pedido.nomeCliente,
         total,
         saldoDe: pedido.creditoFornecedora?.codigo,
+        cupom:
+          pedido.cupomCodigo && pedido.descontoCupomCentavos > 0
+            ? { codigo: pedido.cupomCodigo, desconto: formatarReais(pedido.descontoCupomCentavos) }
+            : null,
         itens: pedido.itens.map((i) => ({
           ...i.peca,
           preco: i.descontoCentavos
@@ -107,6 +113,11 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
           </li>
         ))}
       </ul>
+      {pedido.cupomCodigo && pedido.descontoCupomCentavos > 0 && (
+        <p>
+          Cupom {pedido.cupomCodigo}: −{formatarReais(pedido.descontoCupomCentavos)}
+        </p>
+      )}
       <p className={estilos.total}>
         Total: <strong>{total}</strong>
       </p>
