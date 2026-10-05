@@ -99,7 +99,12 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
 
   return (
     <>
-      <h1 className={estilos.titulo}>WhatsApp Marketing</h1>
+      <div className={proprios.cabecalho}>
+        <h1 className={estilos.titulo}>WhatsApp Marketing</h1>
+        <Link href="/painel/marketing/resumo" className={proprios.botaoSecundario}>
+          Resumo da semana
+        </Link>
+      </div>
       <p>
         Escolha as peças, escreva um título e um texto e mande tudo junto para o grupo. Cada peça vai com o link dela, marcado
         com o grupo, para a venda contar para ele.

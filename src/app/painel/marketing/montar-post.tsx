@@ -33,14 +33,17 @@ export function MontarPost({
   sugeridoId,
   pecas,
   origem,
+  inicial,
 }: {
   grupos: { id: string; nome: string; codigo: string }[];
   sugeridoId?: string;
   pecas: PecaComFoto[];
   origem: string;
+  /** Título e texto já prontos (resumo semanal): não usa o que está guardado no navegador. */
+  inicial?: { titulo: string; texto: string };
 }) {
-  const [titulo, setTitulo] = useState("");
-  const [texto, setTexto] = useState("");
+  const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
+  const [texto, setTexto] = useState(inicial?.texto ?? "");
   // Enquanto a administradora não escolhe, vale o grupo sugerido para as peças da lista.
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const grupoId = escolhido ?? sugeridoId ?? "";
@@ -49,14 +52,18 @@ export function MontarPost({
   const podeCompartilhar = usePodeCompartilhar();
 
   useEffect(() => {
+    if (inicial) return;
     const guardado = lerGuardado();
     queueMicrotask(() => {
       setTitulo(guardado.titulo);
       setTexto(guardado.texto);
     });
+    // Só na primeira vez: o texto pronto não muda depois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function guardar(mudanca: { titulo?: string; texto?: string }) {
+    if (inicial) return;
     try {
       localStorage.setItem(GUARDADO, JSON.stringify({ titulo, texto, ...mudanca }));
     } catch {
