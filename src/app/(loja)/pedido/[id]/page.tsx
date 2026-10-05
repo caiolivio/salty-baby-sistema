@@ -34,6 +34,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       totalCentavos: true,
       cupomCodigo: true,
       descontoCupomCentavos: true,
+      naSacolinha: true,
       creditoFornecedora: { select: { codigo: true } },
       itens: {
         orderBy: { ordem: "asc" },
@@ -57,6 +58,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
         nomeCliente: pedido.nomeCliente,
         total,
         saldoDe: pedido.creditoFornecedora?.codigo,
+        sacolinha: pedido.naSacolinha,
         cupom:
           pedido.cupomCodigo && pedido.descontoCupomCentavos > 0
             ? { codigo: pedido.cupomCodigo, desconto: formatarReais(pedido.descontoCupomCentavos) }
@@ -121,6 +123,12 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       <p className={estilos.total}>
         Total: <strong>{total}</strong>
       </p>
+      {pedido.naSacolinha && pedido.status !== "cancelado" && (
+        <p className={estilos.avisoSacolinha}>
+          Depois do pagamento, as peças ficam guardadas na sua sacolinha. Você pode juntar outros pedidos e pagar um frete só.
+          Se o envio não for pedido em {loja.mesesSacolinha} meses, as peças são doadas.
+        </p>
+      )}
 
       {link && pedido.status !== "cancelado" && (
         <p className={estilos.acoesPedido}>

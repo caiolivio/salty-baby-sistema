@@ -85,6 +85,8 @@ export function mensagemDoPedido(
     saldoDe?: string | null;
     /** Cupom usado: código e desconto já formatado. */
     cupom?: { codigo: string; desconto: string } | null;
+    /** A cliente escolheu guardar as peças na sacolinha. */
+    sacolinha?: boolean;
   },
   origem: string,
   minutosReserva = MINUTOS_DE_RESERVA,
@@ -101,6 +103,7 @@ export function mensagemDoPedido(
     "",
     ...(pedido.cupom ? [`Cupom ${pedido.cupom.codigo}: −${pedido.cupom.desconto}`] : []),
     `Total: ${pedido.total}`,
+    ...(pedido.sacolinha ? ["Quero guardar as peças na minha sacolinha (pago agora e recebo depois)."] : []),
     ...(pedido.saldoDe ? [`Quero pagar com o meu saldo de fornecedora (${pedido.saldoDe}).`] : []),
     `As peças ficam reservadas por ${minutosReserva} minutos. Como faço o pagamento?`,
   ].join("\n");

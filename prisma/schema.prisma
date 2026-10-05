@@ -529,6 +529,8 @@ model Pedido {
   cupomCodigo           String?        @map("cupom_codigo") @db.VarChar(30)
   descontoCupomCentavos Int            @default(0) @map("desconto_cupom_centavos")
   cupom                 Cupom?         @relation(fields: [cupomId], references: [id], onDelete: SetNull)
+  /// A cliente escolheu "Colocar na sacolinha" (pagar agora e receber depois).
+  naSacolinha           Boolean        @default(false) @map("na_sacolinha")
 
   @@index([status, reservadoAte])
   @@map("pedidos")

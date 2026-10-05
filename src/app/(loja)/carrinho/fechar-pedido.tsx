@@ -11,12 +11,15 @@ export function FecharPedido({
   telefone,
   saldoCentavos,
   totalCentavos,
+  sacolinha,
 }: {
   nome?: string;
   telefone?: string;
   /** Saldo para compras, se quem está logada é uma fornecedora com saldo. */
   saldoCentavos?: number;
   totalCentavos?: number;
+  /** Explicação da sacolinha e, se a cliente logada já tem uma aberta, até quando. */
+  sacolinha: { explicacao: string[]; abertaAte?: string };
 }) {
   const [estado, acao, enviando] = useActionState(fechar, undefined);
   // O botão fica fora do formulário (ligado pelo `form`) para, no celular,
@@ -45,6 +48,30 @@ export function FecharPedido({
             required
           />
         </label>
+        <fieldset className={estilos.receber}>
+          <legend>Como você quer receber?</legend>
+          <label>
+            <input type="radio" name="receber" value="agora" defaultChecked={!estado?.sacolinha} />
+            <span>
+              <strong>Receber agora</strong>
+              <small>Envio ou retirada logo depois do pagamento.</small>
+            </span>
+          </label>
+          <label title="Pagar e receber depois">
+            <input type="radio" name="receber" value="sacolinha" defaultChecked={estado?.sacolinha} />
+            <span>
+              <strong>Colocar na sacolinha</strong>
+              <small>Pague agora e receba depois, junto com outras compras.</small>
+            </span>
+          </label>
+          <details>
+            <summary>O que é a sacolinha?</summary>
+            {sacolinha.explicacao.map((t) => (
+              <p key={t}>{t}</p>
+            ))}
+            {sacolinha.abertaAte && <p>Você já tem uma sacolinha aberta até {sacolinha.abertaAte}: estas peças entram nela.</p>}
+          </details>
+        </fieldset>
         {saldoCentavos ? (
           <label className={estilos.marcarLinha}>
             <input type="checkbox" name="usar_saldo" value="sim" defaultChecked />

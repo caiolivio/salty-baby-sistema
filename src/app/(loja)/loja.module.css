@@ -1680,3 +1680,76 @@
   color: #8a4b00;
   font-weight: 600;
 }
+
+/* "Como você quer receber?" no Fechar pedido: agora ou na sacolinha. */
+.receber {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.receber legend {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.receber label {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  cursor: pointer;
+}
+
+.receber label:has(input:checked) {
+  border-color: var(--petroleo);
+  background: #eef5f8;
+}
+
+.receber input {
+  margin-top: 3px;
+  accent-color: var(--petroleo);
+}
+
+.receber label span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.receber small {
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+}
+
+.receber summary {
+  color: var(--petroleo);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.receber details p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.explicaSacolinha {
+  margin-bottom: 16px;
+}
+
+.explicaSacolinha summary {
+  color: var(--petroleo);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.explicaSacolinha p {
+  margin: 6px 0 0;
+}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   avisoDeDoacao,
   enderecoDeEntrega,
+  explicacaoDaSacolinha,
   estaParaDoar,
   lerPrazo,
   mensagemDoAviso,
@@ -133,5 +134,15 @@ describe("pedido de envio", () => {
   it("acha o tamanho mais comum", () => {
     expect(tamanhoMaisComum([{ tamanho: "2 anos" }, { tamanho: "3 anos" }, { tamanho: "3 anos" }, { tamanho: null }])).toBe("3 anos");
     expect(tamanhoMaisComum([{ tamanho: null }])).toBeNull();
+  });
+});
+
+describe("explicação da sacolinha", () => {
+  it("conta que dá para juntar pedidos e pagar um frete só, com o prazo e a doação", () => {
+    const texto = explicacaoDaSacolinha("Salty", 3).join(" ");
+    expect(texto).toContain("juntando vários pedidos");
+    expect(texto).toContain("um frete só");
+    expect(texto).toContain("O prazo é de 3 meses");
+    expect(texto).toContain("doadas");
   });
 });

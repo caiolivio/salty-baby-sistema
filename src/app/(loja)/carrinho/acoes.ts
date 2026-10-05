@@ -64,10 +64,11 @@ export async function tirarCupom() {
   redirect("/carrinho");
 }
 
-export type EstadoFechar = { erro?: string; nome?: string; telefone?: string } | undefined;
+export type EstadoFechar = { erro?: string; nome?: string; telefone?: string; sacolinha?: boolean } | undefined;
 
 export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<EstadoFechar> {
-  const digitado = { nome: String(dados.get("nome") ?? ""), telefone: String(dados.get("telefone") ?? "") };
+  const sacolinha = dados.get("receber") === "sacolinha";
+  const digitado = { nome: String(dados.get("nome") ?? ""), telefone: String(dados.get("telefone") ?? ""), sacolinha };
   const nome = lerNomeCliente(dados.get("nome"));
   if (!nome) return { erro: "Escreva seu nome para a loja saber de quem é o pedido.", ...digitado };
   const telefone = lerTelefoneCliente(dados.get("telefone"));
@@ -90,7 +91,7 @@ export async function fechar(_anterior: EstadoFechar, dados: FormData): Promise<
   const cupom = lerCodigoDoCupom((await cookies()).get(COOKIE_CUPOM)?.value);
   const resultado = await fecharPedido(
     ids,
-    { nome, telefone, clienteId: ficha?.id, creditoFornecedoraId: comSaldo },
+    { nome, telefone, clienteId: ficha?.id, creditoFornecedoraId: comSaldo, naSacolinha: sacolinha },
     grupo?.id ?? null,
     cupom,
     autorDoSite(nome, usuario?.id ?? null),

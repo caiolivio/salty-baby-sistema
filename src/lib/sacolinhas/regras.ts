@@ -151,3 +151,13 @@ export function tamanhoMaisComum(pecas: { tamanho: string | null }[]): string | 
   for (const [tamanho, n] of contagem) if (melhor === null || n > (contagem.get(melhor) ?? 0)) melhor = tamanho;
   return melhor;
 }
+
+/** "O que é a sacolinha?": aparece no "Fechar pedido" e na página da sacolinha da cliente. */
+export function explicacaoDaSacolinha(nomeCurto: string, meses = MESES_SACOLINHA): string[] {
+  return [
+    `Você paga o pedido normalmente, e as peças ficam guardadas na ${nomeCurto} até você pedir o envio.`,
+    "Pode ir juntando vários pedidos, em dias diferentes, na mesma sacolinha. No fim, você paga um frete só.",
+    `O prazo é de ${meses} meses a partir da primeira peça. Se o envio não for pedido até lá, as peças são doadas.`,
+    'Quando quiser receber, toque em "Pedir envio" em Minha conta > Sacolinha ou fale com a gente no WhatsApp.',
+  ];
+}

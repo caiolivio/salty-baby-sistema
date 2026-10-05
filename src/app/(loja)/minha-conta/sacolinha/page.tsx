@@ -12,6 +12,7 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import {
   avisoDeDoacao,
   enderecoDeEntrega,
+  explicacaoDaSacolinha,
   mensagemPedirEnvio,
   situacaoDoPrazo,
   SITUACOES_SACOLINHA,
@@ -75,10 +76,12 @@ export default async function MinhaSacolinha({ searchParams }: PageProps<"/minha
 
   return (
     <section aria-label="Sacolinha">
-      <p>
-        Na sacolinha, as peças que você já pagou ficam guardadas na {loja.nomeCurto} até você pedir o envio, e o frete é por sua
-        conta. O prazo é de {loja.mesesSacolinha} meses a partir da primeira peça. Depois dele, as peças são doadas.
-      </p>
+      <details className={estilos.explicaSacolinha} open>
+        <summary>O que é a sacolinha?</summary>
+        {explicacaoDaSacolinha(loja.nomeCurto, loja.mesesSacolinha).map((t) => (
+          <p key={t}>{t}</p>
+        ))}
+      </details>
       {typeof erro === "string" && (
         <p className={estilos.erro} role="alert">
           {erro}
@@ -92,7 +95,7 @@ export default async function MinhaSacolinha({ searchParams }: PageProps<"/minha
       {guardadas.length === 0 && (
         <div className={estilos.vazio}>
           <ShoppingBag className="icone" aria-hidden />
-          <p>Sua sacolinha está vazia. Ao comprar, peça para a {loja.nomeCurto} guardar as peças na sacolinha.</p>
+          <p>Sua sacolinha está vazia. Ao fechar um pedido, escolha &quot;Colocar na sacolinha&quot;.</p>
         </div>
       )}
       {guardadas.map((s) => {
