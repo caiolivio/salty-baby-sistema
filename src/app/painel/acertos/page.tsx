@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
 import { repassesPendentes } from "@/lib/acertos/gravar";
-import { fimDoMesAnterior, nomeDaFormaAcerto, nomeDoMes, resumirAPagar } from "@/lib/acertos/regras";
+import { nomeDoTipoPix } from "@/lib/fornecedoras/contrato";
+import { corteDoAcerto, DIAS_CONSOLIDACAO, nomeDaFormaAcerto, resumirAPagar } from "@/lib/acertos/regras";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -15,12 +16,12 @@ import { BotoesExportar } from "../exportar/botoes";
 export const metadata: Metadata = { title: "Contas a pagar" };
 
 // Acerto mensal: no dia 1, a loja paga às fornecedoras os repasses das vendas
-// até o fim do mês anterior. Só a administradora (envolve Pix e valores).
+// já consolidadas (10 dias depois da venda, contrato 9.2 e 10.3). Só a administradora (envolve Pix e valores).
 export default async function ContasAPagar({ searchParams }: PageProps<"/painel/acertos">) {
   await exigirAcesso("painel-administracao", "/painel/acertos");
   const aviso = await searchParams;
   const hoje = hojeEmSaoPaulo();
-  const corte = fimDoMesAnterior(hoje);
+  const corte = corteDoAcerto(hoje);
 
   const [pendentes, acertos, saldos] = await Promise.all([
     repassesPendentes(),
@@ -62,17 +63,19 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
         </p>
       )}
       <p>
-        Repasses das peças vendidas que as fornecedoras ainda não receberam. No dia 1 de cada mês, pague o que foi vendido até o
-        fim do mês anterior. O que foi vendido neste mês entra no próximo acerto, mas também pode ser pago antes.
+        Repasses das peças vendidas que as fornecedoras ainda não receberam. Pelo contrato, a venda só entra no repasse{" "}
+        {DIAS_CONSOLIDACAO} dias depois (prazo de troca): no primeiro dia útil do mês, pague o que foi vendido até{" "}
+        {formatarData(new Date(`${corte}T00:00:00Z`))}. O que foi vendido depois entra no próximo acerto, mas também pode ser pago
+        antes.
       </p>
       <div className={estilos.cartoes}>
         <div className={estilos.cartao}>
-          <strong>{formatarReais(total.fechadoCentavos)}</strong>a pagar até {nomeDoMes(corte)} ({total.pecasFechadas}{" "}
-          {total.pecasFechadas === 1 ? "peça" : "peças"})
+          <strong>{formatarReais(total.fechadoCentavos)}</strong>a pagar, vendas até{" "}
+          {formatarData(new Date(`${corte}T00:00:00Z`))} ({total.pecasFechadas} {total.pecasFechadas === 1 ? "peça" : "peças"})
         </div>
         <div className={estilos.cartao}>
           <strong>{formatarReais(total.mesAtualCentavos)}</strong>
-          vendido neste mês, para o próximo acerto
+          vendido depois, para o próximo acerto
         </div>
       </div>
 
@@ -87,7 +90,7 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
                 <th>Fornecedora</th>
                 <th>Pix</th>
                 <th className={estilos.numero}>Até {formatarData(new Date(`${corte}T00:00:00Z`))}</th>
-                <th className={estilos.numero}>Deste mês</th>
+                <th className={estilos.numero}>Próximo acerto</th>
                 <th className={estilos.numero}>Total</th>
                 <th>Pagar</th>
               </tr>
@@ -100,14 +103,26 @@ export default async function ContasAPagar({ searchParams }: PageProps<"/painel/
                       {f.codigo} · {f.nome}
                     </Link>
                   </td>
-                  <td data-rotulo="Pix">{f.pix ?? "—"}</td>
-                  <td className={estilos.numero} data-rotulo="Mês fechado">
+                  <td data-rotulo="Pix">
+                    {f.recebimentoPreferido === "credito" ? (
+                      <>
+                        Prefere crédito na loja
+                        {f.pix && <span className={estilos.antigo}>Pix: {f.pix}</span>}
+                      </>
+                    ) : (
+                      <>
+                        {f.pix ?? "—"}
+                        {f.pix && f.pixTipo && <span className={estilos.antigo}>{nomeDoTipoPix(f.pixTipo)}</span>}
+                      </>
+                    )}
+                  </td>
+                  <td className={estilos.numero} data-rotulo="Este acerto">
                     {formatarReais(r.fechadoCentavos)}
                     <span className={estilos.antigo}>
                       {r.pecasFechadas} {r.pecasFechadas === 1 ? "peça" : "peças"}
                     </span>
                   </td>
-                  <td className={estilos.numero} data-rotulo="Deste mês">
+                  <td className={estilos.numero} data-rotulo="Próximo acerto">
                     {formatarReais(r.mesAtualCentavos)}
                     <span className={estilos.antigo}>
                       {r.pecasMesAtual} {r.pecasMesAtual === 1 ? "peça" : "peças"}

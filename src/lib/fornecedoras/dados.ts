@@ -54,6 +54,8 @@ const camposComPadrao = (repassePadrao: number) =>
       .transform((t) => t.toLowerCase() || null),
     documento,
     pix: texto(191),
+    pixTipo: z.enum(["", "cpf", "telefone", "email", "aleatoria"]).transform((t) => t || null),
+    recebimentoPreferido: z.enum(["", "pix", "credito"]).transform((t) => t || null),
     endereco: texto(255),
     cep: texto(15),
     cidade: texto(100),

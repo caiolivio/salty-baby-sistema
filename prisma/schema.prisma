@@ -85,6 +85,9 @@ model Fornecedora {
   /// CPF ou CNPJ: só a administradora vê.
   documento               String?              @db.VarChar(30)
   pix                     String?              @db.VarChar(191)
+  pixTipo                 TipoChavePix?        @map("pix_tipo")
+  /// Como prefere receber o repasse (contrato, cláusula 10.4).
+  recebimentoPreferido    FormaRecebimento?    @map("recebimento_preferido")
   endereco                String?              @db.VarChar(255)
   cep                     String?              @db.VarChar(15)
   cidade                  String?              @db.VarChar(100)
@@ -113,8 +116,56 @@ model Fornecedora {
   relatoriosEnviados      RelatorioEnviado[]
   vendasComCredito        Venda[]              @relation("CreditoDaVenda")
   pedidosComCredito       Pedido[]             @relation("CreditoDoPedido")
+  aceitesContrato         AceiteContrato[]
 
   @@map("fornecedoras")
+}
+
+enum TipoChavePix {
+  cpf
+  telefone
+  email
+  aleatoria
+}
+
+enum FormaRecebimento {
+  pix
+  credito
+}
+
+/// Evidência de cada aceite do contrato de consignação: quem, quando, de onde,
+/// qual versão e o texto exato que estava na tela (com o hash SHA-256 dele),
+/// mais os dados que a pessoa confirmou. Nunca é alterada nem apagada.
+model AceiteContrato {
+  id                   String           @id @default(cuid())
+  fornecedoraId        String?          @map("fornecedora_id")
+  candidaturaId        String?          @map("candidatura_id")
+  usuarioId            String?          @map("usuario_id")
+  versao               String           @db.VarChar(20)
+  titulo               String           @db.VarChar(255)
+  /// O texto do contrato como apareceu na tela (variáveis já trocadas).
+  texto                String           @db.MediumText
+  hash                 String           @db.Char(64)
+  /// Quando a página com o contrato foi aberta (hora do servidor, assinada).
+  abertoEm             DateTime         @map("aberto_em")
+  /// Quando ela chegou ao fim do texto (hora do aparelho dela).
+  lidoAteOFimEm        DateTime?        @map("lido_ate_o_fim_em")
+  aceitoEm             DateTime         @default(now()) @map("aceito_em")
+  ip                   String?          @db.VarChar(64)
+  navegador            String?          @db.VarChar(255)
+  nome                 String           @db.VarChar(160)
+  documento            String           @db.VarChar(30)
+  telefone             String           @db.VarChar(40)
+  email                String           @db.VarChar(191)
+  pix                  String?          @db.VarChar(191)
+  pixTipo              TipoChavePix?    @map("pix_tipo")
+  recebimentoPreferido FormaRecebimento @map("recebimento_preferido")
+  fornecedora          Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: SetNull)
+  candidatura          Candidatura?     @relation(fields: [candidaturaId], references: [id], onDelete: SetNull)
+
+  @@index([fornecedoraId])
+  @@index([candidaturaId])
+  @@map("aceites_contrato")
 }
 
 enum TipoPeca {
@@ -205,6 +256,8 @@ model Peca {
   /// "Não listado": à venda só para quem tem o link (não aparece na vitrine). Vale com status publicada.
   naoListada        Boolean         @default(false) @map("nao_listada")
   dataEntrada       DateTime        @map("data_entrada") @db.Date
+  /// Primeiro dia à venda no site (contrato 11.2: o prazo de 6 meses conta daqui).
+  publicadaEm       DateTime?       @map("publicada_em") @db.Date
   criadoEm          DateTime        @default(now()) @map("criado_em")
   atualizadoEm      DateTime        @updatedAt @map("atualizado_em")
   fornecedora       Fornecedora?    @relation(fields: [fornecedoraId], references: [id])
@@ -239,23 +292,23 @@ model FotoPeca {
 }
 
 model Cliente {
-  id           String     @id @default(cuid())
-  nome         String     @db.VarChar(160)
-  telefone     String?    @db.VarChar(40)
-  email        String?    @db.VarChar(191)
+  id           String          @id @default(cuid())
+  nome         String          @db.VarChar(160)
+  telefone     String?         @db.VarChar(40)
+  email        String?         @db.VarChar(191)
   /// Só a administradora vê.
-  cpf          String?    @db.VarChar(20)
-  endereco     String?    @db.VarChar(255)
-  cep          String?    @db.VarChar(15)
-  cidade       String?    @db.VarChar(100)
-  estado       String?    @db.VarChar(60)
-  pais         String?    @db.VarChar(60)
-  observacao   String?    @db.Text
+  cpf          String?         @db.VarChar(20)
+  endereco     String?         @db.VarChar(255)
+  cep          String?         @db.VarChar(15)
+  cidade       String?         @db.VarChar(100)
+  estado       String?         @db.VarChar(60)
+  pais         String?         @db.VarChar(60)
+  observacao   String?         @db.Text
   /// Conta de acesso ao site (área do cliente), criada pela cliente ou pela loja.
-  usuarioId    String?    @unique @map("usuario_id")
-  criadoEm     DateTime   @default(now()) @map("criado_em")
-  atualizadoEm DateTime   @updatedAt @map("atualizado_em")
-  usuario      Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuarioId    String?         @unique @map("usuario_id")
+  criadoEm     DateTime        @default(now()) @map("criado_em")
+  atualizadoEm DateTime        @updatedAt @map("atualizado_em")
+  usuario      Usuario?        @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   vendas       Venda[]
   pedidos      Pedido[]
   criancas     Crianca[]
@@ -580,26 +633,32 @@ enum EtapaCandidatura {
 }
 
 model Candidatura {
-  id             String           @id @default(cuid())
-  nome           String           @db.VarChar(160)
-  email          String           @db.VarChar(191)
-  telefone       String           @db.VarChar(40)
-  endereco       String           @db.VarChar(255)
-  cep            String?          @db.VarChar(15)
-  cidade         String?          @db.VarChar(100)
-  estado         String?          @db.VarChar(60)
-  etapa          EtapaCandidatura @default(enviada)
+  id                   String            @id @default(cuid())
+  nome                 String            @db.VarChar(160)
+  email                String            @db.VarChar(191)
+  telefone             String            @db.VarChar(40)
+  endereco             String            @db.VarChar(255)
+  cep                  String?           @db.VarChar(15)
+  cidade               String?           @db.VarChar(100)
+  estado               String?           @db.VarChar(60)
+  etapa                EtapaCandidatura  @default(enviada)
   /// Anotação da curadoria (só o painel vê).
-  observacao     String?          @db.Text
-  acordoAceitoEm DateTime?        @map("acordo_aceito_em")
-  acordoVersao   String?          @map("acordo_versao") @db.VarChar(20)
-  usuarioId      String?          @unique @map("usuario_id")
-  fornecedoraId  String?          @unique @map("fornecedora_id")
-  criadoEm       DateTime         @default(now()) @map("criado_em")
-  atualizadoEm   DateTime         @updatedAt @map("atualizado_em")
-  usuario        Usuario?         @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  fornecedora    Fornecedora?     @relation(fields: [fornecedoraId], references: [id], onDelete: SetNull)
-  pecas          PecaProposta[]
+  observacao           String?           @db.Text
+  acordoAceitoEm       DateTime?         @map("acordo_aceito_em")
+  acordoVersao         String?           @map("acordo_versao") @db.VarChar(20)
+  /// Dados confirmados no aceite do contrato (vão para a fornecedora ao efetivar).
+  documento            String?           @db.VarChar(30)
+  pix                  String?           @db.VarChar(191)
+  pixTipo              TipoChavePix?     @map("pix_tipo")
+  recebimentoPreferido FormaRecebimento? @map("recebimento_preferido")
+  usuarioId            String?           @unique @map("usuario_id")
+  fornecedoraId        String?           @unique @map("fornecedora_id")
+  criadoEm             DateTime          @default(now()) @map("criado_em")
+  atualizadoEm         DateTime          @updatedAt @map("atualizado_em")
+  usuario              Usuario?          @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  fornecedora          Fornecedora?      @relation(fields: [fornecedoraId], references: [id], onDelete: SetNull)
+  pecas                PecaProposta[]
+  aceitesContrato      AceiteContrato[]
 
   @@index([etapa])
   @@map("candidaturas")

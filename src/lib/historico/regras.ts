@@ -139,6 +139,8 @@ export type EstadoFornecedora = {
   email: string | null;
   documento?: string | null;
   pix: string | null;
+  pixTipo?: string | null;
+  recebimentoPreferido?: string | null;
   endereco: string | null;
   cep: string | null;
   cidade: string | null;
@@ -155,6 +157,21 @@ export const CAMPOS_FORNECEDORA: readonly Campo<EstadoFornecedora>[] = [
   { titulo: "E-mail", ler: (f) => f.email },
   { titulo: "CPF/CNPJ", ler: (f) => f.documento, oculto: true },
   { titulo: "Pix", ler: (f) => f.pix, oculto: true },
+  {
+    titulo: "Tipo da chave Pix",
+    ler: (f) => f.pixTipo,
+    mostrar: nomeDe([
+      { valor: "cpf", nome: "CPF" },
+      { valor: "telefone", nome: "Telefone" },
+      { valor: "email", nome: "E-mail" },
+      { valor: "aleatoria", nome: "Aleatória" },
+    ]),
+  },
+  {
+    titulo: "Prefere receber",
+    ler: (f) => f.recebimentoPreferido,
+    mostrar: (v) => (v === "credito" ? "Crédito na loja" : "PIX"),
+  },
   { titulo: "Endereço", ler: (f) => f.endereco },
   { titulo: "CEP", ler: (f) => f.cep },
   { titulo: "Cidade", ler: (f) => f.cidade },

@@ -5,13 +5,15 @@
 // Funções puras, testadas.
 
 import { z } from "zod";
+import { formatarReais } from "../dinheiro";
+import { TEXTO_CONTRATO, TITULO_CONTRATO } from "./contrato";
 
 export const PAGINAS_EDITAVEIS = [
   {
     chave: "contrato",
-    nome: "Acordo de consignação",
+    nome: "Contrato de consignação",
     endereco: "/acordo-de-consignacao",
-    explica: "As regras que a fornecedora lê e aceita na área dela. Ao mudar, você escolhe se elas precisam aceitar de novo.",
+    explica: "O contrato que a fornecedora lê e aceita na área dela. Ao mudar, você escolhe se elas precisam aceitar de novo.",
   },
   { chave: "termos", nome: "Termos de uso", endereco: "/termos-de-uso", explica: "Regras de uso do site e das compras." },
   { chave: "trocas", nome: "Política de troca", endereco: "/politica-de-troca", explica: "Como funcionam trocas e devoluções das compras." },
@@ -52,11 +54,74 @@ const telefone = (n: string) => {
   return d.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : d.length === 10 ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}` : n;
 };
 
+const UNIDADES = [
+  "zero",
+  "um",
+  "dois",
+  "três",
+  "quatro",
+  "cinco",
+  "seis",
+  "sete",
+  "oito",
+  "nove",
+  "dez",
+  "onze",
+  "doze",
+  "treze",
+  "quatorze",
+  "quinze",
+  "dezesseis",
+  "dezessete",
+  "dezoito",
+  "dezenove",
+];
+const DEZENAS = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+
+/** "40%" por extenso: "quarenta por cento". Só para percentuais inteiros de 0 a 100. */
+export function porcentoPorExtenso(pontosBase: number): string {
+  const n = pontosBase / 100;
+  if (!Number.isInteger(n) || n < 0 || n > 100) return `${porcento(pontosBase)}`;
+  const numero =
+    n === 100 ? "cem" : n < 20 ? UNIDADES[n] : `${DEZENAS[Math.floor(n / 10)]}${n % 10 ? ` e ${UNIDADES[n % 10]}` : ""}`;
+  return `${numero} por cento`;
+}
+
+/** Exemplo do contrato: peça de R$ 100,00 vendida por R$ 80,00. */
+const EXEMPLO_VENDA_CENTAVOS = 8000;
+
 export const VARIAVEIS = [
   { nome: "loja", explica: "nome da loja", valor: (l: DadosDaLoja) => l.nome },
+  {
+    nome: "loja_maiusculas",
+    explica: "nome da loja em maiúsculas",
+    valor: (l: DadosDaLoja) => l.nome.toLocaleUpperCase("pt-BR"),
+  },
   { nome: "nome_curto", explica: "nome curto da loja", valor: (l: DadosDaLoja) => l.nomeCurto },
   { nome: "whatsapp", explica: "WhatsApp da loja", valor: (l: DadosDaLoja) => telefone(l.whatsapp) },
   { nome: "repasse", explica: "% de repasse padrão", valor: (l: DadosDaLoja) => porcento(l.repassePadrao) },
+  {
+    nome: "repasse_por_extenso",
+    explica: "% de repasse por extenso",
+    valor: (l: DadosDaLoja) => porcentoPorExtenso(l.repassePadrao),
+  },
+  { nome: "parte_loja", explica: "% que fica com a loja", valor: (l: DadosDaLoja) => porcento(10000 - l.repassePadrao) },
+  {
+    nome: "parte_loja_por_extenso",
+    explica: "% que fica com a loja, por extenso",
+    valor: (l: DadosDaLoja) => porcentoPorExtenso(10000 - l.repassePadrao),
+  },
+  {
+    nome: "exemplo_fornecedora",
+    explica: "repasse de uma venda de R$ 80,00",
+    valor: (l: DadosDaLoja) => formatarReais(Math.round((EXEMPLO_VENDA_CENTAVOS * l.repassePadrao) / 10000)),
+  },
+  {
+    nome: "exemplo_loja",
+    explica: "parte da loja numa venda de R$ 80,00",
+    valor: (l: DadosDaLoja) =>
+      formatarReais(EXEMPLO_VENDA_CENTAVOS - Math.round((EXEMPLO_VENDA_CENTAVOS * l.repassePadrao) / 10000)),
+  },
   { nome: "meses_devolucao", explica: "meses para pedir devolução", valor: (l: DadosDaLoja) => String(l.mesesDevolucao) },
   { nome: "meses_sacolinha", explica: "meses de prazo da sacolinha", valor: (l: DadosDaLoja) => String(l.mesesSacolinha) },
 ] as const;
@@ -185,26 +250,7 @@ export function lerFormularioPagina(
 // Textos iniciais (rascunhos para a loja revisar). Usam as variáveis acima.
 
 export const TEXTOS_INICIAIS: Record<ChavePagina, { titulo: string; conteudo: string }> = {
-  contrato: {
-    titulo: "Acordo de consignação {loja}",
-    conteudo: `## 1. Como funciona
-A fornecedora deixa as peças com a {loja}, que as fotografa, anuncia e vende no site, na loja e nos grupos de WhatsApp. A peça continua sendo da fornecedora até ser vendida.
-
-## 2. Curadoria e preço
-A {nome_curto} avalia cada peça e pode não aceitar as que não estiverem em bom estado ou não combinarem com a loja. O preço de venda é sempre definido pela {nome_curto}.
-
-## 3. Repasse
-Quando a peça é vendida, a fornecedora recebe a parte combinada do valor pago pela cliente (o repasse, normalmente {repasse}). Se houver desconto ou cupom, em regra o repasse é calculado sobre o valor com desconto, ou seja, o desconto é dividido entre a {nome_curto} e a fornecedora. A {nome_curto} pode assumir um desconto sozinha, sem mudar o repasse. Um desconto só por conta da fornecedora acontece apenas com a autorização dela, e nunca passa do repasse da peça. Cada venda mostra, na área da fornecedora, o desconto e quanto ele mudou o repasse.
-
-## 4. Pagamento
-No dia 1 de cada mês, a {nome_curto} calcula os repasses das vendas do mês anterior e combina o pagamento com a fornecedora. A fornecedora também pode usar o saldo para comprar na {nome_curto}.
-
-## 5. Devolução das peças
-A fornecedora pode pedir a devolução de peças não vendidas depois de {meses_devolucao} meses do cadastro de cada peça no site. A data de quando cada peça pode ser devolvida aparece na área da fornecedora.
-
-## 6. Cuidados
-A {nome_curto} cuida das peças com atenção. Em caso de avaria ou perda enquanto a peça estiver com a {nome_curto}, as duas partes combinam a solução.`,
-  },
+  contrato: { titulo: TITULO_CONTRATO, conteudo: TEXTO_CONTRATO },
   termos: {
     titulo: "Termos de uso",
     conteudo: `Estes termos explicam como funcionam o site e as compras na {loja}. Ao usar o site ou fazer um pedido, você concorda com eles.

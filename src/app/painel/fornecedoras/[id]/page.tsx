@@ -14,6 +14,11 @@ import { formatarDataHora } from "@/lib/datas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 import { Voltar } from "@/componentes/voltar";
+import { formatarCpf } from "@/lib/clientes/dados";
+import { aceitesDaFornecedora } from "@/lib/fornecedoras/aceite";
+import { nomeDaFormaRecebimento, nomeDoTipoPix } from "@/lib/fornecedoras/contrato";
+import { lerLoja } from "@/lib/loja/servidor";
+import { formatarTelefone } from "@/lib/pedidos/regras";
 
 export const metadata: Metadata = { title: "Fornecedora" };
 
@@ -27,7 +32,7 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
 
   const fornecedora = await prisma.fornecedora.findUnique({
     where: { id },
-    include: { usuario: { select: { email: true, ultimoAcessoEm: true } } },
+    include: { usuario: { select: { email: true, ultimoAcessoEm: true } }, candidatura: { select: { id: true } } },
   });
   if (!fornecedora) notFound();
   const [aVenda, vendidas] = await Promise.all([
@@ -35,6 +40,10 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
     prisma.peca.count({ where: { fornecedoraId: id, status: { in: [...VENDIDAS] } } }),
   ]);
   const f = fornecedora;
+  const [aceites, loja] = await Promise.all([
+    acesso.administradora ? aceitesDaFornecedora(f.id, f.candidatura?.id ?? null) : Promise.resolve([]),
+    lerLoja(),
+  ]);
 
   return (
     <>
@@ -72,16 +81,46 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
             : `Entra com o e-mail ${f.usuario.email}. ${
                 {
                   dados: "Ainda não terminou o cadastro.",
-                  acordo: "Ainda não aceitou o acordo.",
+                  acordo: "Ainda não aceitou o contrato.",
                   parabens: "Cadastro concluído.",
                   liberada: "Cadastro concluído.",
                 }[etapaDaFornecedora(f)]
-              }${f.termosAceitosEm ? ` Acordo aceito em ${formatarDataHora(f.termosAceitosEm)} (versão ${f.termosVersao}).` : ""}${
+              }${f.termosAceitosEm ? ` Contrato aceito em ${formatarDataHora(f.termosAceitosEm)} (versão ${f.termosVersao}).` : ""}${
                 f.usuario.ultimoAcessoEm ? ` Último acesso em ${formatarDataHora(f.usuario.ultimoAcessoEm)}.` : ""
               }`}
         </p>
         {f.ativa && acesso.administradora && <AcessoDaFornecedora id={f.id} temConta={Boolean(f.usuario)} />}
       </section>
+      {acesso.administradora && aceites.length > 0 && (
+        <section aria-labelledby="aceites">
+          <h2 id="aceites">Aceites do contrato</h2>
+          <p className={proprios.dica}>Provas de cada aceite: o texto exato que estava na tela, a hora e de onde ela aceitou.</p>
+          <ul className={proprios.aceites}>
+            {aceites.map((a) => (
+              <li key={a.id}>
+                <strong>
+                  Versão {a.versao} · aceito em {formatarDataHora(a.aceitoEm)}
+                </strong>
+                <br />
+                Abriu o contrato em {formatarDataHora(a.abertoEm)}
+                {a.lidoAteOFimEm && `, chegou ao fim do texto em ${formatarDataHora(a.lidoAteOFimEm)}`}
+                .
+                <br />
+                {a.nome} · CPF {formatarCpf(a.documento)} · {formatarTelefone(a.telefone)} · {a.email}
+                <br />
+                Prefere receber: {nomeDaFormaRecebimento(a.recebimentoPreferido, loja.nome)}
+                {a.pix && ` · Pix (${nomeDoTipoPix(a.pixTipo) ?? "?"}) ${a.pix}`}
+                <br />
+                <span className={proprios.dica}>
+                  IP {a.ip ?? "não informado"} · {a.navegador ?? "navegador não informado"} · código do texto (SHA-256) {a.hash}
+                </span>
+                <br />
+                <Link href={`/painel/fornecedoras/${f.id}/contrato/${a.id}`}>Ver o texto aceito</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <FormularioFornecedora
         acao={salvarFornecedora}
         textoBotao="Salvar alterações"
@@ -96,6 +135,8 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
           // CPF/CNPJ e Pix nem chegam ao navegador de quem não é administradora.
           documento: acesso.administradora ? (f.documento ?? "") : "",
           pix: acesso.administradora ? (f.pix ?? "") : "",
+          pixTipo: acesso.administradora ? (f.pixTipo ?? "") : "",
+          recebimentoPreferido: acesso.administradora ? (f.recebimentoPreferido ?? "") : "",
           endereco: f.endereco ?? "",
           cep: f.cep ?? "",
           cidade: f.cidade ?? "",

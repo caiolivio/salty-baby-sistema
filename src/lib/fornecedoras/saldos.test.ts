@@ -5,20 +5,31 @@ import { calcularSaldos, devolucaoDisponivelEm, situacaoDaDevolucao, vendasNoPer
 const d = (t: string) => new Date(`${t}T00:00:00Z`);
 
 describe("devolução depois de 6 meses", () => {
-  it("conta 6 meses de calendário a partir da entrada", () => {
+  it("conta 6 meses de calendário a partir da data", () => {
     expect(devolucaoDisponivelEm(d("2026-04-10"))).toBe("2026-10-10");
     expect(devolucaoDisponivelEm(d("2026-08-31"))).toBe("2027-02-28");
     expect(devolucaoDisponivelEm(d("2027-08-31"))).toBe("2028-02-29");
   });
-  it("libera só as peças à venda ou em rascunho, a partir da data", () => {
-    expect(situacaoDaDevolucao({ status: "publicada", dataEntrada: d("2026-04-01") }, "2026-10-01")).toEqual({ tipo: "pode" });
-    expect(situacaoDaDevolucao({ status: "rascunho", dataEntrada: d("2026-04-02") }, "2026-10-01")).toEqual({
+  it("libera só as peças à venda ou em rascunho, a partir do dia em que entraram no site", () => {
+    const pub = (status: string, entrada: string, publicada: string | null) => ({
+      status,
+      dataEntrada: d(entrada),
+      publicadaEm: publicada ? d(publicada) : null,
+    });
+    expect(situacaoDaDevolucao(pub("publicada", "2026-03-20", "2026-04-01"), "2026-10-01")).toEqual({ tipo: "pode" });
+    // Entrou na loja em março, mas só foi para o site em abril (precisou de conserto).
+    expect(situacaoDaDevolucao(pub("publicada", "2026-03-01", "2026-04-02"), "2026-10-01")).toEqual({
       tipo: "a-partir-de",
       data: "2026-10-02",
     });
-    expect(situacaoDaDevolucao({ status: "vendida", dataEntrada: d("2025-01-01") }, "2026-10-01")).toEqual({ tipo: "nao-se-aplica" });
-    expect(situacaoDaDevolucao({ status: "reservada", dataEntrada: d("2025-01-01") }, "2026-10-01")).toEqual({ tipo: "nao-se-aplica" });
-    expect(situacaoDaDevolucao({ status: "devolucao_pedida", dataEntrada: d("2025-01-01") }, "2026-10-01")).toEqual({ tipo: "pedida" });
+    expect(situacaoDaDevolucao(pub("rascunho", "2026-03-01", "2026-04-02"), "2026-10-01")).toEqual({
+      tipo: "a-partir-de",
+      data: "2026-10-02",
+    });
+    expect(situacaoDaDevolucao(pub("rascunho", "2025-01-01", null), "2026-10-01")).toEqual({ tipo: "fora-do-site" });
+    expect(situacaoDaDevolucao(pub("vendida", "2025-01-01", "2025-01-01"), "2026-10-01")).toEqual({ tipo: "nao-se-aplica" });
+    expect(situacaoDaDevolucao(pub("reservada", "2025-01-01", "2025-01-01"), "2026-10-01")).toEqual({ tipo: "nao-se-aplica" });
+    expect(situacaoDaDevolucao(pub("devolucao_pedida", "2025-01-01", "2025-01-01"), "2026-10-01")).toEqual({ tipo: "pedida" });
   });
 });
 

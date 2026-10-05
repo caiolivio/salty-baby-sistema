@@ -433,3 +433,20 @@ label.botaoSecundario:focus-within {
 .botaoSecundario:hover {
   background: var(--fundo-marca);
 }
+
+/* Aceites do contrato na página da fornecedora. */
+.aceites {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.aceites li {
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

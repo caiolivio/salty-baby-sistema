@@ -21,6 +21,18 @@ export function fimDoMesAnterior(hoje: string): string {
   return new Date(Date.UTC(ano, mes - 1, 0)).toISOString().slice(0, 10);
 }
 
+/** Contrato, cláusulas 9.2 e 10.3: a venda só entra no repasse depois de 10 dias (prazo de troca). */
+export const DIAS_CONSOLIDACAO = 10;
+
+/**
+ * Última data de venda que entra no acerto do dia 1 deste mês: as vendas dos
+ * 10 dias antes do dia 1 ainda estão consolidando e ficam para o mês seguinte.
+ */
+export function corteDoAcerto(hoje: string): string {
+  const [ano, mes] = hoje.split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, -DIAS_CONSOLIDACAO)).toISOString().slice(0, 10);
+}
+
 /** "setembro de 2026", para dizer de que mês é o acerto. */
 export function nomeDoMes(data: string): string {
   const [ano, mes] = data.split("-").map(Number);
@@ -47,18 +59,18 @@ const dia = (d: Date) => d.toISOString().slice(0, 10);
 export type ItemPendente = { id: string; data: Date; repasseCentavos: number; quantidade: number };
 
 export type APagar = {
-  /** Vendas até o fim do mês passado: é o que o acerto do dia 1 paga. */
+  /** Vendas até o corte (já consolidadas no dia 1): é o que o acerto do dia 1 paga. */
   fechadoCentavos: number;
   pecasFechadas: number;
-  /** Vendas deste mês, que entram no próximo acerto. */
+  /** Vendas depois do corte, que entram no próximo acerto. */
   mesAtualCentavos: number;
   pecasMesAtual: number;
   totalCentavos: number;
 };
 
-/** Separa os repasses que faltam pagar entre o mês fechado e o mês atual. */
+/** Separa os repasses que faltam pagar entre o acerto deste mês (até o corte) e o próximo. */
 export function resumirAPagar(itens: readonly ItemPendente[], hoje: string): APagar {
-  const corte = fimDoMesAnterior(hoje);
+  const corte = corteDoAcerto(hoje);
   const r: APagar = { fechadoCentavos: 0, pecasFechadas: 0, mesAtualCentavos: 0, pecasMesAtual: 0, totalCentavos: 0 };
   for (const i of itens) {
     if (dia(i.data) <= corte) {
@@ -73,9 +85,9 @@ export function resumirAPagar(itens: readonly ItemPendente[], hoje: string): APa
   return r;
 }
 
-/** Vem marcado no formulário: o que foi vendido até o fim do mês passado. */
+/** Vem marcado no formulário: o que entra no acerto deste mês (vendido até o corte). */
 export function marcadoDeInicio(item: { data: Date }, hoje: string): boolean {
-  return dia(item.data) <= fimDoMesAnterior(hoje);
+  return dia(item.data) <= corteDoAcerto(hoje);
 }
 
 export type DadosAcerto = { itemIds: string[]; data: string; forma: FormaAcerto; observacao: string | null };

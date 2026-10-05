@@ -3,7 +3,6 @@ import { prisma } from "../banco";
 import { fimDoLink, gerarCodigoDoLink, hashDoCodigo } from "../clientes/conta";
 import { gravarLinkDeSenha } from "../clientes/contas";
 import { conferirSenha, gerarHash } from "../senha";
-import { versaoAtualDoAcordo } from "../paginas/servidor";
 import type { DadosDaFornecedora } from "./conta";
 import { registrar, rotuloDaFornecedora } from "../historico/gravar";
 import { CAMPOS_FORNECEDORA, compararParcial } from "../historico/regras";
@@ -51,6 +50,8 @@ export async function buscarConvite(codigo: string, agora = new Date()) {
           cidade: true,
           estado: true,
           pix: true,
+          pixTipo: true,
+          recebimentoPreferido: true,
           ativa: true,
           usuarioId: true,
         },
@@ -142,13 +143,5 @@ export async function salvarDadosDaFornecedora(
       );
     }
     return { ok: true as const };
-  });
-}
-
-/** Passo 2 do primeiro acesso: aceite do acordo. */
-export async function aceitarTermos(fornecedoraId: string, agora = new Date()): Promise<void> {
-  await prisma.fornecedora.updateMany({
-    where: { id: fornecedoraId, termosAceitosEm: null },
-    data: { termosAceitosEm: agora, termosVersao: await versaoAtualDoAcordo() },
   });
 }

@@ -29,6 +29,8 @@ describe("lerFormularioFornecedora", () => {
         email: null,
         documento: null,
         pix: null,
+        pixTipo: null,
+        recebimentoPreferido: null,
         endereco: null,
         cep: null,
         cidade: null,

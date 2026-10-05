@@ -43,6 +43,8 @@ export async function gravarImportacao(plano: PlanoImportacao): Promise<void> {
           cor: p.cor,
           status: p.status,
           dataEntrada: data(p.dataEntrada),
+          // Peças que já estavam à venda no Notion: o prazo do contrato conta da entrada.
+          publicadaEm: p.status === "rascunho" ? null : data(p.dataEntrada),
         })),
       });
       const pecas = new Map((await tx.peca.findMany({ select: { id: true, codigo: true } })).map((p) => [p.codigo, p.id]));

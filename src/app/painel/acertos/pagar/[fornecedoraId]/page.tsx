@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { exigirAcesso } from "@/lib/acesso";
 import { pendentesDaFornecedora } from "@/lib/acertos/gravar";
-import { marcadoDeInicio } from "@/lib/acertos/regras";
+import { DIAS_CONSOLIDACAO, marcadoDeInicio } from "@/lib/acertos/regras";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -41,8 +41,9 @@ export default async function PagarRepasses({ params }: PageProps<"/painel/acert
       ) : (
         <>
           <p>
-            Já vêm marcadas as vendas até o fim do mês passado. Faça o Pix (ou o pagamento) primeiro e depois registre aqui. O
-            sistema gera o comprovante para mandar no WhatsApp, e ele também fica na área da fornecedora.
+            Já vêm marcadas as vendas que entram no acerto deste mês. Pelo contrato, as vendas dos {DIAS_CONSOLIDACAO} dias antes
+            do dia 1 ficam para o próximo acerto. Faça o Pix (ou o pagamento) primeiro e depois registre aqui. O sistema gera o
+            comprovante para mandar no WhatsApp, e ele também fica na área da fornecedora.
           </p>
           {saldo.usadoPendenteCentavos > 0 && (
             <p>
