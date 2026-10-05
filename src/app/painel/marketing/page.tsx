@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -101,8 +102,9 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
     <>
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>WhatsApp Marketing</h1>
-        <Link href="/painel/marketing/resumo" className={proprios.botaoSecundario}>
-          Resumo da semana
+        <Link href="/painel/marketing/resumo" className={proprios.botao}>
+          <Sparkles className="icone" aria-hidden />
+          Lançamentos da semana
         </Link>
       </div>
       <p>

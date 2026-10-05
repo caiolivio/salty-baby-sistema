@@ -20,7 +20,7 @@ import estilos from "../../painel.module.css";
 import marketing from "../marketing.module.css";
 import { MontarPost } from "../montar-post";
 
-export const metadata: Metadata = { title: "Resumo da semana" };
+export const metadata: Metadata = { title: "Lançamentos da semana" };
 
 const nomeDoTamanho = (t: string | null) => TAMANHOS.find((x) => x.valor === t)?.nome ?? t;
 
@@ -69,7 +69,7 @@ export default async function ResumoDaSemana({ searchParams }: PageProps<"/paine
       <p>
         <Voltar href="/painel/marketing">WhatsApp Marketing</Voltar>
       </p>
-      <h1 className={estilos.titulo}>Resumo da semana</h1>
+      <h1 className={estilos.titulo}>Lançamentos da semana</h1>
       <p>
         Um post para cada grupo com as peças que entraram à venda no site nestes 7 dias e ainda estão à venda, pelas regras do
         grupo sugerido. Confira o texto, mude o que quiser e mande no grupo.
