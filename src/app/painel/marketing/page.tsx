@@ -9,6 +9,8 @@ import { origemDaRequisicao } from "@/lib/etiquetas";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { grupoMaisSugerido, LIMITE_DIVULGACAO } from "@/lib/grupos/regras";
+import { precoDoPost } from "@/lib/promocoes/regras";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAlterar, podeVer } from "@/lib/permissoes";
@@ -85,8 +87,10 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
     listarGruposEmUso(),
   ]);
   const lista = ids.flatMap((id) => escolhidas.filter((p) => p.id === id));
+  const promocoes = await promocoesDasPecas([...lista, ...encontradas]);
+  const precoAgora = (p: { id: string; precoCentavos: number }) => formatarReais(promocoes.get(p.id)?.precoCentavos ?? p.precoCentavos);
   const sugerido = grupoMaisSugerido(
-    lista.map((p) => ({ genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome) })),
+    lista.map((p) => ({ genero: p.genero, categorias: p.categorias.map((c) => c.categoria.nome), emPromocao: promocoes.has(p.id) })),
     grupos,
   );
   const naLista = new Set(ids);
@@ -121,7 +125,8 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
                   )}
                   <span>
                     <Link href={`/painel/pecas/${p.id}`}>{p.codigo}</Link> {p.nome}
-                    {p.tamanho && ` · ${p.tamanho}`} · {formatarReais(p.precoCentavos)}
+                    {p.tamanho && ` · ${p.tamanho}`} · {precoAgora(p)}
+                    {promocoes.has(p.id) && " (promoção)"}
                     {p.status !== "publicada" && <strong> · saiu da vitrine</strong>}
                     {p.status === "publicada" && p.naoListada && " · não listado (só pelo link)"}
                   </span>
@@ -149,7 +154,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
             descricao: p.descricao,
             categorias: p.categorias.map((c) => c.categoria.nome),
             tamanho: nomeDoTamanho(p.tamanho),
-            preco: formatarReais(p.precoCentavos),
+            preco: precoDoPost(p.precoCentavos, promocoes.get(p.id)),
             marca: p.marca,
             nota: p.nota,
             foto: p.fotos[0] ? enderecoDaFoto(p.fotos[0].arquivo) : null,
@@ -230,7 +235,8 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
                   <span>{p.nome}</span>
                   <span>
                     {p.tamanho && `${p.tamanho} · `}
-                    {formatarReais(p.precoCentavos)}
+                    {precoAgora(p)}
+                    {promocoes.has(p.id) && " (promoção)"}
                   </span>
                 </div>
               ))}

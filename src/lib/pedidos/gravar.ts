@@ -3,6 +3,7 @@ import { prisma } from "../banco";
 import { registrarStatus, SELECAO_STATUS } from "../historico/gravar";
 import { AUTOR_SISTEMA, type Autor } from "../historico/regras";
 import { lerLoja } from "../loja/servidor";
+import { promocoesDasPecas } from "../promocoes/servidor";
 import { fimDaReserva } from "./regras";
 
 /** Erro usado para desfazer a transação quando alguma peça já saiu. */
@@ -80,6 +81,8 @@ export async function fecharPedido(
         if (r.count === 0) indisponiveis.push(peca.id);
       }
       if (indisponiveis.length > 0) throw new PecasIndisponiveis(indisponiveis);
+      // O desconto da promoção que vale agora fica guardado em cada item do pedido.
+      const promocoes = await promocoesDasPecas(pecas, tx);
 
       await tx.sequencia.upsert({
         where: { chave: "pedido" },
@@ -101,12 +104,14 @@ export async function fecharPedido(
           creditoFornecedoraId: cliente.creditoFornecedoraId ?? null,
           grupoId,
           reservadoAte: fimDaReserva(agora, minutosReserva),
-          totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos, 0),
+          totalCentavos: pecas.reduce((soma, p) => soma + p.precoCentavos - (promocoes.get(p.id)?.descontoCentavos ?? 0), 0),
           itens: {
             create: pecaIds.map((pecaId, ordem) => ({
               pecaId,
               ordem,
               precoCentavos: pecas.find((p) => p.id === pecaId)!.precoCentavos,
+              descontoCentavos: promocoes.get(pecaId)?.descontoCentavos ?? 0,
+              promocaoId: promocoes.get(pecaId)?.promocaoId ?? null,
             })),
           },
         },
@@ -139,10 +144,10 @@ async function editar(pedidoId: string, mudar: (tx: Transacao, pedido: PedidoAbe
         throw new Recusa(pedido.status === "pago" ? "Este pedido já foi pago." : "Este pedido foi cancelado.");
       }
       await mudar(tx, { ...pedido, status: pedido.status });
-      const itens = await tx.itemPedido.findMany({ where: { pedidoId }, select: { precoCentavos: true } });
+      const itens = await tx.itemPedido.findMany({ where: { pedidoId }, select: { precoCentavos: true, descontoCentavos: true } });
       await tx.pedido.update({
         where: { id: pedidoId },
-        data: { totalCentavos: itens.reduce((soma, i) => soma + i.precoCentavos, 0) },
+        data: { totalCentavos: itens.reduce((soma, i) => soma + i.precoCentavos - i.descontoCentavos, 0) },
       });
     });
     return { ok: true };
@@ -192,12 +197,15 @@ export function incluirPecaNoPedido(pedidoId: string, codigo: string, autor: Aut
     if (pedido.status === "reservado") {
       await registrarStatus(tx, [peca], { status: "reservada" }, autor, `Incluída no pedido nº ${pedido.numero}`);
     }
+    const promocao = (await promocoesDasPecas([peca], tx)).get(peca.id);
     await tx.itemPedido.create({
       data: {
         pedidoId,
         pecaId: peca.id,
         ordem: Math.max(-1, ...pedido.itens.map((i) => i.ordem)) + 1,
         precoCentavos: peca.precoCentavos,
+        descontoCentavos: promocao?.descontoCentavos ?? 0,
+        promocaoId: promocao?.promocaoId ?? null,
       },
     });
   });

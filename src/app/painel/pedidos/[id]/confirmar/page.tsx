@@ -8,6 +8,7 @@ import { formatarDataHora, formatarHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { minutosRestantes } from "@/lib/pedidos/regras";
+import { valoresDaPromocao } from "@/lib/promocoes/regras";
 import { opcoesDeSaldo } from "@/lib/fornecedoras/saldo-para-compras";
 import proprios from "../../../formulario.module.css";
 import estilos from "../../../painel.module.css";
@@ -29,6 +30,7 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
     where: { id },
     include: {
       itens: { orderBy: { ordem: "asc" }, include: {
+          promocao: { select: { nome: true, porContaDaLoja: true } },
           peca: {
             select: {
               id: true,
@@ -96,7 +98,8 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
                     {i.peca.tamanho && <span className={estilos.antigo}>Tam. {i.peca.tamanho}</span>}
                   </td>
                   <td className={estilos.numero} data-rotulo="Preço">
-                    {formatarReais(i.precoCentavos)}
+                    {formatarReais(i.precoCentavos - i.descontoCentavos)}
+                    {i.descontoCentavos > 0 && <span className={estilos.antigo}>Promoção · antes {formatarReais(i.precoCentavos)}</span>}
                   </td>
                 </tr>
             ))}
@@ -119,6 +122,15 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
           mostrarValores={valores}
           saldos={saldos}
           saldoPedido={pedido.creditoFornecedoraId}
+          // O desconto das promoções já vem preenchido em cada peça.
+          iniciais={valoresDaPromocao(
+            pedido.itens.map((i) => ({
+              pecaId: i.pecaId,
+              descontoCentavos: i.descontoCentavos,
+              porContaDaLoja: i.promocao?.porContaDaLoja ?? false,
+              nome: i.promocao?.nome ?? "promoção",
+            })),
+          )}
           pecas={pedido.itens.map((i) => ({
             id: i.pecaId,
             codigo: i.peca.codigo,

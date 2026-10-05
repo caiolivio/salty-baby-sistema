@@ -448,6 +448,42 @@
   font-weight: 600;
 }
 
+/* Peça em promoção: preço antigo riscado ao lado do novo. */
+.precoPromocao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.precoPromocao s {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.precoPromocao .preco,
+.precoPromocao .precoGrande,
+.precoPromocao .precoNaBarra {
+  color: var(--petroleo);
+}
+
+.economia {
+  margin: -4px 0 12px;
+  color: var(--petroleo);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.seloPromocao {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--raio-p);
+  background: var(--petroleo);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .paginas {
   display: flex;
   justify-content: center;

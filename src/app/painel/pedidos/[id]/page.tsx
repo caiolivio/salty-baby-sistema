@@ -214,7 +214,8 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
                     )}
                   </td>
                   <td className={estilos.numero} data-rotulo="Preço">
-                    {formatarReais(i.precoCentavos)}
+                    {formatarReais(i.precoCentavos - i.descontoCentavos)}
+                    {i.descontoCentavos > 0 && <span className={estilos.antigo}>Promoção · antes {formatarReais(i.precoCentavos)}</span>}
                   </td>
                   {vendido && valores && (
                     <>

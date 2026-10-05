@@ -23,6 +23,7 @@ import {
 import { incluir } from "../../carrinho/acoes";
 import { Estrela } from "../../estrela";
 import { lerLoja } from "@/lib/loja/servidor";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import estilos from "../../loja.module.css";
 import { quemVeALoja } from "../../quem-ve";
 
@@ -55,11 +56,17 @@ const buscarPeca = cache(async (codigo: string) =>
   }),
 );
 
+/** Preço com a promoção que vale hoje, se a peça estiver numa. */
+const promocaoDa = cache(async (peca: { id: string; precoCentavos: number }) => (await promocoesDasPecas([peca])).get(peca.id) ?? null);
+
+const dataBr = (t: string) => t.split("-").reverse().join("/");
+
 export async function generateMetadata({ params }: PageProps<"/peca/[codigo]">): Promise<Metadata> {
   const peca = await buscarPeca((await params).codigo);
   if (!peca) return { title: "Peça não encontrada" };
   const loja = await lerLoja();
-  const titulo = `${peca.nome} · ${formatarReais(peca.precoCentavos)} · ${loja.nome}`;
+  const promocao = await promocaoDa(peca);
+  const titulo = `${peca.nome} · ${formatarReais(promocao?.precoCentavos ?? peca.precoCentavos)} · ${loja.nome}`;
   const foto = peca.fotos[0];
   return {
     title: { absolute: titulo },
@@ -94,6 +101,8 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   const conservacao = CONSERVACOES.find((c) => c.valor === peca.conservacao)?.nome;
   const categorias = peca.categorias.map((c) => c.categoria.nome).join(", ");
   const loja = await lerLoja();
+  const promocao = await promocaoDa(peca);
+  const preco = formatarReais(promocao?.precoCentavos ?? peca.precoCentavos);
   const whatsapp = linkWhatsapp(
     loja.whatsapp,
     mensagemDaPeca(
@@ -101,7 +110,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
         codigo: peca.codigo,
         nome: peca.nome,
         tamanho: peca.tamanho,
-        preco: formatarReais(peca.precoCentavos),
+        preco,
       },
       origemDaRequisicao(await headers()),
       grupo?.nome,
@@ -109,7 +118,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   );
   const paraAmiga = linkCompartilharWhatsapp(
     mensagemParaAmiga(
-      { codigo: peca.codigo, nome: peca.nome, tamanho: peca.tamanho, preco: formatarReais(peca.precoCentavos) },
+      { codigo: peca.codigo, nome: peca.nome, tamanho: peca.tamanho, preco },
       origemDaRequisicao(await headers()),
       loja.nome,
     ),
@@ -167,7 +176,14 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
           {(conservacao || peca.marca) && <p className="sobretitulo">{[conservacao, peca.marca].filter(Boolean).join(" · ")}</p>}
           <h1>{peca.nome}</h1>
           <div className={estilos.precoEEstrela}>
-            <strong className={estilos.precoGrande}>{formatarReais(peca.precoCentavos)}</strong>
+            {promocao ? (
+              <span className={estilos.precoPromocao}>
+                <s aria-label={`Antes ${formatarReais(peca.precoCentavos)}`}>{formatarReais(peca.precoCentavos)}</s>
+                <strong className={estilos.precoGrande}>{preco}</strong>
+              </span>
+            ) : (
+              <strong className={estilos.precoGrande}>{preco}</strong>
+            )}
             {quem.estrela && (
               <Estrela
                 pecaId={peca.id}
@@ -178,6 +194,11 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
               />
             )}
           </div>
+          {promocao && (
+            <p>
+              <span className={estilos.seloPromocao}>{promocao.nome}</span> Promoção até {dataBr(promocao.fim)}
+            </p>
+          )}
           {!disponivel && <p className={estilos.reservada}>Esta peça está reservada para outra cliente no momento.</p>}
           <dl className={estilos.detalhes}>
             {detalhes
@@ -205,7 +226,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
               <form action={incluir} className={estilos.acaoFixa}>
                 <input type="hidden" name="id" value={peca.id} />
                 <input type="hidden" name="voltar" value={enderecoDaPeca(peca.codigo)} />
-                <strong className={estilos.precoNaBarra}>{formatarReais(peca.precoCentavos)}</strong>
+                <strong className={estilos.precoNaBarra}>{preco}</strong>
                 <button type="submit" className={estilos.botaoWhats}>
                   <ShoppingBag className="icone" aria-hidden />
                   Incluir no carrinho

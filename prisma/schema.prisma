@@ -213,6 +213,7 @@ model Peca {
   itensVendidos     ItemVenda[]
   itensPedido       ItemPedido[]
   favoritos         Favorito[]
+  promocoes         PromocaoPeca[]
   proposta          PecaProposta?
   devolucoes        Devolucao[]
 
@@ -525,14 +526,18 @@ model Pedido {
 }
 
 model ItemPedido {
-  pedidoId      String @map("pedido_id")
-  pecaId        String @map("peca_id")
+  pedidoId         String    @map("pedido_id")
+  pecaId           String    @map("peca_id")
   /// Ordem em que a cliente escolheu as peças.
-  ordem         Int    @default(0)
+  ordem            Int       @default(0)
   /// Preço da peça no momento do pedido.
-  precoCentavos Int    @map("preco_centavos")
-  pedido        Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  peca          Peca   @relation(fields: [pecaId], references: [id])
+  precoCentavos    Int       @map("preco_centavos")
+  /// Desconto da promoção em que a peça estava ao fechar o pedido.
+  descontoCentavos Int       @default(0) @map("desconto_centavos")
+  promocaoId       String?   @map("promocao_id")
+  pedido           Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  peca             Peca      @relation(fields: [pecaId], references: [id])
+  promocao         Promocao? @relation(fields: [promocaoId], references: [id], onDelete: SetNull)
 
   @@id([pedidoId, pecaId])
   @@index([pecaId])
@@ -798,4 +803,43 @@ model Despesa {
 
   @@index([data])
   @@map("despesas")
+}
+
+enum TipoDesconto {
+  reais
+  percentual
+}
+
+/// Promoção: peças escolhidas com um desconto e um período. A vitrine mostra o
+/// preço antigo riscado; o preço da peça no cadastro não muda.
+model Promocao {
+  id             String         @id @default(cuid())
+  nome           String         @db.VarChar(80)
+  tipo           TipoDesconto
+  /// Centavos (reais) ou pontos-base (percentual, 2000 = 20%).
+  valor          Int
+  inicio         DateTime       @db.Date
+  fim            DateTime       @db.Date
+  /// Desconto por conta da loja (repasse sobre o preço cheio); senão, dividido.
+  porContaDaLoja Boolean        @default(false) @map("por_conta_da_loja")
+  ativa          Boolean        @default(true)
+  quem           String         @db.VarChar(191)
+  criadoEm       DateTime       @default(now()) @map("criado_em")
+  atualizadoEm   DateTime       @updatedAt @map("atualizado_em")
+  pecas          PromocaoPeca[]
+  itensPedido    ItemPedido[]
+
+  @@index([inicio, fim])
+  @@map("promocoes")
+}
+
+model PromocaoPeca {
+  promocaoId String   @map("promocao_id")
+  pecaId     String   @map("peca_id")
+  promocao   Promocao @relation(fields: [promocaoId], references: [id], onDelete: Cascade)
+  peca       Peca     @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  @@id([promocaoId, pecaId])
+  @@index([pecaId])
+  @@map("promocoes_pecas")
 }

@@ -153,7 +153,10 @@ export async function confirmarPagamento(
           ? new Recusa(`${erro.message} Tire a peça do pedido ou cancele o pedido.`)
           : erro;
       });
-      const total = pedido.totalCentavos - descontoCentavos;
+      // O total do pedido já vem com a promoção; a venda parte do preço cheio
+      // das peças, e todo desconto (promoção incluída) está no plano.
+      const subtotal = pedido.itens.reduce((s, i) => s + i.precoCentavos, 0);
+      const total = subtotal - descontoCentavos;
       const forma = formaDaVenda(dados.forma, credito, total);
       const venda = await tx.venda.create({
         data: {
@@ -166,7 +169,7 @@ export async function confirmarPagamento(
           formaPagamento: forma,
           ...camposDoCredito(credito),
           taxaCentavos: calcularTaxa({ forma, totalCentavos: total, creditoCentavos: credito?.valorCentavos }, await taxasAtuais(tx)),
-          subtotalCentavos: pedido.totalCentavos,
+          subtotalCentavos: subtotal,
           descontoCentavos,
           totalCentavos: total,
           motivoDesconto: descontoCentavos > 0 ? dados.desconto.motivo : null,

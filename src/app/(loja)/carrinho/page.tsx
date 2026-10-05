@@ -10,6 +10,7 @@ import { enderecoDaFoto } from "@/lib/fotos";
 import { saldoParaCompras } from "@/lib/fornecedoras/saldo-para-compras";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { COOKIE_CARRINHO, formatarTelefone, lerCarrinho } from "@/lib/pedidos/regras";
+import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { enderecoDaPeca } from "@/lib/vitrine";
 import estilos from "../loja.module.css";
 import { tirar } from "./acoes";
@@ -35,7 +36,10 @@ export default async function Carrinho() {
   });
   const pecas = ids.flatMap((id) => encontradas.filter((p) => p.id === id));
   const disponivel = (p: (typeof pecas)[number]) => p.status === "publicada" && p.quantidade > 0;
-  const total = pecas.filter(disponivel).reduce((soma, p) => soma + p.precoCentavos, 0);
+  const promocoes = await promocoesDasPecas(pecas);
+  const preco = (p: (typeof pecas)[number]) => promocoes.get(p.id)?.precoCentavos ?? p.precoCentavos;
+  const total = pecas.filter(disponivel).reduce((soma, p) => soma + preco(p), 0);
+  const economia = pecas.filter(disponivel).reduce((soma, p) => soma + (promocoes.get(p.id)?.descontoCentavos ?? 0), 0);
   const todasDisponiveis = pecas.length > 0 && pecas.every(disponivel);
   // Cliente logada: nome e WhatsApp já vêm preenchidos, e o pedido fica na conta dela.
   const usuario = await usuarioAtual();
@@ -83,7 +87,14 @@ export default async function Carrinho() {
                   </Link>
                   <span className={estilos.detalhe}>{[p.codigo, p.tamanho && `Tam. ${p.tamanho}`].filter(Boolean).join(" · ")}</span>
                   {disponivel(p) ? (
-                    <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>
+                    promocoes.has(p.id) ? (
+                      <span className={estilos.precoPromocao}>
+                        <s aria-label={`Antes ${formatarReais(p.precoCentavos)}`}>{formatarReais(p.precoCentavos)}</s>
+                        <strong className={estilos.preco}>{formatarReais(preco(p))}</strong>
+                      </span>
+                    ) : (
+                      <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>
+                    )
                   ) : (
                     <span className={estilos.aviso}>Esta peça não está mais disponível.</span>
                   )}
@@ -102,6 +113,7 @@ export default async function Carrinho() {
             <p className={estilos.total}>
               <span>Total</span> <strong>{formatarReais(total)}</strong>
             </p>
+            {economia > 0 && <p className={estilos.economia}>Você economiza {formatarReais(economia)} com a promoção.</p>}
             {todasDisponiveis ? (
               <>
                 <FecharPedido
