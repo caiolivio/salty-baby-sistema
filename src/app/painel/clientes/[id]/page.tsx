@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
+import { descricaoDoAlerta } from "@/lib/alertas/regras";
 import { SITUACOES_SACOLINHA, textoDoPrazo } from "@/lib/sacolinhas/regras";
 import { prisma } from "@/lib/banco";
 import { formatarCpf } from "@/lib/clientes/dados";
@@ -72,6 +73,15 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
   });
   if (!cliente) notFound();
   const c = cliente;
+  const alertas = await prisma.alerta.findMany({ where: { clienteId: c.id }, orderBy: { criadoEm: "asc" } });
+  const categoriasDosAlertas = new Map(
+    (
+      await prisma.categoria.findMany({
+        where: { id: { in: alertas.flatMap((a) => (a.categoriaId ? [a.categoriaId] : [])) } },
+        select: { id: true, nome: true },
+      })
+    ).map((x) => [x.id, x.nome]),
+  );
   const tel = lerTelefoneCliente(c.telefone);
   const gasto = c.vendas.reduce((s, v) => s + v.totalCentavos, 0);
   const tamanhos = [...new Set(c.vendas.flatMap((v) => v.itens.map((i) => i.peca.tamanho)).filter(Boolean))];
@@ -150,6 +160,11 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         <AcessoAoSite clienteId={c.id} email={c.usuario?.email ?? c.email ?? ""} temConta={Boolean(c.usuario)} />
       ) : (
         !c.usuario && <p className={proprios.dica}>Só a administradora cria o acesso.</p>
+      )}
+      {alertas.length > 0 && (
+        <p>
+          Pediu aviso de chegada: {alertas.map((a) => descricaoDoAlerta(a, categoriasDosAlertas.get(a.categoriaId ?? ""))).join("; ")}
+        </p>
       )}
       {c.favoritos.length > 0 && (
         <p>

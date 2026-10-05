@@ -1,8 +1,9 @@
-import { Plus } from "lucide-react";
+import { BellRing, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
 import { exigirPagina } from "@/lib/acesso";
+import { avisosPendentes } from "@/lib/alertas/servidor";
 import { prisma } from "@/lib/banco";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
@@ -46,6 +47,7 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
       select: { id: true, nome: true, telefone: true, cidade: true },
     }),
   ]);
+  const avisos = (await avisosPendentes()).length;
   const compras = await prisma.venda.groupBy({
     by: ["clienteId"],
     where: { clienteId: { in: clientes.map((c) => c.id) } },
@@ -61,6 +63,10 @@ export default async function Clientes({ searchParams }: PageProps<"/painel/clie
       <div className={proprios.cabecalho}>
         <h1 className={estilos.titulo}>Clientes</h1>
         <span className={proprios.exportar}>
+          <Link href="/painel/clientes/avisos" className={proprios.botaoSecundario}>
+            <BellRing className="icone" aria-hidden />
+            Avisos de chegada{avisos > 0 && ` (${avisos})`}
+          </Link>
           <BotoesExportar tabela="clientes" />
           {podeAlterar(usuario.acesso, "clientes") && (
             <Link href="/painel/clientes/nova" className={proprios.botao}>

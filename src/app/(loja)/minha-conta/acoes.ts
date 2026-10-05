@@ -9,6 +9,8 @@ import { alternarFavorito, atualizarPerfil, fichaDaCliente, tornarTambemCliente,
 import { enderecoDeVoltaSeguro, podeAcessar } from "@/lib/permissoes";
 import { autorDe } from "@/lib/historico/regras";
 import { pedirEnvio } from "@/lib/sacolinhas/servidor";
+import { lerAlerta } from "@/lib/alertas/regras";
+import { apagarAlerta, criarAlerta } from "@/lib/alertas/servidor";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -66,4 +68,38 @@ export async function pedirEnvioDaSacolinha(dados: FormData) {
   const ficha = await fichaDaCliente(usuario);
   const r = await pedirEnvio(String(dados.get("id") ?? ""), autorDe(usuario), ficha.id);
   redirect(r.ok ? "/minha-conta/sacolinha?envio=1" : `/minha-conta/sacolinha?erro=${encodeURIComponent(r.erro)}`);
+}
+
+/** Cliente logada (a fornecedora ganha o perfil de cliente, como na estrela). Sem login, leva para entrar e voltar. */
+async function clienteParaAviso(voltar: string) {
+  const usuario = await usuarioAtual();
+  if (!usuario) redirect(`/entrar?voltar=${encodeURIComponent(voltar)}`);
+  if (!podeAcessar(usuario.perfis, "area-cliente")) {
+    if (!podeAcessar(usuario.perfis, "area-fornecedora")) redirect("/sem-acesso");
+    await tornarTambemCliente(usuario.id);
+  }
+  return fichaDaCliente(usuario);
+}
+
+/** "Me avise quando chegar": do formulário em Minha conta > Avisos ou do atalho na vitrine. */
+export async function criarAviso(dados: FormData) {
+  const voltar = enderecoDeVoltaSeguro(dados.get("voltar")) ?? "/minha-conta/avisos";
+  const ficha = await clienteParaAviso(voltar);
+  const valores = Object.fromEntries(
+    ["tamanho", "publico", "categoria", "marca"].map((c) => [c, typeof dados.get(c) === "string" ? String(dados.get(c)) : ""]),
+  );
+  const lido = lerAlerta(valores);
+  const r = lido.ok ? await criarAlerta(ficha.id, lido.alerta) : lido;
+  if (!r.ok) {
+    const busca = new URLSearchParams({ ...valores, erro: r.erro });
+    redirect(`/minha-conta/avisos?${busca.toString()}`);
+  }
+  redirect("/minha-conta/avisos?criado=1");
+}
+
+export async function apagarAviso(dados: FormData) {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/avisos");
+  const ficha = await fichaDaCliente(usuario);
+  await apagarAlerta(String(dados.get("id") ?? ""), ficha.id);
+  refresh();
 }

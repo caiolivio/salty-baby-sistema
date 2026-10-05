@@ -1794,3 +1794,55 @@
 .explicaSacolinha p {
   margin: 6px 0 0;
 }
+
+/* Minha conta > Avisos ("me avise quando chegar") */
+
+.listaAvisos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.listaAvisos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+}
+
+.listaAvisos button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--altura-toque);
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--petroleo);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.meAvise {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo-suave);
+}
+
+.meAvise p {
+  margin: 0;
+}

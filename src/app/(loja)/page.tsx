@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { BellRing, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import type { Genero, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
@@ -16,6 +16,7 @@ import { CartaoPeca, SELECAO_CARTAO } from "./cartao-peca";
 import { FiltrosDaVitrine } from "./filtros-da-vitrine";
 import estilos from "./loja.module.css";
 import { quemVeALoja } from "./quem-ve";
+import { criarAviso } from "./minha-conta/acoes";
 import { lerLoja } from "@/lib/loja/servidor";
 import { ondeEmPromocao, promocoesDasPecas } from "@/lib/promocoes/servidor";
 
@@ -161,6 +162,26 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
             </li>
           ))}
         </ul>
+      )}
+
+      {(f.tamanho || f.publico || f.categoria) && (
+        <form action={criarAviso} className={estilos.meAvise}>
+          <input type="hidden" name="voltar" value={linkDaVitrine(f)} />
+          <input type="hidden" name="tamanho" value={f.tamanho ?? ""} />
+          <input type="hidden" name="publico" value={f.publico ?? ""} />
+          <input type="hidden" name="categoria" value={f.categoria ?? ""} />
+          <p>
+            <strong>Não achou o que procurava?</strong> A gente avisa pelo WhatsApp quando chegar peça{" "}
+            {[f.tamanho && `no tamanho ${f.tamanho}`, f.categoria && categorias.find((c) => c.id === f.categoria)?.nome.toLowerCase()]
+              .filter(Boolean)
+              .join(", ")}
+            {f.publico && ` para ${f.publico}`}.
+          </p>
+          <button type="submit" className={estilos.botaoWhats}>
+            <BellRing className="icone" aria-hidden />
+            Me avise quando chegar
+          </button>
+        </form>
       )}
 
       {paginas > 1 && (

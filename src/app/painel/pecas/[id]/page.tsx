@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
+import { clientesQueQueremEstaPeca } from "@/lib/alertas/servidor";
 import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { formatarData } from "@/lib/datas";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
@@ -52,6 +53,8 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const marcadas = peca.categorias.map((c) => c.categoriaId);
   const categorias = await opcoesDeCategoria(marcadas);
   const p = peca;
+  // Quem pediu "me avise" de algo assim (só interessa enquanto a peça pode ser vendida).
+  const querem = ["rascunho", "publicada"].includes(p.status) ? await clientesQueQueremEstaPeca(p.id) : [];
   const situacao = nomeDoStatus(p.status, p.naoListada);
   const { acesso } = usuario;
   const valores = temExtra(acesso, "valores");
@@ -162,6 +165,20 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
               <Link href={`/painel/clientes/${f.cliente.id}`}>{f.cliente.nome}</Link>
             </span>
           ))}
+        </p>
+      )}
+
+      {querem.length > 0 && (
+        <p>
+          🔔 Combina com o aviso de chegada de{" "}
+          {querem.map((c, i) => (
+            <span key={c.id}>
+              {i > 0 && (i === querem.length - 1 ? " e " : ", ")}
+              <Link href={`/painel/clientes/${c.id}`}>{c.nome}</Link>
+            </span>
+          ))}
+          {" · "}
+          <Link href="/painel/clientes/avisos">Avisos de chegada</Link>
         </p>
       )}
 
