@@ -181,6 +181,151 @@
   color: var(--petroleo);
 }
 
+/* Grupos do menu (Finanças, Configurações): abrem na coluna ao tocar e, no computador, ao lado ao passar o mouse. */
+.grupoMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.botaoGrupo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.botaoGrupo:hover {
+  background: var(--fundo-suave);
+}
+
+.botaoGrupo :global(.icone) {
+  color: var(--texto-suave);
+}
+
+.botaoGrupo[data-ativo] {
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.botaoGrupo[data-ativo] :global(.icone) {
+  color: var(--petroleo);
+}
+
+.botaoGrupo span {
+  flex: 1;
+}
+
+.botaoGrupo .seta {
+  width: 16px;
+  height: 16px;
+}
+
+.subMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 18px;
+  padding-left: 8px;
+  border-left: 1px solid var(--borda);
+}
+
+.menuFlutuante {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  margin-left: 4px;
+  padding: 8px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: 0 8px 24px rgba(19, 33, 43, 0.14);
+}
+
+.menuFlutuante strong {
+  padding: 4px 10px 6px;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menuFlutuante a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--raio);
+  color: var(--tinta);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.menuFlutuante a:hover {
+  background: var(--fundo-suave);
+}
+
+.menuFlutuante a[aria-current="page"] {
+  background: var(--fundo-marca);
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.menuFlutuante a :global(.icone) {
+  color: var(--texto-suave);
+}
+
+/* Abas no alto das páginas de um grupo, para ir de uma à outra. */
+.abasDoGrupo {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--borda);
+}
+
+.abasDoGrupo a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.abasDoGrupo a:hover {
+  color: var(--tinta);
+}
+
+.abasDoGrupo a[aria-current="page"] {
+  border-bottom-color: var(--petroleo);
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
 .menuTopo,
 .barraCelular,
 .fundoMenu {
@@ -276,9 +421,14 @@
     visibility: visible;
   }
 
-  .menu a {
+  .menu a,
+  .botaoGrupo {
     min-height: var(--altura-toque);
     font-size: 1rem;
+  }
+
+  .menuFlutuante {
+    display: none;
   }
 
   .menuTopo {
