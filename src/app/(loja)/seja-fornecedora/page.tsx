@@ -5,6 +5,8 @@ import { LIMITE_PECAS_INSCRICAO, PASSOS, situacaoDosPassos } from "@/lib/fornece
 import estilos from "../loja.module.css";
 import { FormularioInscricao } from "./formulario-inscricao";
 import { lerLoja } from "@/lib/loja/servidor";
+import { TextoDaPagina } from "@/componentes/texto-da-pagina";
+import { paginaParaMostrar } from "@/lib/paginas/servidor";
 
 export async function generateMetadata(): Promise<Metadata> {
   const loja = await lerLoja();
@@ -15,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SejaFornecedora() {
-  const loja = await lerLoja();
+  const [loja, resumo] = await Promise.all([lerLoja(), paginaParaMostrar("resumo")]);
   return (
     <div className={estilos.paginaFornecedora}>
       <h1 className={estilos.tituloPagina}>Seja uma fornecedora {loja.nome}</h1>
@@ -42,6 +44,10 @@ export default async function SejaFornecedora() {
             {loja.nome}.
           </li>
         </ol>
+      </section>
+      <section className={estilos.resumoContrato} aria-labelledby="resumo-contrato">
+        <h2 id="resumo-contrato">{resumo.titulo}</h2>
+        <TextoDaPagina blocos={resumo.blocos} />
       </section>
       <FormularioInscricao desafio={await novoDesafio()} limite={LIMITE_PECAS_INSCRICAO} />
     </div>

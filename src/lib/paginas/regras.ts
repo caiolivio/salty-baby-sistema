@@ -15,6 +15,12 @@ export const PAGINAS_EDITAVEIS = [
     endereco: "/acordo-de-consignacao",
     explica: "O contrato que a fornecedora lê e aceita na área dela. Ao mudar, você escolhe se elas precisam aceitar de novo.",
   },
+  {
+    chave: "resumo",
+    nome: "Resumo do contrato",
+    endereco: "/seja-fornecedora",
+    explica: "O resumo das condições que a candidata lê no passo 1 do Seja uma fornecedora, antes de se inscrever.",
+  },
   { chave: "termos", nome: "Termos de uso", endereco: "/termos-de-uso", explica: "Regras de uso do site e das compras." },
   { chave: "trocas", nome: "Política de troca", endereco: "/politica-de-troca", explica: "Como funcionam trocas e devoluções das compras." },
   { chave: "sobre", nome: "Sobre a loja", endereco: "/sobre", explica: "Quem é a loja, a história e como funciona." },
@@ -235,7 +241,7 @@ export function lerFormularioPagina(
   const lido = formulario.safeParse({ titulo: valores.titulo ?? "", conteudo: valores.conteudo ?? "" });
   if (!lido.success) return { ok: false, erro: lido.error.issues[0]?.message ?? "Confira os campos." };
   // O acordo e o aviso de privacidade ficam sempre no ar: as fornecedoras e o cadastro dependem deles.
-  const sempreNoAr = chave === "contrato" || chave === "privacidade";
+  const sempreNoAr = NO_AR_SEM_SALVAR.includes(chave);
   return {
     ok: true,
     dados: {
@@ -251,6 +257,20 @@ export function lerFormularioPagina(
 
 export const TEXTOS_INICIAIS: Record<ChavePagina, { titulo: string; conteudo: string }> = {
   contrato: { titulo: TITULO_CONTRATO, conteudo: TEXTO_CONTRATO },
+  resumo: {
+    titulo: "Resumo das condições de consignação",
+    conteudo: `Antes de se inscrever, veja como funciona a consignação na {loja}. Se as suas peças forem aprovadas, você lê e aceita o contrato completo na sua área.
+
+- **Curadoria:** todas as peças passam por avaliação, e a entrega não garante que todas serão colocadas à venda.
+- **Peças não selecionadas:** ficam disponíveis para retirada por 15 dias depois do aviso. Depois desse prazo, são doadas.
+- **Preço:** é definido pela {loja}, que pode ajustá-lo e incluir as peças em promoções, liquidações e cupons.
+- **Divisão:** você recebe {repasse} do valor pago pelo cliente, e {parte_loja} fica com a loja. Quando há desconto, a conta é feita sobre o valor com desconto.
+- **Pagamento:** no primeiro dia útil de cada mês, por PIX ou como crédito na loja, das vendas feitas há mais de 10 dias.
+- **Prazo mínimo:** cada peça fica pelo menos {meses_devolucao} meses à venda, contados do dia em que entra no site. Depois disso, você pode pedir a retirada.
+- **Fotos e divulgação:** a loja fotografa as peças e divulga no site, no Instagram e no WhatsApp.
+
+Dúvidas? Fale com a gente pelo WhatsApp {whatsapp}.`,
+  },
   termos: {
     titulo: "Termos de uso",
     conteudo: `Estes termos explicam como funcionam o site e as compras na {loja}. Ao usar o site ou fazer um pedido, você concorda com eles.
@@ -339,4 +359,7 @@ Você pode ver e corrigir seus dados na sua conta a qualquer momento. Para pedir
 };
 
 /** Páginas que já ficam no ar com o texto inicial, antes de a loja salvar (as outras esperam a loja revisar). */
-export const NO_AR_SEM_SALVAR: readonly ChavePagina[] = ["contrato", "privacidade"];
+export const NO_AR_SEM_SALVAR: readonly ChavePagina[] = ["contrato", "resumo", "privacidade"];
+
+/** Páginas que aparecem dentro de outra (o resumo, no Seja uma fornecedora) e não ganham link no rodapé. */
+export const FORA_DO_RODAPE: readonly ChavePagina[] = ["resumo"];

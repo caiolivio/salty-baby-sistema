@@ -20,8 +20,9 @@ import { concluirBoasVindas } from "./acoes";
 import { FormularioAceite } from "./formulario-aceite";
 import { TextoDaPagina } from "@/componentes/texto-da-pagina";
 import { formatarCpf } from "@/lib/clientes/dados";
-import { aberturaDoContrato, contratoParaAceite } from "@/lib/fornecedoras/aceite";
-import { textoDoCheckbox } from "@/lib/fornecedoras/contrato";
+import { aberturaDoContrato, contratoParaAceite, ultimoAceite } from "@/lib/fornecedoras/aceite";
+import { conteudoGuardado, textoDoCheckbox } from "@/lib/fornecedoras/contrato";
+import { blocosDoTexto } from "@/lib/paginas/regras";
 import { ComoFuncionaAArea, TextoDoAcordo } from "./acordo-texto";
 import { EscolherPeriodo } from "./escolher-periodo";
 import { FormularioDados } from "./formulario-dados";
@@ -39,6 +40,31 @@ type DadosParaAceite = {
   pixTipo: string | null;
   recebimentoPreferido: string | null;
 };
+
+/** Passo 3: o contrato completo, com o texto exato que ela aceitou. */
+async function ContratoAceito({ fornecedoraId, aceitoEm }: { fornecedoraId: string; aceitoEm: Date | null }) {
+  const aceite = await ultimoAceite(fornecedoraId);
+  return (
+    <section className={estilos.secaoArea} aria-labelledby="contrato-completo">
+      <h2 id="contrato-completo">O contrato completo</h2>
+      {aceite ? (
+        <>
+          <p>
+            Você aceitou a versão {aceite.versao} em {formatarDia(aceite.aceitoEm)}. Ele fica guardado em Meus dados.
+          </p>
+          <div className={`${estilos.acordo} ${estilos.contrato}`}>
+            <TextoDaPagina blocos={blocosDoTexto(conteudoGuardado(aceite.texto))} nivel={3} />
+          </div>
+        </>
+      ) : (
+        <>
+          {aceitoEm && <p>Você aceitou este contrato em {formatarDia(aceitoEm)}.</p>}
+          <TextoDoAcordo />
+        </>
+      )}
+    </section>
+  );
+}
 
 /** O contrato com os dados e o aceite (CLAUDE.md, "contrato de consignação digital"). */
 async function AceiteDoContrato({ usuarioId, dados }: { usuarioId: string; dados: DadosParaAceite }) {
@@ -216,19 +242,13 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             Quanto mais peças, mais chances de venda! Sempre que tiver roupas, calçados ou brinquedos que não usa mais, mande
             as fotos em <strong>Enviar peças</strong>.
           </p>
-          <details>
-            <summary>
-              Ver o acordo que você aceitou
-              {fornecedora.termosAceitosEm && ` em ${formatarDia(fornecedora.termosAceitosEm)}`}
-            </summary>
-            <TextoDoAcordo />
-          </details>
           <form action={concluirBoasVindas}>
             <button type="submit" className={estilos.botaoWhats}>
               Ir para a minha área
             </button>
           </form>
         </section>
+        <ContratoAceito fornecedoraId={fornecedora.id} aceitoEm={fornecedora.termosAceitosEm} />
       </>
     );
   }
