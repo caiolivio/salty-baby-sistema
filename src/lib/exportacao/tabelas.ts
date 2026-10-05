@@ -315,6 +315,22 @@ async function acertos() {
   );
 }
 
+async function despesas() {
+  const linhas = await prisma.despesa.findMany({ orderBy: [{ data: "desc" }, { criadoEm: "desc" }] });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Data", tipo: "data", valor: (d) => d.data },
+      { titulo: "Despesa", valor: (d) => d.descricao },
+      { titulo: "Categoria", valor: (d) => d.categoria },
+      { titulo: "Valor", tipo: "reais", valor: (d) => d.valorCentavos },
+      { titulo: "Lançada por", valor: (d) => d.quem },
+      { titulo: "Lançada em", tipo: "datahora", valor: (d) => d.criadoEm },
+    ],
+    linhas,
+  );
+}
+
 async function historico(ver: Visao) {
   // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
   const linhas = await prisma.alteracao.findMany({
@@ -348,5 +364,6 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", pagina: "candidaturas", carregar: candidaturas },
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
   historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
+  despesas: { titulo: "Despesas", arquivo: "despesas", pagina: "vendas", soAdministradora: true, carregar: despesas },
   acertos: { titulo: "Pagamentos às fornecedoras", arquivo: "pagamentos-fornecedoras", pagina: "vendas", soAdministradora: true, carregar: acertos },
 };

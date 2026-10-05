@@ -347,6 +347,10 @@ model Venda {
   /// Parte do total paga com o saldo da fornecedora (o resto, na forma de pagamento).
   creditoCentavos      Int                @default(0) @map("credito_centavos")
   creditoFornecedoraId String?            @map("credito_fornecedora_id")
+  /// Taxa da maquininha ou do Pix desta venda (o % da forma no dia da venda, ou o valor ajustado no Financeiro).
+  taxaCentavos         Int                @default(0) @map("taxa_centavos")
+  /// A taxa foi acertada à mão no Financeiro: não é recalculada sozinha.
+  taxaAjustada         Boolean            @default(false) @map("taxa_ajustada")
   /// De onde veio a venda antiga, quando importada (ex.: "Notion: ka - liquida").
   origem               String?            @db.VarChar(191)
   criadoEm             DateTime           @default(now()) @map("criado_em")
@@ -768,4 +772,30 @@ model RelatorioEnviado {
   @@unique([fornecedoraId, mes])
   @@index([mes])
   @@map("relatorios_enviados")
+}
+
+/// Taxa de cada forma de pagamento (pontos-base: 350 = 3,5%), editada no Financeiro.
+/// Vale para as vendas novas; cada venda guarda a taxa dela.
+model TaxaPagamento {
+  forma        FormaPagamento @id
+  percentual   Int
+  atualizadoEm DateTime       @updatedAt @map("atualizado_em")
+  quem         String         @db.VarChar(191)
+
+  @@map("taxas_pagamento")
+}
+
+/// Despesas da loja (aluguel, embalagens, frete...), para o lucro real no Financeiro.
+model Despesa {
+  id            String   @id @default(cuid())
+  data          DateTime @db.Date
+  descricao     String   @db.VarChar(160)
+  categoria     String   @db.VarChar(40)
+  valorCentavos Int      @map("valor_centavos")
+  usuarioId     String?  @map("usuario_id")
+  quem          String   @db.VarChar(191)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  @@index([data])
+  @@map("despesas")
 }
