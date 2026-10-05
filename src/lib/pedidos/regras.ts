@@ -83,6 +83,8 @@ export function mensagemDoPedido(
     itens: ItemDaMensagem[];
     /** Código da fornecedora que quer pagar com o saldo dela. */
     saldoDe?: string | null;
+    /** Cupom usado: código e desconto já formatado. */
+    cupom?: { codigo: string; desconto: string } | null;
   },
   origem: string,
   minutosReserva = MINUTOS_DE_RESERVA,
@@ -97,6 +99,7 @@ export function mensagemDoPedido(
     "",
     ...linhas,
     "",
+    ...(pedido.cupom ? [`Cupom ${pedido.cupom.codigo}: −${pedido.cupom.desconto}`] : []),
     `Total: ${pedido.total}`,
     ...(pedido.saldoDe ? [`Quero pagar com o meu saldo de fornecedora (${pedido.saldoDe}).`] : []),
     `As peças ficam reservadas por ${minutosReserva} minutos. Como faço o pagamento?`,

@@ -356,6 +356,30 @@ async function promocoes() {
   );
 }
 
+async function cupons() {
+  const linhas = await prisma.cupom.findMany({ orderBy: { criadoEm: "desc" }, include: { _count: { select: { pedidos: true } } } });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Código", valor: (c) => c.codigo },
+      { titulo: "Desconto", valor: (c) => descricaoDoDesconto(c) },
+      { titulo: "Início", tipo: "data", valor: (c) => c.inicio },
+      { titulo: "Fim", tipo: "data", valor: (c) => c.fim },
+      { titulo: "Limite de usos", valor: (c) => c.limiteUsos ?? "" },
+      { titulo: "Pedidos com o cupom", valor: (c) => c._count.pedidos },
+      { titulo: "Pedido mínimo", tipo: "reais", valor: (c) => c.pedidoMinimoCentavos },
+      { titulo: "Quem paga", valor: (c) => (c.porContaDaLoja ? "Loja" : "Dividido com a fornecedora") },
+      { titulo: "Ativo", valor: (c) => (c.ativo ? "Sim" : "Não") },
+      { titulo: "Marca", valor: (c) => c.marca ?? "" },
+      { titulo: "Tamanho", valor: (c) => c.tamanho ?? "" },
+      { titulo: "Gênero", valor: (c) => c.genero ?? "" },
+      { titulo: "Só para uma cliente", valor: (c) => (c.clienteId ? "Sim" : "Não") },
+      { titulo: "Só para uma fornecedora", valor: (c) => (c.fornecedoraId ? "Sim" : "Não") },
+    ],
+    linhas,
+  );
+}
+
 async function historico(ver: Visao) {
   // As mais recentes primeiro; um limite alto evita um arquivo grande demais.
   const linhas = await prisma.alteracao.findMany({
@@ -390,6 +414,7 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
   historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
   despesas: { titulo: "Despesas", arquivo: "despesas", pagina: "vendas", soAdministradora: true, carregar: despesas },
+  cupons: { titulo: "Cupons", arquivo: "cupons", pagina: "vendas", soAdministradora: true, carregar: cupons },
   promocoes: { titulo: "Promoções", arquivo: "promocoes", pagina: "vendas", soAdministradora: true, carregar: promocoes },
   acertos: { titulo: "Pagamentos às fornecedoras", arquivo: "pagamentos-fornecedoras", pagina: "vendas", soAdministradora: true, carregar: acertos },
 };

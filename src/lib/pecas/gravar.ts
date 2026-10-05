@@ -234,7 +234,7 @@ export async function mudarStatusDaPeca(id: string, novo: string, autor: Autor):
       if (peca.status === "reservada") {
         const itens = await tx.itemPedido.findMany({
           where: { pecaId: id, pedido: { status: "reservado" } },
-          select: { pedidoId: true, pedido: { select: { numero: true, itens: { select: { pecaId: true, precoCentavos: true, descontoCentavos: true } } } } },
+          select: { pedidoId: true, pedido: { select: { numero: true, itens: { select: { pecaId: true, precoCentavos: true, descontoCentavos: true, descontoCupomCentavos: true } } } } },
         });
         for (const item of itens) {
           const resto = item.pedido.itens.filter((i) => i.pecaId !== id);
@@ -245,7 +245,10 @@ export async function mudarStatusDaPeca(id: string, novo: string, autor: Autor):
             await tx.itemPedido.delete({ where: { pedidoId_pecaId: { pedidoId: item.pedidoId, pecaId: id } } });
             await tx.pedido.update({
               where: { id: item.pedidoId },
-              data: { totalCentavos: resto.reduce((soma, i) => soma + i.precoCentavos - i.descontoCentavos, 0) },
+              data: {
+                totalCentavos: resto.reduce((soma, i) => soma + i.precoCentavos - i.descontoCentavos - i.descontoCupomCentavos, 0),
+                descontoCupomCentavos: resto.reduce((soma, i) => soma + i.descontoCupomCentavos, 0),
+              },
             });
             motivos.push(`tirada do pedido nº ${item.pedido.numero}`);
           }

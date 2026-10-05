@@ -241,6 +241,11 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
           </tbody>
         </table>
       </div>
+      {pedido.cupomCodigo && pedido.descontoCupomCentavos > 0 && (
+        <p>
+          Cupom {pedido.cupomCodigo}: −{formatarReais(pedido.descontoCupomCentavos)}
+        </p>
+      )}
       <p>
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
         {pedido.venda && pedido.venda.descontoCentavos > 0 && (
