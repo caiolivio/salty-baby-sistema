@@ -1846,3 +1846,39 @@
 .meAvise p {
   margin: 0;
 }
+
+/* Fila de espera na página da peça reservada */
+.filaDeEspera {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo-suave);
+}
+
+.filaDeEspera p {
+  margin: 0;
+}
+
+.filaDeEspera p :global(.icone) {
+  vertical-align: -3px;
+  color: var(--turquesa);
+}
+
+.botaoSimples {
+  min-height: var(--altura-toque);
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--petroleo);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.filaSituacao {
+  font-size: 0.88rem;
+  color: var(--texto-suave, #5a6b75);
+}

@@ -21,6 +21,10 @@ import {
   mensagemParaAmiga,
 } from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
+import { entrarNaFilaDeEspera, sairDaFilaDeEspera } from "../../minha-conta/acoes";
+import { filaDaPeca } from "@/lib/fila/servidor";
+import { ordinal, podeEntrarNaFila, posicaoNaFila } from "@/lib/fila/regras";
+import { Clock } from "lucide-react";
 import { Estrela } from "../../estrela";
 import { lerLoja } from "@/lib/loja/servidor";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
@@ -89,11 +93,20 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
   if (!peca) notFound();
   const disponivel = peca.status === "publicada" && peca.quantidade > 0;
   const quem = await quemVeALoja([peca.id]);
+  const busca = await searchParams;
+  // Fila de espera: só para peça reservada. Mostra a posição de quem já está na fila.
+  const naFila = podeEntrarNaFila(peca.status) ? await filaDaPeca(peca.id) : [];
+  const fichaId =
+    naFila.length > 0 && quem.usuario
+      ? (await prisma.cliente.findFirst({ where: { usuarioId: quem.usuario.id }, select: { id: true } }))?.id
+      : undefined;
+  const posicao = fichaId ? posicaoNaFila(naFila, fichaId) : null;
+  const erroFila = typeof busca.erroFila === "string" ? busca.erroFila.slice(0, 200) : null;
   const biscoitos = await cookies();
   const noCarrinho = lerCarrinho(biscoitos.get(COOKIE_CARRINHO)?.value).includes(peca.id);
   // Grupo do link do post (?g=...) ou guardado de uma visita anterior.
   const codigoGrupo =
-    lerCodigoGrupo((await searchParams)[PARAMETRO_GRUPO]) ?? lerCodigoGrupo(biscoitos.get(COOKIE_GRUPO)?.value);
+    lerCodigoGrupo(busca[PARAMETRO_GRUPO]) ?? lerCodigoGrupo(biscoitos.get(COOKIE_GRUPO)?.value);
   const grupo = codigoGrupo
     ? await prisma.grupoWhatsapp.findUnique({ where: { codigo: codigoGrupo }, select: { nome: true } })
     : null;
@@ -200,6 +213,44 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
             </p>
           )}
           {!disponivel && <p className={estilos.reservada}>Esta peça está reservada para outra cliente no momento.</p>}
+          {podeEntrarNaFila(peca.status) && (
+            <section className={estilos.filaDeEspera} aria-label="Fila de espera">
+              {erroFila && (
+                <p className={estilos.erro} role="alert">
+                  {erroFila}
+                </p>
+              )}
+              {posicao ? (
+                <>
+                  <p role="status">
+                    <Clock className="icone" aria-hidden /> Você está na fila de espera: é a <strong>{ordinal(posicao)}</strong>. Se a
+                    reserva não for paga, a gente avisa você pelo WhatsApp.
+                  </p>
+                  <form action={sairDaFilaDeEspera}>
+                    <input type="hidden" name="pecaId" value={peca.id} />
+                    <button type="submit" className={estilos.botaoSimples}>
+                      Sair da fila
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <p>
+                    <Clock className="icone" aria-hidden /> Ainda quer esta peça? Entre na fila de espera: se a reserva não for paga,
+                    a gente avisa você pelo WhatsApp.
+                    {naFila.length > 0 && ` ${naFila.length === 1 ? "1 pessoa já está" : `${naFila.length} pessoas já estão`} na fila.`}
+                  </p>
+                  <form action={entrarNaFilaDeEspera}>
+                    <input type="hidden" name="pecaId" value={peca.id} />
+                    <input type="hidden" name="voltar" value={enderecoDaPeca(peca.codigo)} />
+                    <button type="submit" className={estilos.botaoWhats}>
+                      Entrar na fila de espera
+                    </button>
+                  </form>
+                </>
+              )}
+            </section>
+          )}
           <dl className={estilos.detalhes}>
             {detalhes
               .filter(([, valor]) => valor)

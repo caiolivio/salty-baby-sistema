@@ -11,6 +11,7 @@ import { autorDe } from "@/lib/historico/regras";
 import { pedirEnvio } from "@/lib/sacolinhas/servidor";
 import { lerAlerta } from "@/lib/alertas/regras";
 import { apagarAlerta, criarAlerta } from "@/lib/alertas/servidor";
+import { entrarNaFila, sairDaFila } from "@/lib/fila/servidor";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -101,5 +102,21 @@ export async function apagarAviso(dados: FormData) {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/avisos");
   const ficha = await fichaDaCliente(usuario);
   await apagarAlerta(String(dados.get("id") ?? ""), ficha.id);
+  refresh();
+}
+
+/** "Entrar na fila de espera" na página de uma peça reservada. Sem login, leva para entrar e volta. */
+export async function entrarNaFilaDeEspera(dados: FormData) {
+  const voltar = enderecoDeVoltaSeguro(dados.get("voltar")) ?? "/minha-conta/avisos";
+  const ficha = await clienteParaAviso(voltar);
+  const r = await entrarNaFila(ficha.id, String(dados.get("pecaId") ?? ""));
+  const separador = voltar.includes("?") ? "&" : "?";
+  redirect(`${voltar}${separador}${r.ok ? "fila=1" : `erroFila=${encodeURIComponent(r.erro)}`}`);
+}
+
+export async function sairDaFilaDeEspera(dados: FormData) {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/avisos");
+  const ficha = await fichaDaCliente(usuario);
+  await sairDaFila(ficha.id, String(dados.get("pecaId") ?? ""));
   refresh();
 }

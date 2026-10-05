@@ -146,6 +146,10 @@ export async function fecharPedido(
         },
       });
       await registrarStatus(tx, pecas, { status: "reservada" }, autor, `Pedido nº ${numero} do site`);
+      // Quem estava na fila e conseguiu reservar sai da fila dessas peças.
+      if (cliente.clienteId) {
+        await tx.filaDeEspera.deleteMany({ where: { clienteId: cliente.clienteId, pecaId: { in: pecaIds } } });
+      }
       return pedido.id;
     });
     return { ok: true, id };

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { clientesQueQueremEstaPeca } from "@/lib/alertas/servidor";
+import { filaDaPeca } from "@/lib/fila/servidor";
 import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { formatarData } from "@/lib/datas";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
@@ -55,6 +56,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const p = peca;
   // Quem pediu "me avise" de algo assim (só interessa enquanto a peça pode ser vendida).
   const querem = ["rascunho", "publicada"].includes(p.status) ? await clientesQueQueremEstaPeca(p.id) : [];
+  const fila = ["reservada", "publicada"].includes(p.status) ? await filaDaPeca(p.id) : [];
   const situacao = nomeDoStatus(p.status, p.naoListada);
   const { acesso } = usuario;
   const valores = temExtra(acesso, "valores");
@@ -179,6 +181,21 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           ))}
           {" · "}
           <Link href="/painel/clientes/avisos">Avisos de chegada</Link>
+        </p>
+      )}
+
+      {fila.length > 0 && (
+        <p>
+          ⏳ Fila de espera:{" "}
+          {fila.map((f, i) => (
+            <span key={f.clienteId}>
+              {i > 0 && ", "}
+              {i + 1}ª <Link href={`/painel/clientes/${f.cliente.id}`}>{f.cliente.nome}</Link>
+              {f.avisadoEm && " (já avisada)"}
+            </span>
+          ))}
+          {" · "}
+          <Link href="/painel/clientes/avisos">Avisos para enviar</Link>
         </p>
       )}
 
