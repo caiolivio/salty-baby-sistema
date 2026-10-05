@@ -1670,3 +1670,13 @@
 .info .botaoContorno {
   align-self: stretch;
 }
+
+/* Sacolinha: o aviso de doação aparece sempre, bem visível. */
+.avisoSacolinha {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  background: #fff3dc;
+  color: #8a4b00;
+  font-weight: 600;
+}

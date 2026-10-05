@@ -58,6 +58,7 @@ export const PAGINAS = [
   { chave: "pedidos", nome: "Pedidos", explica: "Pedidos do site, reservas e peças de cada pedido." },
   { chave: "clientes", nome: "Clientes", explica: "Cadastro, compras e crianças das clientes." },
   { chave: "vendas", nome: "Vendas", explica: "Lista de vendas e venda direta (WhatsApp, loja, Bag)." },
+  { chave: "sacolinhas", nome: "Sacolinhas", explica: "Peças pagas guardadas na loja: avisos semanais, envio, retirada e doação." },
   { chave: "historico", nome: "Histórico", explica: "Quem mudou o quê no sistema." },
 ] as const;
 export type Pagina = (typeof PAGINAS)[number]["chave"];

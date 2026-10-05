@@ -11,6 +11,7 @@ import { descontoDaPromocao, descricaoDoDesconto } from "../promocoes/regras";
 import { nomeDoStatus } from "../situacoes";
 import { TAMANHOS } from "../tamanhos";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "../vendas/regras";
+import { SITUACOES_SACOLINHA } from "../sacolinhas/regras";
 import type { Coluna } from "./planilha";
 
 // O que cada tabela do painel exporta. CPF/CNPJ e Pix só vão para a
@@ -293,6 +294,33 @@ async function devolucoes() {
   );
 }
 
+async function sacolinhas() {
+  const linhas = await prisma.sacolinha.findMany({
+    orderBy: { abertaEm: "desc" },
+    include: {
+      cliente: { select: { nome: true, telefone: true } },
+      itens: { select: { valorPagoCentavos: true, peca: { select: { codigo: true } } } },
+    },
+  });
+  type L = (typeof linhas)[number];
+  return exportacao<L>(
+    [
+      { titulo: "Cliente", valor: (s) => s.cliente.nome },
+      { titulo: "WhatsApp", valor: (s) => s.cliente.telefone },
+      { titulo: "Situação", valor: (s) => SITUACOES_SACOLINHA[s.situacao] },
+      { titulo: "Aberta em", tipo: "datahora", valor: (s) => s.abertaEm },
+      { titulo: "Prazo", tipo: "data", valor: (s) => s.prazo },
+      { titulo: "Peças", valor: (s) => s.itens.map((i) => i.peca.codigo).join(", ") },
+      { titulo: "Valor pago", tipo: "reais", valor: (s) => s.itens.reduce((t, i) => t + i.valorPagoCentavos, 0) },
+      { titulo: "Envio pedido em", tipo: "datahora", valor: (s) => s.envioPedidoEm },
+      { titulo: "Frete", tipo: "reais", valor: (s) => s.freteCentavos },
+      { titulo: "Fechada em", tipo: "datahora", valor: (s) => s.fechadaEm },
+      { titulo: "Observação", valor: (s) => s.observacao },
+    ],
+    linhas,
+  );
+}
+
 async function acertos() {
   const linhas = await prisma.acerto.findMany({
     orderBy: [{ data: "desc" }, { numero: "desc" }],
@@ -412,6 +440,7 @@ export const TABELAS: Record<string, TabelaExportavel> = {
   categorias: { titulo: "Categorias", arquivo: "categorias", pagina: "categorias", carregar: categorias },
   candidaturas: { titulo: "Seja fornecedora", arquivo: "inscricoes-fornecedoras", pagina: "candidaturas", carregar: candidaturas },
   devolucoes: { titulo: "Devoluções", arquivo: "devolucoes", pagina: "devolucoes", carregar: devolucoes },
+  sacolinhas: { titulo: "Sacolinhas", arquivo: "sacolinhas", pagina: "sacolinhas", carregar: sacolinhas },
   historico: { titulo: "Histórico de alterações", arquivo: "historico", pagina: "historico", carregar: historico },
   despesas: { titulo: "Despesas", arquivo: "despesas", pagina: "vendas", soAdministradora: true, carregar: despesas },
   cupons: { titulo: "Cupons", arquivo: "cupons", pagina: "vendas", soAdministradora: true, carregar: cupons },

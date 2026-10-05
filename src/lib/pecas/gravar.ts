@@ -6,7 +6,8 @@ import { apagarFoto, guardarFotoDePeca } from "../fotos";
 import { registrar, registrarCadastro, registrarStatus, rotuloDaPeca, SELECAO_STATUS } from "../historico/gravar";
 import { compararPeca, type Autor, type EstadoPeca } from "../historico/regras";
 import { nomeDoStatus } from "../situacoes";
-import { motivoParaNaoExcluir, moverNaLista, opcoesDeStatus, type DadosPeca } from "./dados";
+import { hojeEmSaoPaulo, motivoParaNaoExcluir, moverNaLista, opcoesDeStatus, type DadosPeca } from "./dados";
+import { guardarPecaNaSacolinha, RecusaDaSacolinha, tirarPecaDaSacolinha } from "../sacolinhas/servidor";
 import { lerLoja } from "../loja/servidor";
 
 type Transacao = Prisma.TransactionClient;
@@ -261,6 +262,16 @@ export async function mudarStatusDaPeca(id: string, novo: string, autor: Autor):
           data: { situacao: devolvida ? "devolvida" : "cancelada", concluidaEm: new Date() },
         });
         motivos.push(devolvida ? "devolvida à fornecedora" : "pedido de devolução cancelado");
+      }
+
+      if (status === "na_sacolinha") {
+        await guardarPecaNaSacolinha(tx, id, hojeEmSaoPaulo()).catch((erro) => {
+          throw erro instanceof RecusaDaSacolinha ? new Recusa(erro.message) : erro;
+        });
+        motivos.push("guardada na sacolinha da cliente");
+      } else if (peca.status === "na_sacolinha" && status === "vendida") {
+        await tirarPecaDaSacolinha(tx, id);
+        motivos.push("tirada da sacolinha");
       }
 
       // Só muda se ninguém mexeu na peça enquanto isso.

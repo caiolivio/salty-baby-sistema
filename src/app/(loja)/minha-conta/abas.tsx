@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Receipt, ShoppingBag, Sparkles, UserRound } from "lucide-react";
+import { Heart, Package, Receipt, ShoppingBag, Sparkles, UserRound } from "lucide-react";
 import estilos from "../loja.module.css";
 
 const ABAS = [
   { href: "/minha-conta", nome: "Para você", Icone: Sparkles },
   { href: "/minha-conta/compras", nome: "Compras", Icone: Receipt },
+  { href: "/minha-conta/sacolinha", nome: "Sacolinha", Icone: Package },
   { href: "/minha-conta/favoritos", nome: "Favoritos", Icone: Heart },
   { href: "/carrinho", nome: "Carrinho", Icone: ShoppingBag },
   { href: "/minha-conta/perfil", nome: "Meus dados", Icone: UserRound },

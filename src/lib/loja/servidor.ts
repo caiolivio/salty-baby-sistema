@@ -28,6 +28,7 @@ const SELECAO = {
   repassePadrao: true,
   minutosReserva: true,
   mesesDevolucao: true,
+  mesesSacolinha: true,
   atualizadoEm: true,
 } as const;
 

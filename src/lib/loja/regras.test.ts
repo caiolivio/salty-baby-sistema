@@ -15,6 +15,7 @@ const formulario = {
   repassePadrao: "40",
   minutosReserva: "15",
   mesesDevolucao: "6",
+  mesesSacolinha: "3",
 };
 
 describe("lerFormularioLoja", () => {
@@ -33,6 +34,7 @@ describe("lerFormularioLoja", () => {
         repassePadrao: 4000,
         minutosReserva: 15,
         mesesDevolucao: 6,
+        mesesSacolinha: 3,
       },
     });
   });

@@ -19,6 +19,7 @@ type Valores = {
   repassePadrao: string;
   minutosReserva: string;
   mesesDevolucao: string;
+  mesesSacolinha: string;
 };
 
 const CORES = [
@@ -172,6 +173,11 @@ export function FormularioLoja({
             Meses para pedir devolução
             <input name="mesesDevolucao" type="number" min={0} max={36} required defaultValue={v("mesesDevolucao")} />
             <span className={estilos.dica}>A fornecedora pede a peça de volta só depois deste tempo da entrada.</span>
+          </label>
+          <label className={estilos.campo}>
+            Meses de prazo da sacolinha
+            <input name="mesesSacolinha" type="number" min={1} max={24} required defaultValue={v("mesesSacolinha")} />
+            <span className={estilos.dica}>Contados da primeira peça. Depois do prazo, as peças são doadas. Vale para as sacolinhas novas.</span>
           </label>
           <label className={estilos.campo}>
             Prefixo das peças da loja

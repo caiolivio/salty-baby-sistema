@@ -96,6 +96,10 @@ export function FormularioVenda({
             </label>
           ))}
         </div>
+        <p className={estilos.dica}>
+          Na sacolinha, as peças ficam guardadas na loja até a cliente pedir o envio (ela paga o frete). Precisa de uma
+          cliente na venda. Depois do prazo da sacolinha, as peças são doadas.
+        </p>
       </fieldset>
       {!vazia && <CamposDeDesconto pecas={pecas} valores={v} mostrarValores={mostrarValores} />}
       {!vazia && <CampoDoSaldo fornecedoras={saldos} valores={v} />}

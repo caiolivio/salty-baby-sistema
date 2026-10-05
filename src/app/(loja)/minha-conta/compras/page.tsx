@@ -5,6 +5,9 @@ import { fichaDaCliente } from "@/lib/clientes/contas";
 import { formatarData } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { enderecoDaFoto } from "@/lib/fotos";
+import Link from "next/link";
+import { lerLoja } from "@/lib/loja/servidor";
+import { avisoDeDoacao } from "@/lib/sacolinhas/regras";
 import estilos from "../../loja.module.css";
 
 export const metadata: Metadata = { title: "Minhas compras" };
@@ -13,6 +16,7 @@ export const metadata: Metadata = { title: "Minhas compras" };
 export default async function Compras() {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/compras");
   const ficha = await fichaDaCliente(usuario);
+  const loja = await lerLoja();
   const vendas = await prisma.venda.findMany({
     where: { clienteId: ficha.id },
     orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
@@ -24,6 +28,7 @@ export default async function Compras() {
         select: {
           id: true,
           valorPagoCentavos: true,
+          sacolinha: { select: { situacao: true, prazo: true } },
           peca: {
             select: {
               codigo: true,
@@ -52,6 +57,15 @@ export default async function Compras() {
               {v.itens.length} peça(s) · Total {formatarReais(v.totalCentavos)}
             </span>
           </header>
+          {(() => {
+            // A compra guardada na sacolinha avisa o prazo e a doação.
+            const sacolinha = v.itens.find((i) => i.sacolinha?.situacao === "aberta" || i.sacolinha?.situacao === "envio_pedido")?.sacolinha;
+            return sacolinha ? (
+              <p className={estilos.avisoSacolinha}>
+                Guardada na <Link href="/minha-conta/sacolinha">sacolinha</Link>. {avisoDeDoacao(sacolinha.prazo, loja.nomeCurto)}
+              </p>
+            ) : null;
+          })()}
           <ul className={estilos.itens}>
             {v.itens.map((i) => (
               <li key={i.id}>

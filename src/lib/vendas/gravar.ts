@@ -8,6 +8,7 @@ import { formaComCredito, type PedidoDeCredito } from "../fornecedoras/credito";
 import { gastarSaldo } from "../fornecedoras/saldo-para-compras";
 import { calcularTaxa } from "../financeiro/regras";
 import { taxasAtuais } from "../financeiro/servidor";
+import { guardarVendaNaSacolinha } from "../sacolinhas/servidor";
 import { NOMES_QUEM_PAGA } from "./descontos";
 import {
   calcularItens,
@@ -145,6 +146,9 @@ export async function confirmarPagamento(
       if (pedido.status !== "reservado" && pedido.status !== "expirado") {
         throw new Recusa(pedido.status === "pago" ? "Este pedido já foi pago." : "Este pedido foi cancelado.");
       }
+      if (dados.destino === "na_sacolinha" && !pedido.clienteId) {
+        throw new Recusa("Para guardar na sacolinha, ligue o pedido a uma cliente do cadastro (na página do pedido).");
+      }
       // Reservada por este pedido, ou de volta à venda depois que a reserva venceu.
       const statusAceito = pedido.status === "reservado" ? "reservada" : "publicada";
       const motivo = `Pedido nº ${pedido.numero} pago`;
@@ -177,6 +181,7 @@ export async function confirmarPagamento(
           itens: { create: itens },
         },
       });
+      if (dados.destino === "na_sacolinha" && pedido.clienteId) await guardarVendaNaSacolinha(tx, venda.id, pedido.clienteId, hoje);
       await usarSaldo(tx, credito, { id: venda.id, descricao: `pedido nº ${pedido.numero}` }, autor);
       await tx.pedido.update({ where: { id: pedido.id }, data: { status: "pago", vendaId: venda.id } });
       return venda.id;
@@ -202,6 +207,9 @@ export async function registrarVendaDireta(
   credito: PedidoDeCredito = null,
 ): Promise<ResultadoConfirmar> {
   if (pecaIds.length === 0) return { ok: false, erro: "Inclua pelo menos uma peça na venda." };
+  if (dados.destino === "na_sacolinha" && !cliente) {
+    return { ok: false, erro: "Para guardar na sacolinha, escolha a cliente da venda." };
+  }
   try {
     const vendaId = await prisma.$transaction(async (tx) => {
       const precos = await tx.peca.findMany({ where: { id: { in: pecaIds } }, select: { id: true, precoCentavos: true } });
@@ -232,6 +240,7 @@ export async function registrarVendaDireta(
           itens: { create: itens },
         },
       });
+      if (dados.destino === "na_sacolinha" && clienteId) await guardarVendaNaSacolinha(tx, venda.id, clienteId, dados.data);
       const pecas = itens.length === 1 ? "1 peça" : `${itens.length} peças`;
       await usarSaldo(tx, credito, { id: venda.id, descricao: `venda de ${formatarData(data(dados.data))} (${pecas})` }, autor);
       return venda.id;

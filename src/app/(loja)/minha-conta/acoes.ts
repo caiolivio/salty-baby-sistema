@@ -7,6 +7,8 @@ import { exigirAcesso, usuarioAtual } from "@/lib/acesso";
 import { lerNovaSenha, lerPerfil } from "@/lib/clientes/conta";
 import { alternarFavorito, atualizarPerfil, fichaDaCliente, tornarTambemCliente, trocarSenha } from "@/lib/clientes/contas";
 import { enderecoDeVoltaSeguro, podeAcessar } from "@/lib/permissoes";
+import { autorDe } from "@/lib/historico/regras";
+import { pedirEnvio } from "@/lib/sacolinhas/servidor";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -56,4 +58,12 @@ export async function mudarSenha(_estado: EstadoPerfil, dados: FormData): Promis
 
 export async function sair() {
   await signOut({ redirectTo: "/" });
+}
+
+/** "Pedir envio" da sacolinha: só a dona da sacolinha. Depois, a página mostra o WhatsApp para combinar o frete. */
+export async function pedirEnvioDaSacolinha(dados: FormData) {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/sacolinha");
+  const ficha = await fichaDaCliente(usuario);
+  const r = await pedirEnvio(String(dados.get("id") ?? ""), autorDe(usuario), ficha.id);
+  redirect(r.ok ? "/minha-conta/sacolinha?envio=1" : `/minha-conta/sacolinha?erro=${encodeURIComponent(r.erro)}`);
 }

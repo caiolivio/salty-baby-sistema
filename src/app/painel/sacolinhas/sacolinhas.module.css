@@ -1,0 +1,79 @@
+/* Sacolinhas no painel: cartões dos avisos e destaque do prazo vencido. */
+.aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: #fff;
+}
+
+.aviso h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.aviso p {
+  margin: 0;
+}
+
+.vencida {
+  color: #a3271f;
+  font-weight: 600;
+}
+
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+}
+
+.resumo div {
+  display: flex;
+  flex-direction: column;
+}
+
+.resumo dt {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.resumo dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.blocos {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 16px;
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.bloco h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.bloco p {
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
