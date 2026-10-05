@@ -6,6 +6,8 @@ import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAlterar, podeVer, type Pagina } from "@/lib/permissoes";
 import estilos from "./painel.module.css";
+import { InstalarApp } from "@/componentes/app-instalavel";
+import { lerLoja } from "@/lib/loja/servidor";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -24,6 +26,7 @@ export default async function Painel() {
     ve("devolucoes") ? prisma.devolucao.count({ where: { situacao: "pedida" } }) : 0,
     ve("candidaturas") ? prisma.candidatura.count({ where: { etapa: { in: ["enviada", "acordo_aceito"] } } }) : 0,
   ]);
+  const loja = await lerLoja();
   const nenhuma = !administradora && Object.keys(acesso.paginas).length === 0;
 
   return (
@@ -34,6 +37,7 @@ export default async function Painel() {
         )}
       </p>
       <h1 className={estilos.tituloGrande}>Olá, {primeiroNome}!</h1>
+      <InstalarApp nome={loja.nomeCurto} className={estilos.instalarApp} />
       <div className={estilos.atalhosInicio}>
         {podeAlterar(acesso, "pecas") && (
           <Link href="/painel/pecas/nova" className={estilos.atalhoInicio}>

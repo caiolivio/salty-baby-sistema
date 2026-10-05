@@ -9,6 +9,7 @@ import { LogoDaLoja } from "@/componentes/logo-da-loja";
 import { lerLoja } from "@/lib/loja/servidor";
 import { nomeComSlogan } from "@/lib/loja/regras";
 import { paginasNoAr } from "@/lib/paginas/servidor";
+import { InstalarApp } from "@/componentes/app-instalavel";
 
 // Parte pública do site: a vitrine e a página de cada peça.
 export default async function LayoutLoja({ children }: LayoutProps<"/">) {
@@ -62,6 +63,7 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
                 </a>
               )}
             </nav>
+            <InstalarApp nome={loja.nomeCurto} className={estilos.instalarApp} />
             {paginas.length > 0 && (
               <nav className={estilos.linksRodape} aria-label="Informações">
                 {paginas.map((p) => (

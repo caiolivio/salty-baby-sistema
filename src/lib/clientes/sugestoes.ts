@@ -49,6 +49,8 @@ export function preferenciasDaCliente(dados: {
   compras: PecaDoHistorico[];
   favoritos: PecaDoHistorico[];
   nascimentos?: Date[];
+  /** Tamanho de hoje de cada criança cadastrada (de `tamanhoDaCrianca`). */
+  tamanhosAtuais?: Tamanho[];
   hoje: Date;
 }): Preferencias {
   const tamanhos = new Set<Tamanho>();
@@ -59,6 +61,7 @@ export function preferenciasDaCliente(dados: {
   };
 
   for (const nascimento of dados.nascimentos ?? []) crescer(tamanhoParaIdade(mesesEntre(nascimento, dados.hoje)));
+  for (const t of dados.tamanhosAtuais ?? []) crescer(t);
   for (const crianca of estimarCriancas(dados.compras, dados.hoje)) crescer(crianca.tamanhoHoje);
 
   const recentes = dados.compras.filter((c) => dados.hoje.getTime() - c.data.getTime() <= COMPRA_RECENTE_DIAS * DIA);

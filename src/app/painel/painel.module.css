@@ -768,3 +768,31 @@
   font-size: 0.75rem;
   text-decoration: none;
 }
+
+/* "Instalar o app" no início do painel (some quando já está instalado) */
+.instalarApp {
+  margin: -8px 0 20px;
+}
+
+.instalarApp button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--altura-toque);
+  padding: 8px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--petroleo);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.instalarApp p {
+  margin: 8px 0 0;
+}
+
+.instalarApp p :global(.icone) {
+  vertical-align: -3px;
+}

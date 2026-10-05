@@ -38,7 +38,9 @@ jobs:
 
       - name: Montar o pacote para a VPS
         run: |
-          cp -r public .next/standalone/
+          # A pasta public pode já existir no pacote (arquivos que o código lê), então copia o conteúdo dela.
+          mkdir -p .next/standalone/public
+          cp -r public/. .next/standalone/public/
           cp -r .next/static .next/standalone/.next/
           tar -czf app.tgz -C .next/standalone .
 

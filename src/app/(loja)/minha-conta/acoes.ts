@@ -12,6 +12,10 @@ import { pedirEnvio } from "@/lib/sacolinhas/servidor";
 import { lerAlerta } from "@/lib/alertas/regras";
 import { apagarAlerta, criarAlerta } from "@/lib/alertas/servidor";
 import { entrarNaFila, sairDaFila } from "@/lib/fila/servidor";
+import { lerCrianca } from "@/lib/clientes/dados";
+import { gravarCriancaDaCliente, removerCriancaDaCliente } from "@/lib/clientes/criancas";
+import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
+import type { EstadoCrianca } from "@/app/painel/clientes/acoes";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -118,5 +122,26 @@ export async function sairDaFilaDeEspera(dados: FormData) {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/avisos");
   const ficha = await fichaDaCliente(usuario);
   await sairDaFila(ficha.id, String(dados.get("pecaId") ?? ""));
+  refresh();
+}
+
+/** "Minhas crianças" em Meus dados: só mexe nas crianças da ficha de quem está logada. */
+export async function gravarMinhaCrianca(_estado: EstadoCrianca, dados: FormData): Promise<EstadoCrianca> {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
+  const ficha = await fichaDaCliente(usuario);
+  const valores = Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  const lido = lerCrianca(valores, hojeEmSaoPaulo());
+  if (!lido.ok) return { erro: lido.erro, valores };
+  if (!(await gravarCriancaDaCliente(ficha.id, valores.id || undefined, lido.dados))) {
+    return { erro: "Esta criança não existe mais.", valores };
+  }
+  refresh();
+  return { ok: valores.id ? "Dados salvos." : `${lido.dados.nome} foi incluída.` };
+}
+
+export async function removerMinhaCrianca(dados: FormData): Promise<void> {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
+  const ficha = await fichaDaCliente(usuario);
+  await removerCriancaDaCliente(ficha.id, String(dados.get("id") ?? ""));
   refresh();
 }

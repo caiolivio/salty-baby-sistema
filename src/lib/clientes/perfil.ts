@@ -224,3 +224,21 @@ export function agruparGasto(
   }
   return lista;
 }
+
+/**
+ * Tamanho que serve hoje numa criança cadastrada: pelo nascimento, se houver;
+ * senão pelo tamanho informado, que cresce com o tempo desde que foi informado
+ * (nunca fica menor que ele).
+ */
+export function tamanhoDaCrianca(
+  crianca: { nascimento: Date | null; tamanho: string | null; tamanhoEm: Date | null },
+  hoje: Date,
+): Tamanho | undefined {
+  if (crianca.nascimento) return tamanhoParaIdade(mesesEntre(crianca.nascimento, hoje));
+  const informado = crianca.tamanho ? lerTamanho(crianca.tamanho) : undefined;
+  const faixa = informado ? faixaDoTamanho(informado) : undefined;
+  if (!informado || !faixa || informado === "Prematuro") return informado;
+  const desde = crianca.tamanhoEm ? mesesEntre(crianca.tamanhoEm, hoje) : 0;
+  const estimado = tamanhoParaIdade((faixa.de + faixa.ate) / 2 + desde);
+  return TAMANHOS.findIndex((t) => t.valor === estimado) > TAMANHOS.findIndex((t) => t.valor === informado) ? estimado : informado;
+}

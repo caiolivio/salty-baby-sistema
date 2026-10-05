@@ -3,14 +3,31 @@
 import { useActionState } from "react";
 import estilos from "../formulario.module.css";
 import visual from "./cliente.module.css";
-import { gravarCrianca, removerCrianca } from "./acoes";
+import { TAMANHOS } from "@/lib/tamanhos";
+import { gravarCrianca, removerCrianca, type EstadoCrianca } from "./acoes";
 
-export type ValoresCrianca = { id?: string; nome: string; nascimento: string; sexo: string; resumo?: string };
+export type ValoresCrianca = { id?: string; nome: string; nascimento: string; sexo: string; tamanho: string; resumo?: string };
 
-/** Formulário de uma criança: sem id inclui uma nova; com id edita e permite remover. */
-export function FormularioCrianca({ clienteId, crianca, hoje }: { clienteId: string; crianca?: ValoresCrianca; hoje: string }) {
-  const [estado, acao, enviando] = useActionState(gravarCrianca, undefined);
-  const v = estado?.erro && estado.valores ? estado.valores : (crianca ?? { nome: "", nascimento: "", sexo: "" });
+/**
+ * Formulário de uma criança: sem id inclui uma nova; com id edita e permite
+ * remover. No painel grava na ficha escolhida; na área da cliente, as ações
+ * dela (que só mexem na própria ficha) vêm por "gravar" e "remover".
+ */
+export function FormularioCrianca({
+  clienteId,
+  crianca,
+  hoje,
+  gravar = gravarCrianca,
+  remover = removerCrianca,
+}: {
+  clienteId: string;
+  crianca?: ValoresCrianca;
+  hoje: string;
+  gravar?: (estado: EstadoCrianca, dados: FormData) => Promise<EstadoCrianca>;
+  remover?: (dados: FormData) => Promise<void>;
+}) {
+  const [estado, acao, enviando] = useActionState(gravar, undefined);
+  const v = estado?.erro && estado.valores ? estado.valores : (crianca ?? { nome: "", nascimento: "", sexo: "", tamanho: "" });
   const nova = !crianca?.id;
   return (
     <div className={visual.crianca}>
@@ -45,6 +62,17 @@ export function FormularioCrianca({ clienteId, crianca, hoje }: { clienteId: str
               <option value="masculino">Menino</option>
             </select>
           </label>
+          <label className={estilos.campo}>
+            Tamanho que veste hoje
+            <select name="tamanho" defaultValue={nova && estado?.ok ? "" : v.tamanho}>
+              <option value="">Não sei (uso o nascimento)</option>
+              {TAMANHOS.map((t) => (
+                <option key={t.valor} value={t.valor}>
+                  {t.nome}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className={estilos.acoes}>
           <button type="submit" className={nova ? estilos.botao : estilos.botaoSecundario} disabled={enviando}>
@@ -53,7 +81,7 @@ export function FormularioCrianca({ clienteId, crianca, hoje }: { clienteId: str
           {!nova && (
             <button
               type="submit"
-              formAction={removerCrianca}
+              formAction={remover}
               formNoValidate
               className={estilos.botaoSecundario}
               onClick={(e) => {

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/banco";
 import { mensagemDoLink } from "@/lib/clientes/conta";
 import { criarAcessoPelaLoja } from "@/lib/clientes/contas";
 import { lerCrianca, lerFormularioCliente } from "@/lib/clientes/dados";
+import { gravarCriancaDaCliente, removerCriancaDaCliente } from "@/lib/clientes/criancas";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
@@ -80,13 +81,12 @@ export async function gravarCrianca(_estado: EstadoCrianca, dados: FormData): Pr
   const lido = lerCrianca(valores, hojeEmSaoPaulo());
   if (!lido.ok) return { erro: lido.erro, valores };
   const clienteId = valores.clienteId ?? "";
-  if (valores.id) {
-    const r = await prisma.crianca.updateMany({ where: { id: valores.id, clienteId }, data: lido.dados });
-    if (r.count === 0) return { erro: "Esta criança não existe mais.", valores };
-  } else {
+  if (!valores.id) {
     const existe = await prisma.cliente.findUnique({ where: { id: clienteId }, select: { id: true } });
     if (!existe) return { erro: "Esta cliente não existe mais.", valores };
-    await prisma.crianca.create({ data: { ...lido.dados, clienteId } });
+  }
+  if (!(await gravarCriancaDaCliente(clienteId, valores.id || undefined, lido.dados))) {
+    return { erro: "Esta criança não existe mais.", valores };
   }
   revalidatePath(`/painel/clientes/${clienteId}`);
   return { ok: valores.id ? "Dados da criança salvos." : `${lido.dados.nome} foi incluída.` };
@@ -95,7 +95,7 @@ export async function gravarCrianca(_estado: EstadoCrianca, dados: FormData): Pr
 export async function removerCrianca(dados: FormData): Promise<void> {
   await exigirPagina("clientes", "alterar");
   const clienteId = String(dados.get("clienteId") ?? "");
-  await prisma.crianca.deleteMany({ where: { id: String(dados.get("id") ?? ""), clienteId } });
+  await removerCriancaDaCliente(clienteId, String(dados.get("id") ?? ""));
   revalidatePath(`/painel/clientes/${clienteId}`);
 }
 
