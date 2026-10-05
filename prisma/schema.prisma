@@ -923,3 +923,36 @@ model Sacolinha {
   @@index([situacao, prazo])
   @@map("sacolinhas")
 }
+
+/// Páginas de texto editáveis no painel (acordo, termos, trocas, sobre, privacidade).
+/// Sem linha = ainda com o texto inicial de src/lib/paginas/regras.ts.
+model Pagina {
+  chave        String   @id @db.VarChar(30)
+  titulo       String   @db.VarChar(160)
+  conteudo     String   @db.MediumText
+  publicada    Boolean  @default(true)
+  /// Sobe a cada vez que a página é salva.
+  versao       Int      @default(1)
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  quem         String   @db.VarChar(191)
+
+  @@map("paginas")
+}
+
+/// Cada versão salva de uma página (para saber o texto que cada fornecedora aceitou).
+model VersaoDePagina {
+  id           String   @id @default(cuid())
+  chave        String   @db.VarChar(30)
+  versao       Int
+  titulo       String   @db.VarChar(160)
+  conteudo     String   @db.MediumText
+  publicada    Boolean
+  /// Acordo: esta versão pediu que as fornecedoras aceitassem de novo.
+  exigiuAceite Boolean  @default(false) @map("exigiu_aceite")
+  usuarioId    String?  @map("usuario_id")
+  quem         String   @db.VarChar(191)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  @@unique([chave, versao])
+  @@map("paginas_versoes")
+}

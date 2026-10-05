@@ -3,7 +3,7 @@ import { prisma } from "../banco";
 import { fimDoLink, gerarCodigoDoLink, hashDoCodigo } from "../clientes/conta";
 import { gravarLinkDeSenha } from "../clientes/contas";
 import { conferirSenha, gerarHash } from "../senha";
-import { VERSAO_ACORDO } from "./acordo";
+import { versaoAtualDoAcordo } from "../paginas/servidor";
 import type { DadosDaFornecedora } from "./conta";
 import { registrar, rotuloDaFornecedora } from "../historico/gravar";
 import { CAMPOS_FORNECEDORA, compararParcial } from "../historico/regras";
@@ -149,6 +149,6 @@ export async function salvarDadosDaFornecedora(
 export async function aceitarTermos(fornecedoraId: string, agora = new Date()): Promise<void> {
   await prisma.fornecedora.updateMany({
     where: { id: fornecedoraId, termosAceitosEm: null },
-    data: { termosAceitosEm: agora, termosVersao: VERSAO_ACORDO },
+    data: { termosAceitosEm: agora, termosVersao: await versaoAtualDoAcordo() },
   });
 }

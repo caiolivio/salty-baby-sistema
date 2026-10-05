@@ -22,11 +22,19 @@ describe("menu do painel", () => {
       "WhatsApp Marketing",
       "Fornecedores",
       "Seja fornecedora",
+      "Páginas",
       "Histórico",
       "Configurações",
     ]);
     expect(itens[1].filhos?.map((f) => f.chave)).toEqual(["financeiro", "acertos", "indicadores", "relatorios"]);
     expect(itens.at(-1)?.filhos?.map((f) => f.chave)).toEqual(["configuracoes", "equipe", "backup", "importar"]);
+    expect(itens.find((i) => i.chave === "paginas")?.filhos?.map((f) => f.nome)).toEqual([
+      "Acordo de consignação",
+      "Termos de uso",
+      "Política de troca",
+      "Sobre a loja",
+      "Aviso de privacidade",
+    ]);
   });
 
   it("o suporte vê só as páginas liberadas e nenhum grupo vazio", () => {
@@ -44,6 +52,7 @@ describe("menu do painel", () => {
     const itens = itensDoMenu(admin);
     expect(grupoDaPagina(itens, "/painel/acertos/pagar/x")?.chave).toBe("financas");
     expect(grupoDaPagina(itens, "/painel/equipe")?.chave).toBe("configuracao");
+    expect(grupoDaPagina(itens, "/painel/paginas/contrato")?.chave).toBe("paginas");
     expect(grupoDaPagina(itens, "/painel/pecas")).toBeUndefined();
   });
 });

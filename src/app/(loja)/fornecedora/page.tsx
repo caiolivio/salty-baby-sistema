@@ -145,6 +145,21 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
     );
   }
 
+  if (etapa === "acordo" && fornecedora.boasVindasEm) {
+    // Já usava a área: o acordo mudou e a loja pediu um novo aceite.
+    return (
+      <>
+        <h1 className={estilos.tituloPagina}>O acordo de consignação mudou</h1>
+        <section className={estilos.explicacao}>
+          <p>
+            A {loja.nomeCurto} atualizou as regras da consignação. Leia o texto novo e aceite para continuar usando a sua área.
+          </p>
+        </section>
+        <AceiteDoAcordo falta={Boolean(parametros.faltaAceite)} texto="Aceitar e continuar" />
+      </>
+    );
+  }
+
   if (etapa === "acordo") {
     return (
       <>

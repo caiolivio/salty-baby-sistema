@@ -1,6 +1,7 @@
 // Itens do menu do painel, na ordem combinada com o Caio (05/10/2026). Função
 // pura, testada: cada pessoa vê só o que pode abrir (a página confere de novo).
 
+import { PAGINAS_EDITAVEIS } from "../paginas/regras";
 import { PAGINAS, podeVer, temExtra, type Acesso, type Pagina } from "../permissoes";
 
 export type LinkDoMenu = { chave: string; nome: string };
@@ -35,6 +36,11 @@ export function itensDoMenu(acesso: Acesso): ItemDoMenu[] {
     ...pagina("marketing"),
     ...pagina("fornecedoras"),
     ...pagina("candidaturas"),
+    ...grupo(
+      "paginas",
+      "Páginas",
+      PAGINAS_EDITAVEIS.flatMap((p) => soAdmin(`paginas/${p.chave}`, p.nome)),
+    ),
     ...pagina("historico"),
     ...grupo("configuracao", "Configurações", [
       ...soAdmin("configuracoes", "Configurações da loja"),
