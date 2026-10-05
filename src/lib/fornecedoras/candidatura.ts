@@ -69,7 +69,7 @@ export function lerInscricao(
     if (!p.descricao) return { ok: false, erro: `Escreva uma descrição curta da peça ${i + 1}.` };
     if (p.descricao.length > 500) return { ok: false, erro: `A descrição da peça ${i + 1} pode ter até 500 caracteres.` };
   }
-  if (valores.privacidade !== "sim") return { ok: false, erro: "Para enviar, aceite o aviso de privacidade." };
+  if (valores.resumo !== "sim") return { ok: false, erro: "Para enviar, marque que leu o resumo do contrato." };
   return { ok: true, dados: { ...lido.data, pecas: preenchidas.map((p) => p.descricao) } };
 }
 

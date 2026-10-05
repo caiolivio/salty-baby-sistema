@@ -151,15 +151,18 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
       </fieldset>
 
       <label className={estilos.marcarLinha}>
-        <input type="checkbox" name="privacidade" value="sim" required />
+        <input type="checkbox" name="resumo" value="sim" required />
         <span>
-          Li e aceito o{" "}
-          <Link href="/privacidade" target="_blank">
-            aviso de privacidade
-          </Link>
-          .
+          Li o <a href="#resumo-contrato">resumo do contrato</a> e quero me inscrever.
         </span>
       </label>
+      <p className={estilos.dica}>
+        Seus dados são usados só para a inscrição, como explica o{" "}
+        <Link href="/privacidade" target="_blank">
+          aviso de privacidade
+        </Link>
+        .
+      </p>
       <Desafio inicial={estado?.desafio ?? desafio} />
       <button type="submit" className={estilos.botaoWhats} disabled={ocupado}>
         {preparando ? "Preparando as fotos…" : enviando ? "Enviando…" : "Enviar inscrição"}

@@ -9,7 +9,7 @@ const dados = {
   cep: "",
   cidade: "Caraguatatuba",
   estado: "SP",
-  privacidade: "sim",
+  resumo: "sim",
 };
 const peca = (descricao: string, temFoto = true) => ({ descricao, temFoto });
 
@@ -40,7 +40,7 @@ describe("inscrição (passo 1)", () => {
       ok: false,
       erro: "Nesta primeira etapa, mostre no máximo 5 peças.",
     });
-    expect(lerInscricao({ ...dados, privacidade: "" }, [peca("Body")]).ok).toBe(false);
+    expect(lerInscricao({ ...dados, resumo: "" }, [peca("Body")]).ok).toBe(false);
   });
 });
 
