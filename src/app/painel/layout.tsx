@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
-import { PAGINAS, podeVer, temExtra } from "@/lib/permissoes";
+import { itensDoMenu } from "@/lib/painel/menu";
 import { sair } from "./acoes";
 import estilos from "./painel.module.css";
 import { LogoDaLoja } from "@/componentes/logo-da-loja";
 import { lerLoja } from "@/lib/loja/servidor";
 import { ModoSoVer } from "./modo-so-ver";
-import { MenuDoPainel, type ItemDoMenu } from "./menu-do-painel";
+import { AbasDoGrupo, MenuDoPainel } from "./menu-do-painel";
 
 // Toda página dentro de /painel passa por aqui: sem login ou sem perfil de
 // administradora/suporte, a pessoa não vê nada. O suporte só vê no menu as
@@ -16,26 +16,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
   const usuario = await exigirAcesso("painel", "/painel");
   const { acesso } = usuario;
   const loja = await lerLoja();
-  const itens: ItemDoMenu[] = [
-    { chave: "", nome: "Início" },
-    ...PAGINAS.filter((p) => podeVer(acesso, p.chave)).map((p) => ({ chave: p.chave, nome: p.nome })),
-    ...(acesso.administradora ? [
-          { chave: "acertos", nome: "Contas a pagar" },
-          { chave: "relatorios", nome: "Relatórios" },
-          { chave: "financeiro", nome: "Financeiro" },
-          { chave: "indicadores", nome: "Indicadores" },
-          { chave: "promocoes", nome: "Promoções" },
-          { chave: "cupons", nome: "Cupons" },
-        ] : []),
-    ...(temExtra(acesso, "backup") ? [{ chave: "backup", nome: "Backup" }] : []),
-    ...(acesso.administradora
-      ? [
-          { chave: "equipe", nome: "Equipe" },
-          { chave: "configuracoes", nome: "Configurações" },
-          { chave: "importar", nome: "Importar do Notion" },
-        ]
-      : []),
-  ];
+  const itens = itensDoMenu(acesso);
 
   return (
     <div className={estilos.estrutura}>
@@ -58,6 +39,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
         <MenuDoPainel itens={itens} />
         <main className={estilos.conteudo}>
           <ModoSoVer paginas={acesso.administradora ? {} : acesso.paginas} />
+          <AbasDoGrupo itens={itens} />
           {children}
         </main>
       </div>

@@ -258,6 +258,7 @@ model Cliente {
   pedidos      Pedido[]
   criancas     Crianca[]
   favoritos    Favorito[]
+  sacolinhas   Sacolinha[]
 
   @@map("clientes")
 }
@@ -390,6 +391,9 @@ model ItemVenda {
   venda                 Venda             @relation(fields: [vendaId], references: [id], onDelete: Cascade)
   peca                  Peca              @relation(fields: [pecaId], references: [id])
   acerto                Acerto?           @relation(fields: [acertoId], references: [id], onDelete: SetNull)
+  /// Sacolinha em que a peça ficou guardada depois de paga (vazio: entregue ou enviada na hora).
+  sacolinhaId           String?           @map("sacolinha_id")
+  sacolinha             Sacolinha?        @relation(fields: [sacolinhaId], references: [id], onDelete: SetNull)
 
   @@index([vendaId])
   @@index([pecaId])
@@ -525,6 +529,8 @@ model Pedido {
   cupomCodigo           String?        @map("cupom_codigo") @db.VarChar(30)
   descontoCupomCentavos Int            @default(0) @map("desconto_cupom_centavos")
   cupom                 Cupom?         @relation(fields: [cupomId], references: [id], onDelete: SetNull)
+  /// A cliente escolheu "Colocar na sacolinha" (pagar agora e receber depois).
+  naSacolinha           Boolean        @default(false) @map("na_sacolinha")
 
   @@index([status, reservadoAte])
   @@map("pedidos")
@@ -765,6 +771,8 @@ model ConfiguracaoLoja {
   minutosReserva Int      @map("minutos_reserva")
   /// A fornecedora pede a peça de volta só depois deste tempo da entrada.
   mesesDevolucao Int      @map("meses_devolucao")
+  /// Prazo da sacolinha, contado da primeira peça. Depois dele, as peças são doadas.
+  mesesSacolinha Int      @default(3) @map("meses_sacolinha")
   atualizadoEm   DateTime @updatedAt @map("atualizado_em")
 
   @@map("configuracao_loja")
@@ -880,4 +888,71 @@ model Cupom {
   pedidos              Pedido[]
 
   @@map("cupons")
+}
+
+enum SituacaoSacolinha {
+  /// Recebe as peças das próximas compras da cliente.
+  aberta
+  /// A cliente pediu o envio: não entra mais peça, a próxima compra abre outra.
+  envio_pedido
+  enviada
+  retirada
+  doada
+}
+
+/// Peças já pagas que ficam guardadas na loja até a cliente pedir o envio
+/// (CLAUDE.md, "Sacolinha"). Uma aberta por cliente; regras em src/lib/sacolinhas.
+model Sacolinha {
+  id            String            @id @default(cuid())
+  clienteId     String            @map("cliente_id")
+  situacao      SituacaoSacolinha @default(aberta)
+  abertaEm      DateTime          @default(now()) @map("aberta_em")
+  /// Último dia para pedir o envio; depois as peças vão para a lista "a doar".
+  prazo         DateTime          @db.Date
+  envioPedidoEm DateTime?         @map("envio_pedido_em")
+  /// Frete combinado com a cliente (pago por ela).
+  freteCentavos Int?              @map("frete_centavos")
+  observacao    String?           @db.VarChar(255)
+  fechadaEm     DateTime?         @map("fechada_em")
+  /// Último aviso semanal mandado pelo WhatsApp.
+  ultimoAvisoEm DateTime?         @map("ultimo_aviso_em")
+  cliente       Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  itens         ItemVenda[]
+
+  @@index([clienteId, situacao])
+  @@index([situacao, prazo])
+  @@map("sacolinhas")
+}
+
+/// Páginas de texto editáveis no painel (acordo, termos, trocas, sobre, privacidade).
+/// Sem linha = ainda com o texto inicial de src/lib/paginas/regras.ts.
+model Pagina {
+  chave        String   @id @db.VarChar(30)
+  titulo       String   @db.VarChar(160)
+  conteudo     String   @db.MediumText
+  publicada    Boolean  @default(true)
+  /// Sobe a cada vez que a página é salva.
+  versao       Int      @default(1)
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  quem         String   @db.VarChar(191)
+
+  @@map("paginas")
+}
+
+/// Cada versão salva de uma página (para saber o texto que cada fornecedora aceitou).
+model VersaoDePagina {
+  id           String   @id @default(cuid())
+  chave        String   @db.VarChar(30)
+  versao       Int
+  titulo       String   @db.VarChar(160)
+  conteudo     String   @db.MediumText
+  publicada    Boolean
+  /// Acordo: esta versão pediu que as fornecedoras aceitassem de novo.
+  exigiuAceite Boolean  @default(false) @map("exigiu_aceite")
+  usuarioId    String?  @map("usuario_id")
+  quem         String   @db.VarChar(191)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  @@unique([chave, versao])
+  @@map("paginas_versoes")
 }

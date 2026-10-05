@@ -1,0 +1,217 @@
+/* Editor das páginas: abas "Escrever" e "Ver como fica" no celular; lado a lado em telas largas. */
+
+.abasEditor {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.abasEditor button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.abasEditor button[aria-selected="true"] {
+  border-bottom-color: var(--petroleo);
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.lado {
+  display: grid;
+  gap: 20px;
+}
+
+.lado[data-mostrar="editar"] .previa,
+.lado[data-mostrar="previa"] .escrever {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .abasEditor {
+    display: none;
+  }
+
+  .lado {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .lado[data-mostrar] .previa,
+  .lado[data-mostrar] .escrever {
+    display: flex;
+  }
+
+  .previa {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+  }
+}
+
+.escrever {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ferramentas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ferramentas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.ferramentas button:hover {
+  background: var(--fundo-suave);
+}
+
+.caixa {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.ajuda {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.ajuda summary {
+  cursor: pointer;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.ajuda ul {
+  padding-left: 20px;
+}
+
+.ajuda code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--fundo-suave);
+  color: var(--tinta);
+}
+
+.previa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo-suave);
+  line-height: 1.55;
+}
+
+.previa h1 {
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+}
+
+.previa h2 {
+  color: var(--petroleo);
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+.previa h3 {
+  color: var(--petroleo);
+  font-size: 1rem;
+}
+
+.previa ul {
+  padding-left: 20px;
+}
+
+/* Lista das páginas e das versões */
+
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.cartoes a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.cartoes a:hover {
+  border-color: var(--petroleo);
+}
+
+.cartoes strong {
+  color: var(--petroleo);
+}
+
+.situacao {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.versoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.versoes details {
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+}
+
+.versoes summary {
+  cursor: pointer;
+}
+
+.versoes pre {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.82rem;
+}

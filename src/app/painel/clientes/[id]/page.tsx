@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
+import { SITUACOES_SACOLINHA, textoDoPrazo } from "@/lib/sacolinhas/regras";
 import { prisma } from "@/lib/banco";
 import { formatarCpf } from "@/lib/clientes/dados";
 import {
@@ -56,6 +57,11 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
         },
       },
       pedidos: { where: { status: { not: "pago" } }, orderBy: { numero: "desc" }, take: 20 },
+      sacolinhas: {
+        where: { situacao: { in: ["aberta", "envio_pedido"] } },
+        orderBy: { abertaEm: "asc" },
+        select: { id: true, situacao: true, prazo: true, _count: { select: { itens: true } } },
+      },
       criancas: { orderBy: [{ nascimento: "asc" }, { criadoEm: "asc" }] },
       usuario: { select: { email: true, ultimoAcessoEm: true, ativo: true } },
       favoritos: {
@@ -245,6 +251,22 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
               </li>
             ))}
           </ol>
+        </>
+      )}
+
+      {c.sacolinhas.length > 0 && podeVer(usuario.acesso, "sacolinhas") && (
+        <>
+          <h2>Sacolinha</h2>
+          <ul>
+            {c.sacolinhas.map((s) => (
+              <li key={s.id}>
+                <Link href={`/painel/sacolinhas/${s.id}`}>
+                  {s._count.itens} peça(s) guardada(s)
+                </Link>{" "}
+                · {SITUACOES_SACOLINHA[s.situacao]} · {textoDoPrazo(s.prazo, hoje)}
+              </li>
+            ))}
+          </ul>
         </>
       )}
 

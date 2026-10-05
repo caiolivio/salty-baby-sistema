@@ -73,10 +73,9 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
                 <img className={estilos.logo} src={logo} alt={loja.nome} />
                 <span className={estilos.nome}>{p.nome}</span>
                 {p.precoCentavos > 0 && <strong className={estilos.preco}>{formatarReais(p.precoCentavos)}</strong>}
-                <span className={estilos.codigo}>
-                  {p.codigo}
-                  {p.tamanho && ` · Tam. ${p.tamanho}`}
-                </span>
+                <span className={estilos.codigo}>{p.codigo}</span>
+                {/* Linha própria: "Tam. 10 anos" junto do código não cabia na etiqueta. */}
+                {p.tamanho && <span className={estilos.tamanho}>Tam. {p.tamanho}</span>}
               </div>
             </div>
           ))}

@@ -14,6 +14,9 @@ import { COOKIE_CUPOM, lerCodigoDoCupom } from "@/lib/cupons/regras";
 import { cupomNoCarrinho } from "@/lib/cupons/servidor";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { enderecoDaPeca } from "@/lib/vitrine";
+import { formatarData } from "@/lib/datas";
+import { lerLoja } from "@/lib/loja/servidor";
+import { explicacaoDaSacolinha } from "@/lib/sacolinhas/regras";
 import estilos from "../loja.module.css";
 import { tirar, tirarCupom, usarCupom } from "./acoes";
 import { FecharPedido } from "./fechar-pedido";
@@ -53,6 +56,10 @@ export default async function Carrinho({ searchParams }: PageProps<"/carrinho">)
   // Cliente logada: nome e WhatsApp já vêm preenchidos, e o pedido fica na conta dela.
   const usuario = await usuarioAtual();
   const ficha = usuario ? await clienteDoUsuario(usuario.id) : null;
+  const loja = await lerLoja();
+  const sacolinhaAberta = ficha
+    ? await prisma.sacolinha.findFirst({ where: { clienteId: ficha.id, situacao: "aberta" }, select: { prazo: true } })
+    : null;
   // Fornecedora logada: pode pagar com o saldo dela.
   const fornecedora = usuario ? await prisma.fornecedora.findFirst({ where: { usuarioId: usuario.id }, select: { id: true } }) : null;
   const saldo = fornecedora ? (await saldoParaCompras(fornecedora.id)).disponivelCentavos : 0;
@@ -172,6 +179,10 @@ export default async function Carrinho({ searchParams }: PageProps<"/carrinho">)
                   telefone={ficha?.telefone ? formatarTelefone(ficha.telefone) : undefined}
                   saldoCentavos={saldo}
                   totalCentavos={aPagar}
+                  sacolinha={{
+                    explicacao: explicacaoDaSacolinha(loja.nomeCurto, loja.mesesSacolinha),
+                    abertaAte: sacolinhaAberta ? formatarData(sacolinhaAberta.prazo) : undefined,
+                  }}
                 />
                 {!usuario && (
                   <p className={estilos.dica}>

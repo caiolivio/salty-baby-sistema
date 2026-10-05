@@ -52,12 +52,13 @@ export const PAGINAS = [
   { chave: "pecas", nome: "Peças", explica: "Estoque, cadastro, fotos, status e etiquetas." },
   { chave: "categorias", nome: "Categorias", explica: "A lista de categorias das peças." },
   { chave: "marketing", nome: "WhatsApp Marketing", explica: "Posts para os grupos e a lista de grupos." },
-  { chave: "fornecedoras", nome: "Fornecedoras", explica: "Cadastro das fornecedoras e links de primeiro acesso." },
+  { chave: "fornecedoras", nome: "Fornecedores", explica: "Cadastro das fornecedoras e links de primeiro acesso." },
   { chave: "candidaturas", nome: "Seja fornecedora", explica: "Inscrições de novas fornecedoras e peças propostas." },
   { chave: "devolucoes", nome: "Devoluções", explica: "Peças que as fornecedoras pediram de volta." },
   { chave: "pedidos", nome: "Pedidos", explica: "Pedidos do site, reservas e peças de cada pedido." },
   { chave: "clientes", nome: "Clientes", explica: "Cadastro, compras e crianças das clientes." },
   { chave: "vendas", nome: "Vendas", explica: "Lista de vendas e venda direta (WhatsApp, loja, Bag)." },
+  { chave: "sacolinhas", nome: "Sacolinhas", explica: "Peças pagas guardadas na loja: avisos semanais, envio, retirada e doação." },
   { chave: "historico", nome: "Histórico", explica: "Quem mudou o quê no sistema." },
 ] as const;
 export type Pagina = (typeof PAGINAS)[number]["chave"];

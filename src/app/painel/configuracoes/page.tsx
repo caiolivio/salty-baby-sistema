@@ -36,6 +36,7 @@ export default async function Configuracoes() {
           repassePadrao: mostrarPercentual(loja.repassePadrao),
           minutosReserva: String(loja.minutosReserva),
           mesesDevolucao: String(loja.mesesDevolucao),
+          mesesSacolinha: String(loja.mesesSacolinha),
         }}
         imagens={{ ...imagens, logoPropria: Boolean(loja.logo), iconePropria: Boolean(loja.icone) }}
         prefixoFixo={await prefixoEmUso(loja.prefixoLoja)}

@@ -121,6 +121,12 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
       </p>
 
+      {pedido.naSacolinha && (
+        <p className={proprios.aviso} role="status">
+          A cliente escolheu &quot;Colocar na sacolinha&quot; (pagar agora e receber depois). &quot;Guardar na sacolinha&quot; já vem
+          marcado.{!pedido.clienteId && " Antes de confirmar, ligue o pedido a uma cliente do cadastro na página do pedido."}
+        </p>
+      )}
       {pediuSaldo && (
         <p className={proprios.aviso} role="status">
           A cliente é a fornecedora {pediuSaldo.rotulo} e pediu para pagar com o saldo dela (disponível:{" "}
@@ -134,7 +140,10 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
           saldos={saldos}
           saldoPedido={pedido.creditoFornecedoraId}
           // O desconto das promoções já vem preenchido em cada peça.
-          iniciais={valoresDoPedido(
+          iniciais={{
+            // A cliente escolheu "Colocar na sacolinha" no site.
+            ...(pedido.naSacolinha ? { destino: "na_sacolinha" } : {}),
+            ...valoresDoPedido(
             pedido.itens.map((i) => ({
               pecaId: i.pecaId,
               promocao:
@@ -156,7 +165,7 @@ export default async function ConfirmarPedido({ params }: PageProps<"/painel/ped
                   descontoCentavos: pedido.descontoCupomCentavos,
                 }
               : null,
-          )}
+          )}}
           pecas={pedido.itens.map((i) => ({
             id: i.pecaId,
             codigo: i.peca.codigo,

@@ -1,18 +1,15 @@
-import { acordoDaLoja } from "@/lib/fornecedoras/acordo";
+import { TextoDaPagina } from "@/componentes/texto-da-pagina";
 import { lerLoja } from "@/lib/loja/servidor";
+import { paginaParaMostrar } from "@/lib/paginas/servidor";
 import estilos from "../loja.module.css";
 
+/** O acordo de consignação, com o texto de Painel > Páginas. */
 export async function TextoDoAcordo() {
-  const acordo = acordoDaLoja(await lerLoja());
+  const acordo = await paginaParaMostrar("contrato");
   return (
     <div className={estilos.acordo}>
       <strong>{acordo.titulo}</strong>
-      {acordo.secoes.map((s) => (
-        <div key={s.titulo}>
-          <h3>{s.titulo}</h3>
-          <p>{s.texto}</p>
-        </div>
-      ))}
+      <TextoDaPagina blocos={acordo.blocos} nivel={3} />
     </div>
   );
 }

@@ -23,6 +23,8 @@ export type Loja = {
   repassePadrao: number;
   minutosReserva: number;
   mesesDevolucao: number;
+  /** Prazo da sacolinha (depois dele, as peças são doadas). */
+  mesesSacolinha: number;
 };
 
 /** Os dados da Salty Baby, os mesmos que a migração grava. Valem se o banco ainda não respondeu. */
@@ -42,6 +44,7 @@ export const LOJA_PADRAO: Loja = {
   repassePadrao: 4000,
   minutosReserva: 15,
   mesesDevolucao: 6,
+  mesesSacolinha: 3,
 };
 
 /** Logo e ícone de quando a loja ainda não enviou os dela. */
@@ -154,6 +157,7 @@ export const camposLoja = z.object({
   repassePadrao: repasse,
   minutosReserva: inteiro(5, 1440, "A reserva vai de 5 a 1440 minutos (24 horas)."),
   mesesDevolucao: inteiro(0, 36, "O prazo para pedir a peça de volta vai de 0 a 36 meses."),
+  mesesSacolinha: inteiro(1, 24, "O prazo da sacolinha vai de 1 a 24 meses."),
 });
 
 export type DadosLoja = z.output<typeof camposLoja>;

@@ -246,6 +246,12 @@ export default async function PedidoNoPainel({ params, searchParams }: PageProps
           Cupom {pedido.cupomCodigo}: −{formatarReais(pedido.descontoCupomCentavos)}
         </p>
       )}
+      {pedido.naSacolinha && (
+        <p className={proprios.aviso}>
+          A cliente escolheu &quot;Colocar na sacolinha&quot;: pagar agora e receber depois.
+          {!pedido.clienteId && pedido.status !== "pago" && " Ligue o pedido a uma cliente do cadastro antes de confirmar o pagamento."}
+        </p>
+      )}
       <p>
         Total do pedido: <strong>{formatarReais(pedido.totalCentavos)}</strong>
         {pedido.venda && pedido.venda.descontoCentavos > 0 && (

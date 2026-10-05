@@ -151,6 +151,27 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.linksRodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 16px;
+}
+
+.linksRodape a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.88rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.linksRodape a:hover {
+  color: #fff;
+}
+
 .chamadaFornecedora,
 .chamadaArea {
   display: flex;
@@ -1041,6 +1062,16 @@
   padding-left: 20px;
 }
 
+.texto h3 {
+  color: var(--petroleo);
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.texto ul li + li {
+  margin-top: 4px;
+}
+
 /* Área do cliente */
 
 /* Abas com ícone, sublinhadas (sem caixas arredondadas). Rolam de lado no celular. */
@@ -1452,6 +1483,16 @@
   margin: 0;
 }
 
+.acordo h4 {
+  font-size: 0.95rem;
+  margin: 10px 0 4px;
+}
+
+.acordo ul {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
 .parabens {
   text-align: center;
   padding: 20px 14px;
@@ -1669,4 +1710,87 @@
 
 .info .botaoContorno {
   align-self: stretch;
+}
+
+/* Sacolinha: o aviso de doação aparece sempre, bem visível. */
+.avisoSacolinha {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  background: #fff3dc;
+  color: #8a4b00;
+  font-weight: 600;
+}
+
+/* "Como você quer receber?" no Fechar pedido: agora ou na sacolinha. */
+.receber {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.receber legend {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.receber label {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  cursor: pointer;
+}
+
+.receber label:has(input:checked) {
+  border-color: var(--petroleo);
+  background: #eef5f8;
+}
+
+.receber input {
+  margin-top: 3px;
+  accent-color: var(--petroleo);
+}
+
+.receber label span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.receber small {
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+}
+
+.receber summary {
+  color: var(--petroleo);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.receber details p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.explicaSacolinha {
+  margin-bottom: 16px;
+}
+
+.explicaSacolinha summary {
+  color: var(--petroleo);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.explicaSacolinha p {
+  margin: 6px 0 0;
 }

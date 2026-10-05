@@ -8,12 +8,14 @@ import estilos from "./loja.module.css";
 import { LogoDaLoja } from "@/componentes/logo-da-loja";
 import { lerLoja } from "@/lib/loja/servidor";
 import { nomeComSlogan } from "@/lib/loja/regras";
+import { paginasNoAr } from "@/lib/paginas/servidor";
 
 // Parte pública do site: a vitrine e a página de cada peça.
 export default async function LayoutLoja({ children }: LayoutProps<"/">) {
   const noCarrinho = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value).length;
   const usuario = await usuarioAtual();
   const loja = await lerLoja();
+  const paginas = await paginasNoAr();
   return (
     <div className={estilos.estrutura}>
       <header className={estilos.topo}>
@@ -60,6 +62,15 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
                 </a>
               )}
             </nav>
+            {paginas.length > 0 && (
+              <nav className={estilos.linksRodape} aria-label="Informações">
+                {paginas.map((p) => (
+                  <Link key={p.endereco} href={p.endereco}>
+                    {p.nome}
+                  </Link>
+                ))}
+              </nav>
+            )}
           </div>
           <div className={estilos.chamadaFornecedora}>
             <HandHeart className="icone" aria-hidden />

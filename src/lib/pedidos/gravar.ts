@@ -62,7 +62,14 @@ export type ResultadoFechar = { ok: true; id: string } | { ok: false; indisponiv
  */
 export async function fecharPedido(
   pecaIds: string[],
-  cliente: { nome: string; telefone: string; clienteId?: string | null; creditoFornecedoraId?: string | null },
+  cliente: {
+    nome: string;
+    telefone: string;
+    clienteId?: string | null;
+    creditoFornecedoraId?: string | null;
+    /** A cliente quer guardar as peças na sacolinha (pagar agora e receber depois). */
+    naSacolinha?: boolean;
+  },
   grupoId: string | null,
   cupomCodigo: string | null,
   autor: Autor,
@@ -119,6 +126,7 @@ export async function fecharPedido(
           clienteId: cliente.clienteId ?? null,
           // Fornecedora que pediu para pagar com o saldo (a loja confirma o valor).
           creditoFornecedoraId: cliente.creditoFornecedoraId ?? null,
+          naSacolinha: cliente.naSacolinha ?? false,
           grupoId,
           reservadoAte: fimDaReserva(agora, minutosReserva),
           totalCentavos: pecas.reduce((soma, p) => soma + preco(p), 0) - (doCupom?.descontoCentavos ?? 0),

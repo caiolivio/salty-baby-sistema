@@ -206,6 +206,7 @@ export type EstadoLoja = {
   repassePadrao: number;
   minutosReserva: number;
   mesesDevolucao: number;
+  mesesSacolinha: number;
 };
 
 
@@ -226,6 +227,7 @@ export const CAMPOS_LOJA: readonly Campo<EstadoLoja>[] = [
   { titulo: "% repasse padrão", ler: (l) => l.repassePadrao, mostrar: pontosBase, restrito: true },
   { titulo: "Minutos de reserva", ler: (l) => l.minutosReserva },
   { titulo: "Meses para pedir devolução", ler: (l) => l.mesesDevolucao },
+  { titulo: "Meses de prazo da sacolinha", ler: (l) => l.mesesSacolinha },
 ];
 
 // ---------------------------------------------------------------- tela

@@ -135,3 +135,13 @@ describe("mensagem com cupom", () => {
     expect(texto).toContain("\n\nCupom BEMVINDA10: −R$ 2,50\nTotal: R$ 22,50\n");
   });
 });
+
+describe("mensagem com sacolinha", () => {
+  it("avisa que as peças vão para a sacolinha", () => {
+    const texto = mensagemDoPedido(
+      { numero: 5, nomeCliente: "Bia", total: "R$ 25,00", sacolinha: true, itens: [{ codigo: "F45-00005", nome: "Body", tamanho: null, preco: "R$ 25,00" }] },
+      "https://teste.saltybaby.com.br",
+    );
+    expect(texto).toContain("Total: R$ 25,00\nQuero guardar as peças na minha sacolinha (pago agora e recebo depois).\n");
+  });
+});

@@ -4,7 +4,7 @@ import { gerarCodigoDoLink } from "../clientes/conta";
 import { contaComPerfil, gravarLinkDeSenha } from "../clientes/contas";
 import { guardarFotoDeProposta, lerFotoGuardada } from "../fotos";
 import { adicionarFotos, criarPeca } from "../pecas/gravar";
-import { VERSAO_ACORDO } from "./acordo";
+import { versaoAtualDoAcordo } from "../paginas/servidor";
 import type { DadosInscricao, DadosProposta } from "./candidatura";
 import { criarFornecedoraNaTransacao } from "./gravar";
 import type { Autor } from "../historico/regras";
@@ -106,7 +106,7 @@ export async function tirarProposta(
 export async function aceitarAcordo(candidaturaId: string, agora = new Date()): Promise<boolean> {
   const r = await prisma.candidatura.updateMany({
     where: { id: candidaturaId, etapa: "aprovada" },
-    data: { etapa: "acordo_aceito", acordoAceitoEm: agora, acordoVersao: VERSAO_ACORDO },
+    data: { etapa: "acordo_aceito", acordoAceitoEm: agora, acordoVersao: await versaoAtualDoAcordo() },
   });
   return r.count === 1;
 }
