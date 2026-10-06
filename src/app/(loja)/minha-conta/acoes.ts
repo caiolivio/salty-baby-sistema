@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import { exigirAcesso, usuarioAtual } from "@/lib/acesso";
-import { lerNovaSenha, lerPerfil } from "@/lib/clientes/conta";
+import { lerEnderecoDoPerfil, lerNovaSenha, lerPerfil } from "@/lib/clientes/conta";
 import { alternarFavorito, atualizarPerfil, fichaDaCliente, tornarTambemCliente, trocarSenha } from "@/lib/clientes/contas";
 import { enderecoDeVoltaSeguro, podeAcessar } from "@/lib/permissoes";
 import { autorDe } from "@/lib/historico/regras";
@@ -40,9 +40,12 @@ export type EstadoPerfil = { erro?: string; ok?: string } | undefined;
 export async function salvarPerfil(_estado: EstadoPerfil, dados: FormData): Promise<EstadoPerfil> {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
   const ficha = await fichaDaCliente(usuario);
-  const lido = lerPerfil(Object.fromEntries(dados.entries()));
+  const valores = Object.fromEntries(dados.entries());
+  const lido = lerPerfil(valores);
   if (!lido.ok) return { erro: lido.erro };
-  const r = await atualizarPerfil(usuario.id, ficha.id, lido.dados);
+  const endereco = lerEnderecoDoPerfil(valores);
+  if (!endereco.ok) return { erro: endereco.erro };
+  const r = await atualizarPerfil(usuario.id, ficha.id, lido.dados, endereco.dados);
   if (!r.ok) {
     return {
       erro:

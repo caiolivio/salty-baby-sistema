@@ -152,6 +152,7 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           Tem conta com o e-mail <strong>{c.usuario.email}</strong>
           {c.usuario.ultimoAcessoEm ? `, último acesso em ${formatarDataHora(c.usuario.ultimoAcessoEm)}` : ", ainda não entrou"}.
           {!c.usuario.ativo && " A conta está desativada."}
+          {administradora && " Ao salvar o nome ou o e-mail na ficha acima, a conta muda junto."}
         </p>
       ) : (
         <p>Esta cliente ainda não tem conta no site.</p>

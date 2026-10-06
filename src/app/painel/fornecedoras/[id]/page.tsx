@@ -89,6 +89,9 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
                 f.usuario.ultimoAcessoEm ? ` Último acesso em ${formatarDataHora(f.usuario.ultimoAcessoEm)}.` : ""
               }`}
         </p>
+        {f.usuario && acesso.administradora && (
+          <p className={proprios.dica}>Ao salvar o nome ou o e-mail nos dados abaixo, a conta de entrada muda junto.</p>
+        )}
         {f.ativa && acesso.administradora && <AcessoDaFornecedora id={f.id} temConta={Boolean(f.usuario)} />}
       </section>
       {acesso.administradora && aceites.length > 0 && (

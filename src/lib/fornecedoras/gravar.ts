@@ -1,4 +1,5 @@
 import "server-only";
+import { atualizarContaPelaLoja } from "../contas/pela-loja";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { CHAVE_SEQUENCIA_FORNECEDORA, codigoFornecedora } from "../codigos";
@@ -37,15 +38,18 @@ export async function atualizarFornecedora(
   id: string,
   dados: DadosFornecedora & { ativa: boolean },
   autor: Autor,
+  /** Conta de entrada a atualizar junto (nome e e-mail), quando quem edita é a administradora. */
+  contaId: string | null = null,
 ): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
     const antes = await tx.fornecedora.findUnique({ where: { id } });
     if (!antes) return false;
     await tx.fornecedora.update({ where: { id }, data: dados });
+    const daConta = contaId ? await atualizarContaPelaLoja(tx, contaId, dados) : [];
     await registrar(
       tx,
       { tabela: "fornecedora", id, rotulo: rotuloDaFornecedora({ codigo: antes.codigo, nome: dados.nome }) },
-      compararParcial(CAMPOS_FORNECEDORA, antes, dados),
+      [...compararParcial(CAMPOS_FORNECEDORA, antes, dados), ...daConta],
       autor,
       "Edição no painel",
     );

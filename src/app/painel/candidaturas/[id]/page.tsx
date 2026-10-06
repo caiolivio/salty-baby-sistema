@@ -13,6 +13,8 @@ import { anotar, efetivar, recusar } from "../acoes";
 import { Aprovar } from "../aprovar";
 import visual from "../candidaturas.module.css";
 import { PropostasNoPainel } from "../propostas";
+import { DadosDaCandidata } from "../dados-da-candidata";
+import { podeAcessar, podeAlterar } from "@/lib/permissoes";
 import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Inscrição de fornecedora" };
@@ -27,7 +29,7 @@ const ERROS: Record<string, string> = {
 
 export default async function Candidatura({ params, searchParams }: PageProps<"/painel/candidaturas/[id]">) {
   const { id } = await params;
-  await exigirPagina("candidaturas", "ver", `/painel/candidaturas/${id}`);
+  const usuario = await exigirPagina("candidaturas", "ver", `/painel/candidaturas/${id}`);
   const aviso = await searchParams;
 
   const c = await prisma.candidatura.findUnique({
@@ -64,6 +66,11 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
       {aviso.recusada && (
         <p className={proprios.aviso} role="status">
           Inscrição recusada.
+        </p>
+      )}
+      {aviso.dados && (
+        <p className={proprios.aviso} role="status">
+          Dados salvos.
         </p>
       )}
       {aviso.anotada && (
@@ -121,6 +128,26 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
           </>
         )}
       </dl>
+      {c.etapa !== "efetivada" && podeAlterar(usuario.acesso, "candidaturas") && (
+        <DadosDaCandidata
+          mudaConta={Boolean(c.usuarioId) && podeAcessar(usuario.perfis, "painel-administracao")}
+          iniciais={{
+            id: c.id,
+            nome: c.nome,
+            email: c.email,
+            telefone: c.telefone,
+            endereco: c.endereco,
+            cep: c.cep ?? "",
+            cidade: c.cidade ?? "",
+            estado: c.estado ?? "",
+          }}
+        />
+      )}
+      {c.etapa === "efetivada" && c.fornecedora && (
+        <p className={proprios.dica}>
+          Para mudar os dados, use a <Link href={`/painel/fornecedoras/${c.fornecedora.id}`}>ficha da fornecedora</Link>.
+        </p>
+      )}
 
       {aberta && (
         <section aria-labelledby="curadoria">

@@ -49,6 +49,20 @@ export function lerPerfil(valores: Record<string, unknown>): Lido<DadosPerfil> {
   return { ok: true, dados: lido.data };
 }
 
+export type EnderecoDoPerfil = { endereco: string | null; cep: string | null; cidade: string | null; estado: string | null };
+
+/** Endereço que a cliente informa em "Meus dados" (opcional, para o envio). */
+export function lerEnderecoDoPerfil(valores: Record<string, unknown>): Lido<EnderecoDoPerfil> {
+  const limites = { endereco: 255, cep: 15, cidade: 100, estado: 60 } as const;
+  const dados = {} as Record<keyof EnderecoDoPerfil, string | null>;
+  for (const [campo, maximo] of Object.entries(limites) as [keyof EnderecoDoPerfil, number][]) {
+    const t = texto(valores, campo).trim().replace(/\s+/g, " ");
+    if (t.length > maximo) return { ok: false, erro: `Use no máximo ${maximo} caracteres em ${campo === "cep" ? "CEP" : campo}.` };
+    dados[campo] = t || null;
+  }
+  return { ok: true, dados };
+}
+
 export type DadosCadastro = DadosPerfil & { senha: string };
 
 /** Cadastro feito pela própria cliente no site. Precisa aceitar o aviso de privacidade. */

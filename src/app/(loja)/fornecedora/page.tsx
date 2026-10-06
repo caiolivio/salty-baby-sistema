@@ -9,6 +9,7 @@ import { formatarDia } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { dadosDaFornecedora } from "@/lib/fornecedoras/area";
 import { PASSOS, situacaoDosPassos } from "@/lib/fornecedoras/candidatura";
+import { DadosDaInscricao } from "./dados-da-inscricao";
 import { situacaoNaArea } from "@/lib/fornecedoras/candidaturas";
 import { etapaDaFornecedora, PASSOS_PRIMEIRO_ACESSO } from "@/lib/fornecedoras/conta";
 import { calcularSaldos, vendasNoPeriodo } from "@/lib/fornecedoras/saldos";
@@ -125,6 +126,19 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
       );
     }
     const dono = { candidaturaId: candidatura.id };
+    const seusDados = (
+      <DadosDaInscricao
+        iniciais={{
+          nome: candidatura.nome,
+          email: candidatura.email,
+          telefone: formatarTelefone(candidatura.telefone),
+          endereco: candidatura.endereco,
+          cep: candidatura.cep ?? "",
+          cidade: candidatura.cidade ?? "",
+          estado: candidatura.estado ?? "",
+        }}
+      />
+    );
     if (candidatura.etapa === "acordo_aceito") {
       return (
         <>
@@ -138,6 +152,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             <p>Enquanto isso, você pode continuar mandando peças.</p>
           </section>
           <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
+          {seusDados}
         </>
       );
     }
@@ -157,6 +172,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
+        {seusDados}
       </>
     );
   }

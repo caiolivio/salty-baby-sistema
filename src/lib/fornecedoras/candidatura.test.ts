@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lerInscricao, lerProposta, mensagemDeAprovacao, passoDaEtapa, situacaoDosPassos } from "./candidatura";
+import { lerDadosDaCandidata, lerInscricao, lerProposta, mensagemDeAprovacao, passoDaEtapa, situacaoDosPassos } from "./candidatura";
 
 const dados = {
   nome: " Joana Lima ",
@@ -79,5 +79,16 @@ describe("mensagem de aprovação", () => {
     expect(texto).toContain("criar sua senha");
     expect(texto.endsWith("https://teste.saltybaby.com.br/criar-senha/abc")).toBe(true);
     expect(mensagemDeAprovacao("Ana", "x", false)).toContain("nova senha");
+  });
+});
+
+describe("dados da candidata", () => {
+  it("lê os dados sem as peças nem o resumo", () => {
+    const r = lerDadosDaCandidata({ ...dados, resumo: "" });
+    expect(r.ok && r.dados).toMatchObject({ nome: "Joana Lima", email: "joana@email.com", telefone: "12991112222", cep: null });
+  });
+
+  it("confere o e-mail", () => {
+    expect(lerDadosDaCandidata({ ...dados, email: "joana" }).ok).toBe(false);
   });
 });

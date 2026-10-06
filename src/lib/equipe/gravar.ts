@@ -88,10 +88,10 @@ export async function criarSuporte(
   );
 }
 
-/** Muda nome, WhatsApp e o que o suporte pode usar. Vale na hora, até para quem já está logado. */
+/** Muda nome, e-mail de entrada, WhatsApp e o que o suporte pode usar. Vale na hora, até para quem já está logado. */
 export async function salvarSuporte(
   id: string,
-  dados: { nome: string; whatsapp: string | null },
+  dados: { nome: string; email: string; whatsapp: string | null },
   permissoes: readonly Permissao[],
   autor: Autor,
 ): Promise<boolean> {
@@ -108,7 +108,10 @@ export async function salvarSuporte(
     if (u.whatsapp !== dados.whatsapp) {
       mudancas.unshift({ campo: "WhatsApp", antes: u.whatsapp, depois: dados.whatsapp, restrito: false });
     }
-    await tx.usuario.update({ where: { id }, data: { nome: dados.nome, whatsapp: dados.whatsapp } });
+    if (u.email !== dados.email) {
+      mudancas.unshift({ campo: "E-mail de entrada", antes: u.email, depois: dados.email, restrito: false });
+    }
+    await tx.usuario.update({ where: { id }, data: { nome: dados.nome, email: dados.email, whatsapp: dados.whatsapp } });
     await tx.permissaoEquipe.deleteMany({ where: { usuarioId: id } });
     await tx.permissaoEquipe.createMany({ data: permissoes.map((p) => ({ usuarioId: id, ...p })) });
     await registrar(tx, registro, mudancas, autor, "Equipe");
@@ -192,15 +195,16 @@ export async function criarAdministradora(
   );
 }
 
-/** Muda nome e WhatsApp de outra administradora. */
-export async function salvarAdministradora(id: string, dados: { nome: string; whatsapp: string | null }, autor: Autor) {
+/** Muda nome, e-mail de entrada e WhatsApp de uma administradora. */
+export async function salvarAdministradora(id: string, dados: { nome: string; email: string; whatsapp: string | null }, autor: Autor) {
   return prisma.$transaction(async (tx) => {
     const u = await tx.usuario.findFirst({ where: { id, ativo: true, perfis: { some: { perfil: "administradora" } } } });
     if (!u) return false;
     const mudancas = [];
     if (u.nome !== dados.nome) mudancas.push({ campo: "Nome", antes: u.nome, depois: dados.nome, restrito: false });
+    if (u.email !== dados.email) mudancas.push({ campo: "E-mail de entrada", antes: u.email, depois: dados.email, restrito: false });
     if (u.whatsapp !== dados.whatsapp) mudancas.push({ campo: "WhatsApp", antes: u.whatsapp, depois: dados.whatsapp, restrito: false });
-    await tx.usuario.update({ where: { id }, data: { nome: dados.nome, whatsapp: dados.whatsapp } });
+    await tx.usuario.update({ where: { id }, data: { nome: dados.nome, email: dados.email, whatsapp: dados.whatsapp } });
     await registrar(tx, { tabela: "equipe", id, rotulo: `${dados.nome} (${u.email})` }, mudancas, autor, "Equipe");
     return true;
   });
