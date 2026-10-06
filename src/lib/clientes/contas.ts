@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { lerTelefoneCliente } from "../pedidos/regras";
 import { conferirSenha, gerarHash } from "../senha";
-import { fimDoLink, gerarCodigoDoLink, hashDoCodigo, type DadosCadastro, type DadosPerfil } from "./conta";
+import { fimDoLink, gerarCodigoDoLink, hashDoCodigo, type DadosCadastro, type DadosPerfil, type EnderecoDoPerfil } from "./conta";
 import { registrar } from "../historico/gravar";
 import { CAMPOS_CLIENTE, compararParcial } from "../historico/regras";
 
@@ -212,7 +212,13 @@ export async function usarLinkDeSenha(codigo: string, senha: string, agora = new
 export type ResultadoPerfil = { ok: true } | { ok: false; motivo: "email-em-uso" | "whatsapp-em-uso" };
 
 /** A cliente atualiza nome, e-mail e WhatsApp (na conta e na ficha da loja). */
-export async function atualizarPerfil(usuarioId: string, clienteId: string, dados: DadosPerfil): Promise<ResultadoPerfil> {
+export async function atualizarPerfil(
+  usuarioId: string,
+  clienteId: string,
+  perfil: DadosPerfil,
+  endereco?: EnderecoDoPerfil,
+): Promise<ResultadoPerfil> {
+  const dados = { ...perfil, ...endereco };
   return prisma.$transaction(
     async (tx) => {
       const outroEmail = await tx.usuario.findFirst({ where: { email: dados.email, id: { not: usuarioId } } });

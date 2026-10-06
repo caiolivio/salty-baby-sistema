@@ -73,6 +73,19 @@ export function lerInscricao(
   return { ok: true, dados: { ...lido.data, pecas: preenchidas.map((p) => p.descricao) } };
 }
 
+export type DadosDaCandidata = z.output<typeof camposInscricao>;
+
+/** Dados da pessoa inscrita (sem as peças), para corrigir depois da inscrição. */
+export function lerDadosDaCandidata(
+  valores: Record<string, unknown>,
+): { ok: true; dados: DadosDaCandidata } | { ok: false; erro: string } {
+  const lido = camposInscricao.safeParse(
+    Object.fromEntries(Object.keys(camposInscricao.shape).map((k) => [k, comoTexto(valores, k)])),
+  );
+  if (!lido.success) return { ok: false, erro: lido.error.issues[0]?.message ?? "Confira os campos." };
+  return { ok: true, dados: lido.data };
+}
+
 const opcao = <T extends readonly { valor: string }[]>(lista: T, mensagem: string) =>
   z
     .string()

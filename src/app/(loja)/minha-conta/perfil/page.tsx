@@ -14,6 +14,10 @@ export const metadata: Metadata = { title: "Meus dados" };
 export default async function MeusDados() {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
   const ficha = await fichaDaCliente(usuario);
+  const endereco = await prisma.cliente.findUnique({
+    where: { id: ficha.id },
+    select: { endereco: true, cep: true, cidade: true, estado: true },
+  });
   const criancas = await prisma.crianca.findMany({
     where: { clienteId: ficha.id },
     orderBy: [{ nascimento: "asc" }, { criadoEm: "asc" }],
@@ -28,6 +32,10 @@ export default async function MeusDados() {
           nome={ficha.nome}
           email={usuario.email}
           telefone={ficha.telefone ? formatarTelefone(ficha.telefone) : ""}
+          endereco={endereco?.endereco ?? ""}
+          cep={endereco?.cep ?? ""}
+          cidade={endereco?.cidade ?? ""}
+          estado={endereco?.estado ?? ""}
         />
       </section>
       <section className={estilos.secao} aria-labelledby="titulo-criancas">

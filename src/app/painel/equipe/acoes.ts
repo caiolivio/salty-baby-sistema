@@ -14,6 +14,7 @@ import {
   tirarDaEquipe,
 } from "@/lib/equipe/gravar";
 import { lerFormularioSuporte, mensagemDoSuporte } from "@/lib/equipe/regras";
+import { ERRO_EMAIL_EM_USO, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { autorDe } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
@@ -56,10 +57,10 @@ export async function salvarAcessoDoSuporte(_estado: EstadoSuporte, dados: FormD
   const usuario = await exigirAcesso("painel-administracao", `/painel/equipe/${id}`);
   const atual = await buscarSuporte(id);
   if (!atual) return { erro: "Esta pessoa não está mais na equipe.", valores };
-  // O e-mail é o login e não muda aqui.
-  const lido = lerFormularioSuporte({ ...valores, email: atual.email });
+  const lido = lerFormularioSuporte(valores);
   if (!lido.ok) return { erro: lido.erro, valores };
-  const ok = await salvarSuporte(id, { nome: lido.dados.nome, whatsapp: lido.dados.whatsapp }, lerPermissoes(valores), autorDe(usuario));
+  if (await emailDeEntradaEmUso(lido.dados.email, id)) return { erro: ERRO_EMAIL_EM_USO, valores };
+  const ok = await salvarSuporte(id, lido.dados, lerPermissoes(valores), autorDe(usuario));
   if (!ok) return { erro: "Esta pessoa não está mais na equipe.", valores };
   redirect(`/painel/equipe/${id}?salvo=1`);
 }
@@ -98,9 +99,10 @@ export async function salvarDadosDaAdministradora(_estado: EstadoSuporte, dados:
   const usuario = await exigirAcesso("painel-administracao", `/painel/equipe/${id}`);
   const atual = await buscarSuporte(id);
   if (!atual?.administradora) return { erro: "Esta pessoa não é mais administradora.", valores };
-  const lido = lerFormularioSuporte({ ...valores, email: atual.email });
+  const lido = lerFormularioSuporte(valores);
   if (!lido.ok) return { erro: lido.erro, valores };
-  const ok = await salvarAdministradora(id, { nome: lido.dados.nome, whatsapp: lido.dados.whatsapp }, autorDe(usuario));
+  if (await emailDeEntradaEmUso(lido.dados.email, id)) return { erro: ERRO_EMAIL_EM_USO, valores };
+  const ok = await salvarAdministradora(id, lido.dados, autorDe(usuario));
   if (!ok) return { erro: "Esta pessoa não é mais administradora.", valores };
   redirect(`/painel/equipe/${id}?salvo=1`);
 }

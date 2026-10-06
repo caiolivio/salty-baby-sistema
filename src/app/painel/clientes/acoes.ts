@@ -18,6 +18,7 @@ import { normalizarEmail } from "@/lib/senha";
 import { registrar, registrarCadastro } from "@/lib/historico/gravar";
 import { CAMPOS_CLIENTE, autorDe, compararParcial } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { ERRO_EMAIL_EM_USO, atualizarContaPelaLoja, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 
 export type EstadoCliente = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -58,13 +59,19 @@ export async function salvarCliente(_estado: EstadoCliente, dados: FormData): Pr
   if (!lido.ok) return { erro: lido.erro, valores };
   const repetida = lido.dados.telefone !== atual.telefone ? await mesmoWhatsapp(lido.dados.telefone, id) : undefined;
   if (repetida) return { erro: `${repetida.nome} já está cadastrada com este WhatsApp.`, valores };
+  // Só a administradora muda a conta de entrada (nome e e-mail do login) junto com a ficha.
+  const mudarConta = Boolean(atual.usuarioId) && podeAcessar(usuario.perfis, "painel-administracao");
+  if (mudarConta && lido.dados.email && (await emailDeEntradaEmUso(lido.dados.email, atual.usuarioId!))) {
+    return { erro: ERRO_EMAIL_EM_USO, valores };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.cliente.update({ where: { id }, data: lido.dados });
+    const daConta = mudarConta ? await atualizarContaPelaLoja(tx, atual.usuarioId!, lido.dados) : [];
     await registrar(
       tx,
       { tabela: "cliente", id, rotulo: lido.dados.nome },
-      compararParcial(CAMPOS_CLIENTE, atual, lido.dados),
+      [...compararParcial(CAMPOS_CLIENTE, atual, lido.dados), ...daConta],
       autorDe(usuario),
       "Edição no painel",
     );

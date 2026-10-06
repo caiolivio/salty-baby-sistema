@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { itensDoMenu } from "@/lib/painel/menu";
 import { sair } from "./acoes";
@@ -26,7 +26,10 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
           <span>{loja.nome} · Painel</span>
         </Link>
         <div className={estilos.usuario}>
-          <span className={estilos.nomeUsuario}>{usuario.nome}</span>
+          <Link href="/painel/meus-dados" className={estilos.sair} aria-label="Meus dados">
+            <UserRound className="icone" aria-hidden />
+            <span className={estilos.nomeUsuario}>{usuario.nome}</span>
+          </Link>
           <form action={sair}>
             <button type="submit" className={estilos.sair} aria-label="Sair">
               <LogOut className="icone" aria-hidden />

@@ -4,7 +4,8 @@ import { gerarCodigoDoLink } from "../clientes/conta";
 import { contaComPerfil, gravarLinkDeSenha } from "../clientes/contas";
 import { guardarFotoDeProposta, lerFotoGuardada } from "../fotos";
 import { adicionarFotos, criarPeca } from "../pecas/gravar";
-import type { DadosInscricao, DadosProposta } from "./candidatura";
+import type { DadosDaCandidata, DadosInscricao, DadosProposta } from "./candidatura";
+import { atualizarContaPelaLoja } from "../contas/pela-loja";
 import { criarFornecedoraNaTransacao } from "./gravar";
 import type { Autor } from "../historico/regras";
 import { lerLoja } from "../loja/servidor";
@@ -25,6 +26,21 @@ export async function registrarInscricao(dados: DadosInscricao, fotos: Buffer[])
     select: { id: true },
   });
   return criada.id;
+}
+
+/**
+ * Corrige os dados da inscrição (pela loja ou pela própria pessoa no passo 2).
+ * Depois da parceria efetivada, os dados ficam na ficha da fornecedora.
+ * `contaId`: conta de entrada a atualizar junto (nome e e-mail).
+ */
+export async function atualizarCandidatura(id: string, dados: DadosDaCandidata, contaId: string | null): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const c = await tx.candidatura.findUnique({ where: { id }, select: { etapa: true } });
+    if (!c || c.etapa === "efetivada") return false;
+    await tx.candidatura.update({ where: { id }, data: dados });
+    if (contaId) await atualizarContaPelaLoja(tx, contaId, dados);
+    return true;
+  });
 }
 
 export type ResultadoAprovacao =
@@ -176,6 +192,10 @@ export async function situacaoNaArea(usuarioId: string) {
       nome: true,
       email: true,
       telefone: true,
+      endereco: true,
+      cep: true,
+      cidade: true,
+      estado: true,
       documento: true,
       pix: true,
       pixTipo: true,

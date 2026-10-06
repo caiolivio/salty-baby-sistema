@@ -68,14 +68,15 @@ export function FormularioSuporte({
             <input
               name="email"
               type="email"
-              required={!editando}
-              disabled={editando}
+              required
               maxLength={191}
               defaultValue={texto("email")}
               autoComplete="off"
             />
             <span className={estilos.dica}>
-              {editando ? "É o login da pessoa e não muda." : "É com ele que a pessoa entra no painel."}
+              {editando
+                ? "É com ele que a pessoa entra. Se mudar, ela passa a entrar com o e-mail novo (a senha continua a mesma)."
+                : "É com ele que a pessoa entra no painel."}
             </span>
           </label>
           <label className={estilos.campo}>

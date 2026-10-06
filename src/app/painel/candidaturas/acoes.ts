@@ -4,11 +4,14 @@ import { headers } from "next/headers";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirPagina } from "@/lib/acesso";
+import { podeAcessar } from "@/lib/permissoes";
 import { origemDaRequisicao } from "@/lib/etiquetas";
-import { mensagemDeAprovacao } from "@/lib/fornecedoras/candidatura";
+import { lerDadosDaCandidata, mensagemDeAprovacao } from "@/lib/fornecedoras/candidatura";
+import { ERRO_EMAIL_EM_USO, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 import {
   anotarCandidatura,
   aprovarCandidatura,
+  atualizarCandidatura,
   efetivarCandidatura,
   receberProposta,
   recusarCandidatura,
@@ -89,4 +92,23 @@ export async function recusarPeca(dados: FormData): Promise<void> {
   await exigirPagina("candidaturas", "alterar", voltar);
   await recusarProposta(id);
   refresh();
+}
+
+export type EstadoDadosCandidata = { erro?: string; valores?: Record<string, string> } | undefined;
+
+/** Corrige nome, e-mail, WhatsApp e endereço da inscrição (e da conta, se a administradora). */
+export async function salvarDadosDaCandidata(_estado: EstadoDadosCandidata, dados: FormData): Promise<EstadoDadosCandidata> {
+  const valores = Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  const id = valores.id ?? "";
+  const usuario = await exigirPagina("candidaturas", "alterar", `/painel/candidaturas/${id}`);
+  const lido = lerDadosDaCandidata(valores);
+  if (!lido.ok) return { erro: lido.erro, valores };
+  const c = await prisma.candidatura.findUnique({ where: { id }, select: { usuarioId: true } });
+  if (!c) return { erro: "Esta inscrição não existe mais.", valores };
+  const conta = c.usuarioId && podeAcessar(usuario.perfis, "painel-administracao") ? c.usuarioId : null;
+  if (conta && (await emailDeEntradaEmUso(lido.dados.email, conta))) return { erro: ERRO_EMAIL_EM_USO, valores };
+  if (!(await atualizarCandidatura(id, lido.dados, conta))) {
+    return { erro: "Depois da parceria efetivada, os dados ficam na ficha da fornecedora.", valores };
+  }
+  redirect(`/painel/candidaturas/${id}?dados=1`);
 }

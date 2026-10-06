@@ -21,7 +21,9 @@ function Aviso({ estado }: { estado: EstadoPerfil }) {
   return null;
 }
 
-export function FormularioPerfil({ nome, email, telefone }: { nome: string; email: string; telefone: string }) {
+type Perfil = { nome: string; email: string; telefone: string; endereco: string; cep: string; cidade: string; estado: string };
+
+export function FormularioPerfil({ nome, email, telefone, endereco, cep, cidade, estado: uf }: Perfil) {
   const [estado, acao, enviando] = useActionState(salvarPerfil, undefined);
   return (
     <form action={acao} className={estilos.formConta}>
@@ -38,6 +40,24 @@ export function FormularioPerfil({ nome, email, telefone }: { nome: string; emai
         WhatsApp (com DDD)
         <input name="telefone" type="tel" inputMode="tel" defaultValue={telefone} autoComplete="tel" required maxLength={20} />
       </label>
+      <label>
+        Endereço (rua, número e bairro)
+        <input name="endereco" defaultValue={endereco} autoComplete="street-address" maxLength={255} />
+      </label>
+      <div className={estilos.linhaCampos}>
+        <label>
+          CEP
+          <input name="cep" inputMode="numeric" defaultValue={cep} autoComplete="postal-code" maxLength={15} />
+        </label>
+        <label>
+          Cidade
+          <input name="cidade" defaultValue={cidade} autoComplete="address-level2" maxLength={100} />
+        </label>
+        <label>
+          Estado
+          <input name="estado" defaultValue={uf} autoComplete="address-level1" maxLength={60} />
+        </label>
+      </div>
       <button type="submit" className={estilos.botaoWhats} disabled={enviando}>
         {enviando ? "Salvando…" : "Salvar meus dados"}
       </button>

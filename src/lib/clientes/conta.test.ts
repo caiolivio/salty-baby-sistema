@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codigoValido, fimDoLink, gerarCodigoDoLink, hashDoCodigo, lerCadastro, lerNovaSenha, lerPerfil, mensagemDoLink } from "./conta";
+import { codigoValido, fimDoLink, gerarCodigoDoLink, hashDoCodigo, lerCadastro, lerEnderecoDoPerfil, lerNovaSenha, lerPerfil, mensagemDoLink } from "./conta";
 
 const cadastro = {
   nome: "  Maria   da Silva ",
@@ -62,5 +62,18 @@ describe("link de criar senha", () => {
     expect(m).toContain("Criamos sua conta");
     expect(m).toContain("https://x/criar-senha/abc");
     expect(mensagemDoLink("Maria", "https://x", false)).toContain("nova senha");
+  });
+});
+
+describe("endereço em Meus dados", () => {
+  it("guarda o endereço sem espaços sobrando e deixa vazio como nada", () => {
+    expect(lerEnderecoDoPerfil({ endereco: "  Rua A,  10 ", cep: "", cidade: "Caraguatatuba", estado: "SP" })).toEqual({
+      ok: true,
+      dados: { endereco: "Rua A, 10", cep: null, cidade: "Caraguatatuba", estado: "SP" },
+    });
+  });
+
+  it("recusa texto longo demais", () => {
+    expect(lerEnderecoDoPerfil({ cep: "1".repeat(16) }).ok).toBe(false);
   });
 });

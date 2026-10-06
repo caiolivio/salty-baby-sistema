@@ -8,6 +8,7 @@ import { prisma } from "@/lib/banco";
 import { lerFormularioFornecedora, mostrarPercentual } from "@/lib/fornecedoras/dados";
 import { temExtra, type Acesso } from "@/lib/permissoes";
 import { atualizarFornecedora, criarFornecedora } from "@/lib/fornecedoras/gravar";
+import { ERRO_EMAIL_EM_USO, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 import { mensagemDoLink } from "@/lib/clientes/conta";
 import { mensagemDoConvite } from "@/lib/fornecedoras/conta";
 import { gerarAcessoDaFornecedora } from "@/lib/fornecedoras/convites";
@@ -65,14 +66,17 @@ export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormD
   const id = valores.id ?? "";
   const atual = await prisma.fornecedora.findUnique({
     where: { id },
-    select: { documento: true, pix: true, pixTipo: true, recebimentoPreferido: true, percentualRepassePadrao: true },
+    select: { documento: true, pix: true, pixTipo: true, recebimentoPreferido: true, percentualRepassePadrao: true, usuarioId: true },
   });
   if (!atual) return { erro: "Esta fornecedora não existe mais.", valores };
   manterProtegidos(valores, usuario.acesso, atual);
   const lido = lerFormularioFornecedora(valores, atual.documento, (await lerLoja()).repassePadrao);
   if (!lido.ok) return { erro: lido.erro, valores };
+  // Só a administradora muda a conta de entrada (nome e e-mail do login) junto com a ficha.
+  const conta = atual.usuarioId && usuario.acesso.administradora ? atual.usuarioId : null;
+  if (conta && lido.dados.email && (await emailDeEntradaEmUso(lido.dados.email, conta))) return { erro: ERRO_EMAIL_EM_USO, valores };
 
-  const ok = await atualizarFornecedora(id, { ...lido.dados, ativa: valores.ativa === "sim" }, autorDe(usuario));
+  const ok = await atualizarFornecedora(id, { ...lido.dados, ativa: valores.ativa === "sim" }, autorDe(usuario), conta);
   if (!ok) return { erro: "Esta fornecedora não existe mais.", valores };
   redirect(`/painel/fornecedoras/${id}?salva=1`);
 }

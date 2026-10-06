@@ -7,8 +7,9 @@ import { exigirAcesso } from "@/lib/acesso";
 import { lerNovaSenha } from "@/lib/clientes/conta";
 import { trocarSenha } from "@/lib/clientes/contas";
 import { pedirDevolucao } from "@/lib/fornecedoras/area";
-import { lerProposta } from "@/lib/fornecedoras/candidatura";
-import { marcarBoasVindas, registrarProposta, situacaoNaArea, tirarProposta } from "@/lib/fornecedoras/candidaturas";
+import { lerDadosDaCandidata, lerProposta } from "@/lib/fornecedoras/candidatura";
+import { ERRO_EMAIL_EM_USO, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
+import { atualizarCandidatura, marcarBoasVindas, registrarProposta, situacaoNaArea, tirarProposta } from "@/lib/fornecedoras/candidaturas";
 import { etapaDaFornecedora, lerDadosDaFornecedora } from "@/lib/fornecedoras/conta";
 import { salvarDadosDaFornecedora } from "@/lib/fornecedoras/convites";
 import { contratoParaAceite, registrarAceite, segredoDoAceite } from "@/lib/fornecedoras/aceite";
@@ -134,6 +135,24 @@ export async function salvarDados(_estado: EstadoDados, dados: FormData): Promis
   const r = await salvarDadosDaFornecedora(situacao.fornecedora.id, usuario.id, lido.dados);
   if (!r.ok) return { erro: "Este e-mail já é usado por outra conta no site.", valores };
   if (etapaDaFornecedora(situacao.fornecedora) === "dados") redirect("/fornecedora");
+  refresh();
+  return { ok: "Dados salvos." };
+}
+
+/** Passo 2: a candidata corrige os dados da inscrição (e o e-mail com que entra). */
+export async function salvarDadosDaInscricao(_estado: EstadoDados, dados: FormData): Promise<EstadoDados> {
+  const usuario = await exigirAcesso("area-fornecedora", "/fornecedora");
+  const situacao = await situacaoNaArea(usuario.id);
+  if (situacao.tipo !== "candidata") return { erro: "Seus dados agora ficam em Meus dados." };
+  const valores = Object.fromEntries(
+    [...dados.entries()].filter((par): par is [string, string] => typeof par[1] === "string"),
+  );
+  const lido = lerDadosDaCandidata(valores);
+  if (!lido.ok) return { erro: lido.erro, valores };
+  if (await emailDeEntradaEmUso(lido.dados.email, usuario.id)) return { erro: ERRO_EMAIL_EM_USO, valores };
+  if (!(await atualizarCandidatura(situacao.candidatura.id, lido.dados, usuario.id))) {
+    return { erro: "Seus dados agora ficam em Meus dados.", valores };
+  }
   refresh();
   return { ok: "Dados salvos." };
 }
