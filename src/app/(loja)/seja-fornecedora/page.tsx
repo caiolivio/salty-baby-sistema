@@ -36,20 +36,21 @@ export default async function SejaFornecedora() {
             <strong>Inscrição</strong> (esta página): seus dados e até {LIMITE_PECAS_INSCRICAO} peças, com foto e descrição.
           </li>
           <li>
-            <strong>Peças e acordo</strong>: se a curadoria aprovar, você recebe o acesso à sua área para mostrar mais peças,
-            com todos os detalhes, e ler e aceitar as regras da consignação.
+            <strong>Peças</strong>: se a curadoria aprovar, você recebe o acesso à sua área para mostrar mais peças, com
+            todos os detalhes.
           </li>
           <li>
-            <strong>Parceria</strong>: a {loja.nomeCurto} entra em contato, finaliza o seu cadastro e você vira parceira da{" "}
-            {loja.nome}.
+            <strong>Contrato</strong>: a {loja.nomeCurto} entra em contato e finaliza o seu cadastro. Você lê e aceita o
+            contrato completo e vira parceira da {loja.nome}.
           </li>
         </ol>
       </section>
-      <section className={estilos.resumoContrato} aria-labelledby="resumo-contrato">
-        <h2 id="resumo-contrato">{resumo.titulo}</h2>
-        <TextoDaPagina blocos={resumo.blocos} />
-      </section>
-      <FormularioInscricao desafio={await novoDesafio()} limite={LIMITE_PECAS_INSCRICAO} />
+      <FormularioInscricao
+        desafio={await novoDesafio()}
+        limite={LIMITE_PECAS_INSCRICAO}
+        tituloResumo={resumo.titulo}
+        resumo={<TextoDaPagina blocos={resumo.blocos} />}
+      />
     </div>
   );
 }

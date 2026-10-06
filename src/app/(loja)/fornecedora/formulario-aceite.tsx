@@ -137,6 +137,16 @@ export function FormularioAceite({
           <input type="checkbox" name="de_acordo" value="sim" required disabled={!lidoEm} />
           <span>{textoCheckbox}</span>
         </label>
+        {!lidoEm && (
+          <p className={estilos.avisoPerto}>
+            <ScrollText className="icone" aria-hidden /> Leia o contrato até o final para seguir.
+          </p>
+        )}
+        {estado?.erro && (
+          <p className={estilos.avisoPerto} aria-hidden>
+            {estado.erro}
+          </p>
+        )}
         <button type="submit" className={estilos.botaoWhats} disabled={enviando || !lidoEm}>
           {enviando ? "Enviando…" : TEXTO_BOTAO_ACEITE}
         </button>

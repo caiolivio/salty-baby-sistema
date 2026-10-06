@@ -116,7 +116,8 @@ export async function efetivarCandidatura(id: string): Promise<ResultadoEfetivac
     const c = await tx.candidatura.findUnique({ where: { id } });
     if (!c) return { ok: false as const, motivo: "nao-encontrada" as const };
     if (c.fornecedoraId || c.etapa === "efetivada") return { ok: false as const, motivo: "ja-efetivada" as const };
-    if (c.etapa !== "acordo_aceito" || !c.acordoAceitoEm) return { ok: false as const, motivo: "sem-acordo" as const };
+    // O contrato é aceito depois (passo 3), já como fornecedora. Quem aceitou antes, como candidata, já entra com o aceite.
+    if (c.etapa !== "aprovada" && c.etapa !== "acordo_aceito") return { ok: false as const, motivo: "sem-acordo" as const };
     const { id: fornecedoraId, codigo } = await criarFornecedoraNaTransacao(tx, {
       nome: c.nome,
       email: c.email,
@@ -187,7 +188,7 @@ export async function situacaoNaArea(usuarioId: string) {
   return { tipo: "sem-cadastro" as const };
 }
 
-/** A fornecedora viu o "Parabéns" e passa para a área de verdade (passo 4). */
+/** A fornecedora viu o "Parabéns" e passa para a área de verdade (depois do passo 3). */
 export async function marcarBoasVindas(fornecedoraId: string, agora = new Date()): Promise<void> {
   await prisma.fornecedora.updateMany({ where: { id: fornecedoraId, boasVindasEm: null }, data: { boasVindasEm: agora } });
 }

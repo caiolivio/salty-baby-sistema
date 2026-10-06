@@ -69,7 +69,7 @@ export function lerInscricao(
     if (!p.descricao) return { ok: false, erro: `Escreva uma descrição curta da peça ${i + 1}.` };
     if (p.descricao.length > 500) return { ok: false, erro: `A descrição da peça ${i + 1} pode ter até 500 caracteres.` };
   }
-  if (valores.privacidade !== "sim") return { ok: false, erro: "Para enviar, aceite o aviso de privacidade." };
+  if (valores.resumo !== "sim") return { ok: false, erro: "Para enviar, marque que leu o resumo do contrato." };
   return { ok: true, dados: { ...lido.data, pecas: preenchidas.map((p) => p.descricao) } };
 }
 
@@ -104,15 +104,16 @@ export function lerProposta(
   return { ok: true, dados: lido.data };
 }
 
-/** Os 4 passos mostrados no topo das páginas. */
-export const PASSOS = ["Inscrição", "Peças e acordo", "Parceria", "Concluído"] as const;
+/** Os 3 passos mostrados no topo das páginas (com o 3 feito, a parceria está concluída). */
+// O contrato completo é lido e aceito no passo 3 (decisão do Caio, 06/10/2026); o passo 1 mostra o resumo.
+export const PASSOS = ["Inscrição", "Peças", "Contrato"] as const;
 export type SituacaoPasso = "feito" | "atual" | "pendente";
 
 /**
- * Situação de cada passo. `atual` é o passo em que a pessoa está (1 a 4);
+ * Situação de cada passo. `atual` é o passo em que a pessoa está (1 a 3);
  * os anteriores aparecem como feitos.
  */
-export function situacaoDosPassos(atual: 1 | 2 | 3 | 4, concluido = false): SituacaoPasso[] {
+export function situacaoDosPassos(atual: 1 | 2 | 3, concluido = false): SituacaoPasso[] {
   return PASSOS.map((_, i) => {
     const numero = i + 1;
     if (numero < atual || (numero === atual && concluido)) return "feito";
@@ -121,7 +122,7 @@ export function situacaoDosPassos(atual: 1 | 2 | 3 | 4, concluido = false): Situ
 }
 
 /** Em que passo está cada etapa da candidatura (para a área da fornecedora e o painel). */
-export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3 | 4; concluido: boolean } {
+export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3; concluido: boolean } {
   switch (etapa) {
     case "enviada":
       return { atual: 1, concluido: true };
@@ -138,8 +139,8 @@ export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3 | 4; concluido: 
 
 export const NOMES_ETAPA: Record<string, string> = {
   enviada: "Aguardando curadoria",
-  aprovada: "Aprovada no passo 1 (fazendo o passo 2)",
-  acordo_aceito: "Passo 2 feito (falta efetivar)",
+  aprovada: "No passo 2: mandando peças (falta efetivar)",
+  acordo_aceito: "Contrato aceito (falta efetivar)",
   efetivada: "Parceira (fornecedora)",
   recusada: "Recusada",
 };
@@ -149,7 +150,7 @@ export function mensagemDeAprovacao(nome: string, link: string, novaConta: boole
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
-    "Suas peças foram aprovadas na curadoria! Agora falta o passo 2: mostrar mais peças, com os detalhes, e ler e aceitar as regras da consignação.",
+    "Suas peças foram aprovadas na curadoria! Agora é o passo 2: mostrar mais peças, com os detalhes de cada uma.",
     novaConta
       ? "Toque no link para criar sua senha e entrar na sua área de fornecedora (o link vale por 7 dias):"
       : "Toque no link para criar uma nova senha e entrar na sua área de fornecedora (o link vale por 7 dias):",

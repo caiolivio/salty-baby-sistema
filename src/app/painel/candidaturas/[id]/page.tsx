@@ -18,7 +18,7 @@ import { Voltar } from "@/componentes/voltar";
 export const metadata: Metadata = { title: "Inscrição de fornecedora" };
 
 const ERROS: Record<string, string> = {
-  "sem-acordo": "Ela ainda não aceitou o acordo (passo 2).",
+  "sem-acordo": "Aprove o passo 1 antes de efetivar a parceria.",
   "ja-efetivada": "Esta parceria já foi efetivada.",
   "nao-encontrada": "Esta inscrição ou peça não existe mais.",
   "sem-fornecedora": "Efetive a parceria antes de cadastrar as peças, porque o código da peça leva o da fornecedora.",
@@ -58,7 +58,7 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
       {c.etapa !== "recusada" && <Passos nomes={PASSOS} situacoes={situacaoDosPassos(passo.atual, passo.concluido)} />}
       {aviso.efetivada && (
         <p className={proprios.aviso} role="status">
-          Parceria efetivada! Ela agora é a fornecedora {String(aviso.efetivada)} e, ao entrar, vê a página de parabéns.
+          Parceria efetivada! Ela agora é a fornecedora {String(aviso.efetivada)}. Ao entrar, ela lê e aceita o contrato (passo 3) e vê a página de parabéns.
         </p>
       )}
       {aviso.recusada && (
@@ -126,15 +126,15 @@ export default async function Candidatura({ params, searchParams }: PageProps<"/
         <section aria-labelledby="curadoria">
           <h2 id="curadoria">Curadoria</h2>
           {c.etapa === "enviada" && <p>Avalie as peças abaixo. Se aprovar, ela recebe o acesso para fazer o passo 2.</p>}
-          {c.etapa === "aprovada" && <p>Aprovada. Ela está no passo 2: mostrando mais peças e lendo o acordo.</p>}
-          {c.etapa === "acordo_aceito" && (
+          {(c.etapa === "aprovada" || c.etapa === "acordo_aceito") && (
             <p>
-              Ela aceitou o acordo. Combine com ela pelo WhatsApp e, quando estiver tudo certo, efetive a parceria: ela ganha o
-              código de fornecedora e as peças recebidas entram no estoque com esse código.
+              Aprovada. Ela está no passo 2, mostrando mais peças. Combine com ela pelo WhatsApp e, quando estiver tudo certo,
+              efetive a parceria: ela ganha o código de fornecedora, lê e aceita o contrato completo (passo 3), e as peças
+              recebidas entram no estoque com esse código.
             </p>
           )}
           <Aprovar id={c.id} jaAprovada={c.etapa !== "enviada"} />
-          {c.etapa === "acordo_aceito" && (
+          {(c.etapa === "aprovada" || c.etapa === "acordo_aceito") && (
             <form action={efetivar} className={proprios.acoes}>
               <input type="hidden" name="id" value={c.id} />
               <button type="submit" className={proprios.botao}>

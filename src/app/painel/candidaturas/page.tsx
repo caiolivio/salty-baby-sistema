@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Seja fornecedora" };
 const FILTROS: { valor: string; nome: string; etapas: EtapaCandidatura[] }[] = [
   { valor: "abertas", nome: "Em andamento", etapas: ["enviada", "aprovada", "acordo_aceito"] },
   { valor: "enviada", nome: "Aguardando curadoria", etapas: ["enviada"] },
-  { valor: "acordo_aceito", nome: "Falta efetivar", etapas: ["acordo_aceito"] },
+  { valor: "acordo_aceito", nome: "Falta efetivar", etapas: ["aprovada", "acordo_aceito"] },
   { valor: "efetivada", nome: "Parceiras", etapas: ["efetivada"] },
   { valor: "recusada", nome: "Recusadas", etapas: ["recusada"] },
 ];
@@ -50,7 +50,7 @@ export default async function Candidaturas({ searchParams }: PageProps<"/painel/
       </div>
       <p>
         Inscrições feitas na página <Link href="/seja-fornecedora">Seja uma fornecedora</Link> do site. Aprove o passo 1 para
-        ela receber o acesso, e efetive a parceria depois que ela aceitar o acordo.
+        ela receber o acesso e mandar mais peças (passo 2), e efetive a parceria quando combinar a entrega. O contrato completo ela aceita depois, no passo 3.
       </p>
       <nav className={visual.filtroEtapas} aria-label="Filtrar inscrições">
         {FILTROS.map((f) => (

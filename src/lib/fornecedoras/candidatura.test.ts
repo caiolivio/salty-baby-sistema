@@ -9,7 +9,7 @@ const dados = {
   cep: "",
   cidade: "Caraguatatuba",
   estado: "SP",
-  privacidade: "sim",
+  resumo: "sim",
 };
 const peca = (descricao: string, temFoto = true) => ({ descricao, temFoto });
 
@@ -40,7 +40,7 @@ describe("inscrição (passo 1)", () => {
       ok: false,
       erro: "Nesta primeira etapa, mostre no máximo 5 peças.",
     });
-    expect(lerInscricao({ ...dados, privacidade: "" }, [peca("Body")]).ok).toBe(false);
+    expect(lerInscricao({ ...dados, resumo: "" }, [peca("Body")]).ok).toBe(false);
   });
 });
 
@@ -58,9 +58,9 @@ describe("peça proposta (passo 2)", () => {
 
 describe("passos na tela", () => {
   it("marca os passos feitos, o atual e os que faltam", () => {
-    expect(situacaoDosPassos(1)).toEqual(["atual", "pendente", "pendente", "pendente"]);
-    expect(situacaoDosPassos(2, true)).toEqual(["feito", "feito", "pendente", "pendente"]);
-    expect(situacaoDosPassos(4, true)).toEqual(["feito", "feito", "feito", "feito"]);
+    expect(situacaoDosPassos(1)).toEqual(["atual", "pendente", "pendente"]);
+    expect(situacaoDosPassos(2, true)).toEqual(["feito", "feito", "pendente"]);
+    expect(situacaoDosPassos(3, true)).toEqual(["feito", "feito", "feito"]);
   });
 
   it("liga cada etapa da candidatura a um passo", () => {
