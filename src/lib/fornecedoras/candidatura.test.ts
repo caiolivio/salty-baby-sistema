@@ -58,9 +58,9 @@ describe("peça proposta (passo 2)", () => {
 
 describe("passos na tela", () => {
   it("marca os passos feitos, o atual e os que faltam", () => {
-    expect(situacaoDosPassos(1)).toEqual(["atual", "pendente", "pendente", "pendente"]);
-    expect(situacaoDosPassos(2, true)).toEqual(["feito", "feito", "pendente", "pendente"]);
-    expect(situacaoDosPassos(4, true)).toEqual(["feito", "feito", "feito", "feito"]);
+    expect(situacaoDosPassos(1)).toEqual(["atual", "pendente", "pendente"]);
+    expect(situacaoDosPassos(2, true)).toEqual(["feito", "feito", "pendente"]);
+    expect(situacaoDosPassos(3, true)).toEqual(["feito", "feito", "feito"]);
   });
 
   it("liga cada etapa da candidatura a um passo", () => {

@@ -45,11 +45,12 @@ export default async function SejaFornecedora() {
           </li>
         </ol>
       </section>
-      <section className={estilos.resumoContrato} aria-labelledby="resumo-contrato">
-        <h2 id="resumo-contrato">{resumo.titulo}</h2>
-        <TextoDaPagina blocos={resumo.blocos} />
-      </section>
-      <FormularioInscricao desafio={await novoDesafio()} limite={LIMITE_PECAS_INSCRICAO} />
+      <FormularioInscricao
+        desafio={await novoDesafio()}
+        limite={LIMITE_PECAS_INSCRICAO}
+        tituloResumo={resumo.titulo}
+        resumo={<TextoDaPagina blocos={resumo.blocos} />}
+      />
     </div>
   );
 }

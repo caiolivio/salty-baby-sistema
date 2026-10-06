@@ -163,7 +163,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
 
   const { fornecedora } = situacao;
   const etapa = etapaDaFornecedora(fornecedora);
-  // Quem veio pelo "Seja uma fornecedora" segue os 4 passos da inscrição; quem
+  // Quem veio pelo "Seja uma fornecedora" segue os 3 passos da inscrição; quem
   // já era parceira (importada) segue os 3 passos do primeiro acesso.
   const veioDaInscricao = Boolean(fornecedora.candidatura);
 

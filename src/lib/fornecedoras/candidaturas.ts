@@ -188,7 +188,7 @@ export async function situacaoNaArea(usuarioId: string) {
   return { tipo: "sem-cadastro" as const };
 }
 
-/** A fornecedora viu o "Parabéns" e passa para a área de verdade (passo 4). */
+/** A fornecedora viu o "Parabéns" e passa para a área de verdade (depois do passo 3). */
 export async function marcarBoasVindas(fornecedoraId: string, agora = new Date()): Promise<void> {
   await prisma.fornecedora.updateMany({ where: { id: fornecedoraId, boasVindasEm: null }, data: { boasVindasEm: agora } });
 }

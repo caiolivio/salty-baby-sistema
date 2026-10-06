@@ -2,7 +2,7 @@ import estilos from "./passos.module.css";
 
 export type SituacaoDoPasso = "feito" | "atual" | "pendente";
 
-/** Linha de passos "01 > 02 > 03 > 04", com o passo atual em destaque. */
+/** Linha de passos "01 > 02 > 03", com o passo atual em destaque. */
 export function Passos({ nomes, situacoes }: { nomes: readonly string[]; situacoes: readonly SituacaoDoPasso[] }) {
   return (
     <ol className={estilos.passos} aria-label="Passos">

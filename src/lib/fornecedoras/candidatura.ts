@@ -104,16 +104,16 @@ export function lerProposta(
   return { ok: true, dados: lido.data };
 }
 
-/** Os 4 passos mostrados no topo das páginas. */
+/** Os 3 passos mostrados no topo das páginas (com o 3 feito, a parceria está concluída). */
 // O contrato completo é lido e aceito no passo 3 (decisão do Caio, 06/10/2026); o passo 1 mostra o resumo.
-export const PASSOS = ["Inscrição", "Peças", "Contrato", "Concluído"] as const;
+export const PASSOS = ["Inscrição", "Peças", "Contrato"] as const;
 export type SituacaoPasso = "feito" | "atual" | "pendente";
 
 /**
- * Situação de cada passo. `atual` é o passo em que a pessoa está (1 a 4);
+ * Situação de cada passo. `atual` é o passo em que a pessoa está (1 a 3);
  * os anteriores aparecem como feitos.
  */
-export function situacaoDosPassos(atual: 1 | 2 | 3 | 4, concluido = false): SituacaoPasso[] {
+export function situacaoDosPassos(atual: 1 | 2 | 3, concluido = false): SituacaoPasso[] {
   return PASSOS.map((_, i) => {
     const numero = i + 1;
     if (numero < atual || (numero === atual && concluido)) return "feito";
@@ -122,7 +122,7 @@ export function situacaoDosPassos(atual: 1 | 2 | 3 | 4, concluido = false): Situ
 }
 
 /** Em que passo está cada etapa da candidatura (para a área da fornecedora e o painel). */
-export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3 | 4; concluido: boolean } {
+export function passoDaEtapa(etapa: string): { atual: 1 | 2 | 3; concluido: boolean } {
   switch (etapa) {
     case "enviada":
       return { atual: 1, concluido: true };

@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
+import { useAvisoDoEnvio } from "@/componentes/aviso-do-envio";
 import { reduzirFoto } from "@/componentes/reduzir-foto";
 import { CONSERVACOES, GENEROS } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
@@ -13,10 +14,16 @@ export function FormularioProposta({ categorias }: { categorias: { id: string; n
   const [preparando, setPreparando] = useState(false);
   const [foto, setFoto] = useState<{ arquivo: File; previa: string } | null>(null);
   const v = (campo: string) => estado?.valores?.[campo] ?? "";
+  const { aviso, setAviso, aoFaltarCampo } = useAvisoDoEnvio();
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const formulario = evento.currentTarget;
+    if (!foto) {
+      setAviso("Preencha todos os dados. Falta a foto da peça.");
+      return;
+    }
+    setAviso(null);
     setPreparando(true);
     const dados = new FormData(formulario);
     dados.delete("foto_escolhida");
@@ -28,7 +35,7 @@ export function FormularioProposta({ categorias }: { categorias: { id: string; n
   // Depois de enviar com sucesso, o formulário volta limpo (a chave muda).
   const chave = estado?.ok ? `ok-${estado.ok}` : "formulario";
   return (
-    <form onSubmit={enviar} className={`${estilos.formConta} ${estilos.formLargo}`} key={chave}>
+    <form onSubmit={enviar} onInvalidCapture={aoFaltarCampo} className={`${estilos.formConta} ${estilos.formLargo}`} key={chave}>
       {estado?.erro && (
         <p className={estilos.erro} role="alert">
           {estado.erro}
@@ -129,6 +136,11 @@ export function FormularioProposta({ categorias }: { categorias: { id: string; n
         Marca
         <input name="marca" maxLength={80} defaultValue={v("marca")} />
       </label>
+      {(aviso || estado?.erro) && (
+        <p className={estilos.avisoPerto} role={aviso ? "alert" : undefined}>
+          {aviso ?? estado?.erro}
+        </p>
+      )}
       <button type="submit" className={estilos.botaoWhats} disabled={enviando || preparando}>
         {preparando ? "Preparando a foto…" : enviando ? "Enviando…" : "Enviar peça para avaliação"}
       </button>

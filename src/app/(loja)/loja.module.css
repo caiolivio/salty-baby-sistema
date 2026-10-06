@@ -1215,22 +1215,8 @@
   line-height: 1.55;
 }
 
-.resumoContrato {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
-  padding: 16px 18px;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  line-height: 1.55;
-}
-
-.resumoContrato :is(h2, p, ul) {
+.tituloResumo {
   margin: 0;
-}
-
-.resumoContrato h2 {
   font-family: var(--fonte-titulo);
   font-size: 1.15rem;
 }
@@ -2002,4 +1988,18 @@
 .escolhaRecebimento legend {
   font-weight: 600;
   margin-bottom: 6px;
+}
+
+/* Aviso logo acima do botão de enviar (o mesmo erro do alto do formulário, ou o que falta para seguir). */
+.avisoPerto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--raio-p);
+  background: #fdecea;
+  color: var(--erro);
+  font-weight: 600;
+  line-height: 1.4;
 }

@@ -2,7 +2,8 @@
 
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useState, type ReactNode } from "react";
+import { useAvisoDoEnvio } from "@/componentes/aviso-do-envio";
 import { Desafio } from "@/componentes/desafio";
 import { reduzirFoto } from "@/componentes/reduzir-foto";
 import estilos from "../loja.module.css";
@@ -14,12 +15,23 @@ let proximaChave = 1;
 const novaPeca = (descricao = ""): PecaNaTela => ({ chave: proximaChave++, foto: null, previa: null, descricao });
 
 /** Passo 1: dados da pessoa e até 5 peças, cada uma com foto e descrição. */
-export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: string; ficha: string }; limite: number }) {
+export function FormularioInscricao({
+  desafio,
+  limite,
+  tituloResumo,
+  resumo,
+}: {
+  desafio: { imagem: string; ficha: string };
+  limite: number;
+  tituloResumo: string;
+  resumo: ReactNode;
+}) {
   const [estado, despachar, enviando] = useActionState(enviarInscricao, undefined);
   const [preparando, setPreparando] = useState(false);
   const [pecas, setPecas] = useState<PecaNaTela[]>(() => [novaPeca()]);
   const v = (campo: string) => estado?.valores[campo];
   const ocupado = enviando || preparando;
+  const { aviso, setAviso, aoFaltarCampo } = useAvisoDoEnvio();
 
   function mudar(chave: number, mudanca: Partial<PecaNaTela>) {
     setPecas((atuais) => atuais.map((p) => (p.chave === chave ? { ...p, ...mudanca } : p)));
@@ -27,6 +39,15 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    const preenchidas = pecas.filter((p) => p.foto || p.descricao.trim());
+    const falta = preenchidas.length === 0 ? 0 : preenchidas.findIndex((p) => !p.foto || !p.descricao.trim());
+    if (preenchidas.length === 0 || falta >= 0) {
+      const i = preenchidas.length === 0 ? 0 : pecas.indexOf(preenchidas[falta]);
+      const p = pecas[i];
+      setAviso(`Preencha todos os dados. Falta ${p?.foto ? "a descrição" : "a foto"} da peça ${i + 1}.`);
+      return;
+    }
+    setAviso(null);
     setPreparando(true);
     const dados = new FormData(evento.currentTarget);
     for (const [i, p] of pecas.entries()) {
@@ -38,7 +59,7 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
   }
 
   return (
-    <form onSubmit={enviar} className={`${estilos.formConta} ${estilos.formLargo}`} key={estado ? JSON.stringify(estado.valores) : "novo"}>
+    <form onSubmit={enviar} onInvalidCapture={aoFaltarCampo} className={`${estilos.formConta} ${estilos.formLargo}`} key={estado ? JSON.stringify(estado.valores) : "novo"}>
       {estado?.erro && (
         <p className={estilos.erro} role="alert">
           {estado.erro}
@@ -150,11 +171,17 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
         )}
       </fieldset>
 
+      <section className={estilos.grupoForm} aria-labelledby="resumo-contrato">
+        <h2 id="resumo-contrato" className={estilos.tituloResumo}>
+          {tituloResumo}
+        </h2>
+        <div className={estilos.acordo} tabIndex={0} aria-label="Texto do resumo do contrato">
+          {resumo}
+        </div>
+      </section>
       <label className={estilos.marcarLinha}>
         <input type="checkbox" name="resumo" value="sim" required />
-        <span>
-          Li o <a href="#resumo-contrato">resumo do contrato</a> e quero me inscrever.
-        </span>
+        <span>Li o resumo do contrato e quero me inscrever.</span>
       </label>
       <p className={estilos.dica}>
         Seus dados são usados só para a inscrição, como explica o{" "}
@@ -164,6 +191,11 @@ export function FormularioInscricao({ desafio, limite }: { desafio: { imagem: st
         .
       </p>
       <Desafio inicial={estado?.desafio ?? desafio} />
+      {(aviso || estado?.erro) && (
+        <p className={estilos.avisoPerto} role={aviso ? "alert" : undefined}>
+          {aviso ?? estado?.erro}
+        </p>
+      )}
       <button type="submit" className={estilos.botaoWhats} disabled={ocupado}>
         {preparando ? "Preparando as fotos…" : enviando ? "Enviando…" : "Enviar inscrição"}
       </button>
