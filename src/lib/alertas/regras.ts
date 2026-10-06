@@ -4,7 +4,9 @@
 
 import { formatarReais } from "../dinheiro";
 import { TAMANHOS, type Tamanho } from "../tamanhos";
-import { PUBLICOS, type Publico } from "../vitrine";
+import { marcaComparavel, PUBLICOS, type Publico } from "../vitrine";
+
+export { marcaComparavel };
 
 /** Quantos alertas cada cliente pode ter ao mesmo tempo. */
 export const MAXIMO_DE_ALERTAS = 10;
@@ -25,14 +27,6 @@ export type PecaParaAlerta = {
   categorias: readonly string[];
 };
 
-/** Marca sem acento, maiúsculas e espaços a mais, para comparar "Zara" com " zará ". */
-export const marcaComparavel = (marca: string) =>
-  marca
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
 
 /** A peça combina com tudo o que o alerta pede? Peça sem gênero vale para menina e menino (igual à vitrine). */
 export function pecaAtende(alerta: Alerta, peca: PecaParaAlerta): boolean {
