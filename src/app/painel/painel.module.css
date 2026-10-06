@@ -797,3 +797,47 @@
 .instalarApp p :global(.icone) {
   vertical-align: -3px;
 }
+
+/* Busca da lista de peças: texto em cima, listas de filtro embaixo. */
+.filtrosPecas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listasFiltro {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.listasFiltro label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  min-width: 0;
+}
+
+.listasFiltro select {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--tinta);
+  min-height: var(--altura-toque);
+  padding: 8px 10px;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .listasFiltro {
+    grid-template-columns: 1fr 1fr;
+  }
+  .listasFiltro label:last-of-type {
+    grid-column: 1 / -1;
+  }
+}

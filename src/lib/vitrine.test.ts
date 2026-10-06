@@ -5,6 +5,8 @@ import {
   lerFiltros,
   linkDaVitrine,
   linkWhatsapp,
+  marcaEscolhida,
+  marcasDaVitrine,
   linkCompartilharWhatsapp,
   mensagemDaPeca,
   mensagemParaAmiga,
@@ -115,5 +117,25 @@ describe("compartilhar com uma amiga", () => {
     const mensagem = mensagemParaAmiga({ codigo: "F06-00001", nome: "Body", tamanho: "RN", preco: "R$ 25,00" }, "https://x/", "Salty Baby");
     expect(mensagem).toBe("Vi isso aqui na Salty Baby e lembrei de você! 💛\nBody · tam. RN · R$ 25,00\nhttps://x/peca/f06-00001");
     expect(linkCompartilharWhatsapp("Oi & tchau")).toBe("https://wa.me/?text=Oi%20%26%20tchau");
+  });
+
+  it("lê e leva a marca no link", () => {
+    const f = lerFiltros({ marca: "  Tip  Top ", q: "body" });
+    expect(f.marca).toBe("Tip Top");
+    expect(linkDaVitrine(f)).toBe("/?marca=Tip+Top&q=body");
+    expect(linkDaVitrine(f, { marca: undefined })).toBe("/?q=body");
+  });
+
+  it("junta as grafias parecidas da mesma marca, em ordem alfabética", () => {
+    const marcas = marcasDaVitrine(["Zara", "ZARA", "zará", "Zara", null, "", "  ", "Carter's", "baby gap", "Baby  Gap"]);
+    expect(marcas).toEqual([
+      { nome: "Baby Gap", grafias: ["Baby  Gap", "baby gap"] },
+      { nome: "Carter's", grafias: ["Carter's"] },
+      { nome: "Zara", grafias: ["Zara", "ZARA", "zará"] },
+    ]);
+    expect(marcaEscolhida(marcas, "ZÁRA")?.grafias).toEqual(["Zara", "ZARA", "zará"]);
+    expect(marcaEscolhida(marcas, "Baby Gap")?.nome).toBe("Baby Gap");
+    expect(marcaEscolhida(marcas, "Nike")).toBeUndefined();
+    expect(marcaEscolhida(marcas, undefined)).toBeUndefined();
   });
 });

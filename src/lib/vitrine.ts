@@ -15,6 +15,8 @@ export type FiltrosVitrine = {
   tamanho?: Tamanho;
   publico?: Publico;
   categoria?: string;
+  /** Marca como aparece na lista (as grafias parecidas entram juntas, ver `marcasDaVitrine`). */
+  marca?: string;
   busca?: string;
   /** Só peças em promoção. */
   promocao?: boolean;
@@ -28,10 +30,11 @@ export function lerFiltros(parametros: Parametros): FiltrosVitrine {
   const tamanho = TAMANHOS.find((t) => t.valor === primeiro(parametros.tamanho))?.valor;
   const publico = PUBLICOS.find((p) => p.valor === primeiro(parametros.publico))?.valor;
   const categoria = primeiro(parametros.categoria)?.slice(0, 40);
+  const marca = primeiro(parametros.marca)?.replace(/\s+/g, " ").slice(0, 80);
   const busca = primeiro(parametros.q)?.slice(0, 60);
   const pagina = Math.min(1000, Math.max(1, Math.floor(Number(primeiro(parametros.pagina))) || 1));
   const promocao = primeiro(parametros.promocao) === "1" || undefined;
-  return { tamanho, publico, categoria, busca, promocao, pagina };
+  return { tamanho, publico, categoria, marca, busca, promocao, pagina };
 }
 
 /** Endereço da vitrine com os filtros atuais e uma mudança. Mudar um filtro volta para a página 1. */
@@ -41,11 +44,54 @@ export function linkDaVitrine(atuais: FiltrosVitrine, mudanca: Partial<FiltrosVi
   if (f.tamanho) busca.set("tamanho", f.tamanho);
   if (f.publico) busca.set("publico", f.publico);
   if (f.categoria) busca.set("categoria", f.categoria);
+  if (f.marca) busca.set("marca", f.marca);
   if (f.busca) busca.set("q", f.busca);
   if (f.promocao) busca.set("promocao", "1");
   if (f.pagina > 1) busca.set("pagina", String(f.pagina));
   const texto = busca.toString();
   return texto ? `/?${texto}` : "/";
+}
+
+/** Marca sem acento, maiúsculas e espaços a mais, para comparar "Zara" com " zará ". */
+export const marcaComparavel = (marca: string) =>
+  marca
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+export type MarcaDaVitrine = {
+  /** Nome mostrado: a grafia mais usada entre as peças. */
+  nome: string;
+  /** Todas as grafias guardadas nas peças ("Zara", "ZARA", "zará"), para buscar no banco. */
+  grafias: string[];
+};
+
+/** Marcas das peças à venda, juntando as grafias parecidas, em ordem alfabética. */
+export function marcasDaVitrine(marcas: Iterable<string | null>): MarcaDaVitrine[] {
+  const grupos = new Map<string, Map<string, number>>();
+  for (const marca of marcas) {
+    const limpa = marca?.replace(/\s+/g, " ").trim();
+    if (!limpa) continue;
+    const chave = marcaComparavel(limpa);
+    const grafias = grupos.get(chave) ?? new Map<string, number>();
+    grafias.set(marca!, (grafias.get(marca!) ?? 0) + 1);
+    grupos.set(chave, grafias);
+  }
+  return [...grupos.values()]
+    .map((grafias) => {
+      const nomes = [...grafias].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"));
+      return { nome: nomes[0][0].replace(/\s+/g, " ").trim(), grafias: nomes.map(([g]) => g) };
+    })
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }));
+}
+
+/** A marca escolhida no filtro, achada pela comparação sem acento e maiúsculas. */
+export function marcaEscolhida(marcas: MarcaDaVitrine[], escolhida?: string): MarcaDaVitrine | undefined {
+  if (!escolhida) return undefined;
+  const chave = marcaComparavel(escolhida);
+  return marcas.find((m) => marcaComparavel(m.nome) === chave);
 }
 
 /** Gêneros que entram no filtro escolhido (vazio = todos). */

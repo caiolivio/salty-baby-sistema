@@ -8,6 +8,8 @@ import {
   generosDoPublico,
   lerFiltros,
   linkDaVitrine,
+  marcaEscolhida,
+  marcasDaVitrine,
   POR_PAGINA_VITRINE,
   PUBLICOS,
   tamanhosDisponiveis,
@@ -35,11 +37,17 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
   const f = lerFiltros(await searchParams);
   await liberarReservasVencidas();
   const generos = generosDoPublico(f.publico);
+  const marcas = marcasDaVitrine(
+    (await prisma.peca.findMany({ where: { ...A_VENDA, marca: { not: null } }, select: { marca: true } })).map((p) => p.marca),
+  );
+  const marca = marcaEscolhida(marcas, f.marca);
+  if (f.marca && !marca) f.marca = undefined;
   // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino.
   const onde: Prisma.PecaWhereInput = {
     ...A_VENDA,
     ...(f.tamanho && { tamanho: f.tamanho }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
+    ...(marca && { marca: { in: marca.grafias } }),
     AND: [
       f.promocao ? ondeEmPromocao() : {},
       generos.length > 0 ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] } : {},
@@ -75,7 +83,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
   const promocoes = await promocoesDasPecas(pecas);
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA_VITRINE));
   const quem = await quemVeALoja(pecas.map((p) => p.id));
-  const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.busca || f.promocao);
+  const filtrando = Boolean(f.tamanho || f.publico || f.categoria || f.marca || f.busca || f.promocao);
   const loja = await lerLoja();
 
   return (
@@ -123,6 +131,19 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
             </select>
           </label>
         )}
+        {marcas.length > 0 && (
+          <label>
+            Marca
+            <select name="marca" defaultValue={marca?.nome ?? ""}>
+              <option value="">Todas</option>
+              {marcas.map((m) => (
+                <option key={m.nome} value={m.nome}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {(emPromocao > 0 || f.promocao) && (
           <label>
             Preço
@@ -164,15 +185,16 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
         </ul>
       )}
 
-      {(f.tamanho || f.publico || f.categoria) && (
+      {(f.tamanho || f.publico || f.categoria || marca) && (
         <form action={criarAviso} className={estilos.meAvise}>
           <input type="hidden" name="voltar" value={linkDaVitrine(f)} />
           <input type="hidden" name="tamanho" value={f.tamanho ?? ""} />
           <input type="hidden" name="publico" value={f.publico ?? ""} />
           <input type="hidden" name="categoria" value={f.categoria ?? ""} />
+          <input type="hidden" name="marca" value={marca?.nome ?? ""} />
           <p>
             <strong>Não achou o que procurava?</strong> A gente avisa pelo WhatsApp quando chegar peça{" "}
-            {[f.tamanho && `no tamanho ${f.tamanho}`, f.categoria && categorias.find((c) => c.id === f.categoria)?.nome.toLowerCase()]
+            {[f.tamanho && `no tamanho ${f.tamanho}`, f.categoria && categorias.find((c) => c.id === f.categoria)?.nome.toLowerCase(), marca && `da marca ${marca.nome}`]
               .filter(Boolean)
               .join(", ")}
             {f.publico && ` para ${f.publico}`}.
