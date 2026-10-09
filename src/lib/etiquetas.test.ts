@@ -17,8 +17,9 @@ describe("etiquetas", () => {
 
   it("usa folha A4 quando o formato não é o rolo", () => {
     expect(lerFormato("rolo")).toBe("rolo");
-    expect(lerFormato("x")).toBe("a4");
-    expect(lerFormato(undefined)).toBe("a4");
+    expect(lerFormato("a4")).toBe("a4");
+    expect(lerFormato("x")).toBe("rolo");
+    expect(lerFormato(undefined)).toBe("rolo");
   });
 
   it("descobre o endereço do site pelos cabeçalhos", () => {

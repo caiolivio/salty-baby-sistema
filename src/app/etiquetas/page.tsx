@@ -56,7 +56,7 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
         </span>
         <BotaoImprimir className={estilos.imprimir} />
         {formato === "rolo" ? (
-          <span className={estilos.dica}>Na janela de impressão, escolha a impressora de etiquetas e o papel 50 × 30 mm.</span>
+          <span className={estilos.dica}>Cada etiqueta sai numa página de 50 × 30 mm. Na janela de impressão, escolha a impressora de etiquetas (ou “Salvar como PDF”) e deixe a escala em 100%.</span>
         ) : (
           <span className={estilos.dica}>Na janela de impressão, deixe a escala em 100% (tamanho real). As linhas tracejadas são para recortar.</span>
         )}
