@@ -54,9 +54,15 @@ export default async function Etiquetas({ searchParams }: PageProps<"/etiquetas"
             ),
           )}
         </span>
-        <BotaoImprimir className={estilos.imprimir} />
         {formato === "rolo" ? (
-          <span className={estilos.dica}>Na janela de impressão, escolha a impressora de etiquetas e o papel 50 × 30 mm.</span>
+          <a className={estilos.imprimir} href={`/etiquetas/pdf?${new URLSearchParams({ ids: ids.join(",") })}`} target="_blank" rel="noopener">
+            Abrir PDF 50 × 30 mm
+          </a>
+        ) : (
+          <BotaoImprimir className={estilos.imprimir} />
+        )}
+        {formato === "rolo" ? (
+          <span className={estilos.dica}>O PDF já vem com cada etiqueta numa página de 50 × 30 mm, em qualquer celular ou computador. Imprima na impressora de etiquetas com a escala em 100% (tamanho real).</span>
         ) : (
           <span className={estilos.dica}>Na janela de impressão, deixe a escala em 100% (tamanho real). As linhas tracejadas são para recortar.</span>
         )}

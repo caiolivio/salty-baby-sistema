@@ -18,7 +18,7 @@
   color: var(--tinta, #13212b);
 }
 
-.barra a {
+.barra a:not(.imprimir) {
   color: var(--petroleo);
 }
 
@@ -29,6 +29,8 @@
 }
 
 .imprimir {
+  display: inline-block;
+  text-decoration: none;
   font: inherit;
   font-weight: 700;
   padding: 8px 20px;
