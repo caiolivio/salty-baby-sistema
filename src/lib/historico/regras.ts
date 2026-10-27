@@ -224,6 +224,7 @@ export type EstadoLoja = {
   minutosReserva: number;
   mesesDevolucao: number;
   mesesSacolinha: number;
+  videoInstalarApp: string | null;
 };
 
 
@@ -245,6 +246,7 @@ export const CAMPOS_LOJA: readonly Campo<EstadoLoja>[] = [
   { titulo: "Minutos de reserva", ler: (l) => l.minutosReserva },
   { titulo: "Meses para pedir devolução", ler: (l) => l.mesesDevolucao },
   { titulo: "Meses de prazo da sacolinha", ler: (l) => l.mesesSacolinha },
+  { titulo: "Vídeo de como instalar o app", ler: (l) => l.videoInstalarApp },
 ];
 
 // ---------------------------------------------------------------- tela

@@ -80,6 +80,7 @@ describe("mensagem de aprovação", () => {
     expect(texto).toContain("\nhttps://teste.saltybaby.com.br/criar-senha/abc");
     expect(texto).toContain("tela inicial");
     expect(mensagemDeAprovacao("Ana", "x", false)).toContain("nova senha");
+    expect(mensagemDeAprovacao("Ana", "x", true, "Salty Baby", "https://x/instalar-app")).toContain("\nhttps://x/instalar-app");
   });
 });
 

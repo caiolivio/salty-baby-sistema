@@ -6,6 +6,7 @@ import { lerTelefoneCliente } from "../pedidos/regras";
 import { CONSERVACOES, GENEROS } from "../pecas/dados";
 import { normalizarEmail } from "../senha";
 import { TAMANHOS } from "../tamanhos";
+import { linhaDoVideo } from "./conta";
 
 /** No passo 1 a pessoa mostra até 5 peças, cada uma com foto e descrição. */
 export const LIMITE_PECAS_INSCRICAO = 5;
@@ -159,7 +160,7 @@ export const NOMES_ETAPA: Record<string, string> = {
 };
 
 /** Mensagem que a loja manda no WhatsApp quando aprova o passo 1. */
-export function mensagemDeAprovacao(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby"): string {
+export function mensagemDeAprovacao(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby", linkDoVideo?: string): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
@@ -171,6 +172,8 @@ export function mensagemDeAprovacao(nome: string, link: string, novaConta: boole
       "3. Quando a parceria for efetivada, você lê e aceita o acordo de consignação",
     ].join("\n"),
     `Seu link (vale por 7 dias e funciona uma vez só):\n${link}`,
-    "Depois de criar a senha, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo. Qualquer dúvida, é só responder aqui 🐳",
+    linhaDoVideo(linkDoVideo) ??
+      "Depois de criar a senha, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo.",
+    "Qualquer dúvida, é só responder aqui 🐳",
   ].join("\n\n");
 }

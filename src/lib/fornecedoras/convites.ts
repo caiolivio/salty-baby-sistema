@@ -3,7 +3,8 @@ import { prisma } from "../banco";
 import { fimDoLink, gerarCodigoDoLink, hashDoCodigo } from "../clientes/conta";
 import { gravarLinkDeSenha } from "../clientes/contas";
 import { conferirSenha, gerarHash } from "../senha";
-import type { DadosDaFornecedora } from "./conta";
+import { etapaDaFornecedora, type DadosDaFornecedora } from "./conta";
+import { situacaoDoConvite } from "./lembretes";
 import { registrar, rotuloDaFornecedora } from "../historico/gravar";
 import { CAMPOS_FORNECEDORA, compararParcial } from "../historico/regras";
 
@@ -144,4 +145,31 @@ export async function salvarDadosDaFornecedora(
     }
     return { ok: true as const };
   });
+}
+
+/** Situação do primeiro acesso de cada fornecedora ativa (o convite mais novo conta). */
+export async function situacoesDosConvites(agora = new Date(), ids?: string[]) {
+  const lista = await prisma.fornecedora.findMany({
+    where: { ativa: true, ...(ids ? { id: { in: ids } } : {}) },
+    orderBy: { numero: "asc" },
+    select: {
+      id: true,
+      codigo: true,
+      nome: true,
+      telefone: true,
+      email: true,
+      endereco: true,
+      termosAceitosEm: true,
+      boasVindasEm: true,
+      usuarioId: true,
+      convites: { orderBy: { criadoEm: "desc" }, take: 1, select: { criadoEm: true, expiraEm: true } },
+    },
+  });
+  return lista.map((f) => ({
+    id: f.id,
+    codigo: f.codigo,
+    nome: f.nome,
+    telefone: f.telefone,
+    situacao: situacaoDoConvite({ temConta: Boolean(f.usuarioId), etapa: etapaDaFornecedora(f) }, f.convites[0] ?? null, agora),
+  }));
 }

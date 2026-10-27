@@ -106,13 +106,28 @@ export function fimDoLink(agora: Date): Date {
 }
 
 /** Mensagem que a loja manda no WhatsApp com o link de criar senha. */
-export function mensagemDoLink(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby"): string {
+export function mensagemDoLink(nome: string, link: string, novaConta: boolean, nomeLoja = "Salty Baby", linkDoVideo?: string): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
+  if (!novaConta) {
+    return [
+      `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
+      "Aqui está o link para você criar uma nova senha no nosso site.",
+      `Toque no link para criar sua senha (vale por ${VALIDADE_LINK_DIAS} dias e funciona uma vez só):\n${link}`,
+    ].join("\n\n");
+  }
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
-    novaConta
-      ? "Criamos sua conta no nosso site. Nela você vê suas compras, seus favoritos e peças escolhidas para você."
-      : "Aqui está o link para você criar uma nova senha no nosso site.",
-    `Toque no link para criar sua senha (vale por ${VALIDADE_LINK_DIAS} dias): ${link}`,
+    [
+      "Criamos a sua *conta* no nosso site. Nela você:",
+      "• vê as suas compras e a sua sacolinha",
+      "• guarda as peças favoritas",
+      "• pede para ser avisada quando chegar o tamanho que procura",
+      "• recebe sugestões no tamanho das suas crianças",
+    ].join("\n"),
+    `Toque no link para criar sua senha (vale por ${VALIDADE_LINK_DIAS} dias e funciona uma vez só):\n${link}`,
+    ...(linkDoVideo
+      ? [`Vídeo de 1 minuto mostrando como colocar a loja na tela inicial do celular, como um aplicativo:\n${linkDoVideo}`]
+      : []),
+    "Qualquer dúvida, é só responder aqui 🐳",
   ].join("\n\n");
 }

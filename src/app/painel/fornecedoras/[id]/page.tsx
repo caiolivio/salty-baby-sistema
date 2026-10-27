@@ -12,6 +12,7 @@ import { FormularioFornecedora } from "../formulario-fornecedora";
 import { AcessoDaFornecedora } from "../acesso-da-fornecedora";
 import { formatarDataHora } from "@/lib/datas";
 import { etapaDaFornecedora } from "@/lib/fornecedoras/conta";
+import { situacaoDoConvite, textoDaSituacao } from "@/lib/fornecedoras/lembretes";
 import { HistoricoDoRegistro } from "../../historico/do-registro";
 import { Voltar } from "@/componentes/voltar";
 import { formatarCpf } from "@/lib/clientes/dados";
@@ -32,7 +33,11 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
 
   const fornecedora = await prisma.fornecedora.findUnique({
     where: { id },
-    include: { usuario: { select: { email: true, ultimoAcessoEm: true } }, candidatura: { select: { id: true } } },
+    include: {
+      usuario: { select: { email: true, ultimoAcessoEm: true } },
+      candidatura: { select: { id: true } },
+      convites: { orderBy: { criadoEm: "desc" }, take: 1, select: { criadoEm: true, expiraEm: true } },
+    },
   });
   if (!fornecedora) notFound();
   const [aVenda, vendidas] = await Promise.all([
@@ -77,7 +82,9 @@ export default async function Fornecedora({ params, searchParams }: PageProps<"/
         <h2 id="acesso">Área da fornecedora</h2>
         <p>
           {!f.usuario
-            ? "Ela ainda não tem acesso à área dela no site."
+            ? `Ela ainda não tem acesso à área dela no site. ${textoDaSituacao(
+                situacaoDoConvite({ temConta: false, etapa: "dados" }, f.convites[0] ?? null, new Date()),
+              )}`
             : `Entra com o e-mail ${f.usuario.email}. ${
                 {
                   dados: "Ainda não terminou o cadastro.",

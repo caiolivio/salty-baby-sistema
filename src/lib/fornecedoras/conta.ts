@@ -67,7 +67,12 @@ export function lerDadosDaFornecedora(
  * tem na área, os passos do cadastro e avisa que depois dá para instalar o app.
  * Negrito no formato do WhatsApp (*texto*).
  */
-export function mensagemDoConvite(nome: string, link: string, nomeLoja = "Salty Baby"): string {
+/** Linha com o vídeo de como instalar o app, para as mensagens de acesso. */
+export function linhaDoVideo(linkDoVideo?: string): string | null {
+  return linkDoVideo ? `Vídeo de 1 minuto mostrando como colocar a loja na tela inicial do celular, como um aplicativo:\n${linkDoVideo}` : null;
+}
+
+export function mensagemDoConvite(nome: string, link: string, nomeLoja = "Salty Baby", linkDoVideo?: string): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
@@ -86,7 +91,9 @@ export function mensagemDoConvite(nome: string, link: string, nomeLoja = "Salty 
       "3. Leia e aceite o acordo de consignação",
     ].join("\n"),
     `Seu link (vale por ${VALIDADE_LINK_DIAS} dias e funciona uma vez só):\n${link}`,
-    "No final, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo. Qualquer dúvida, é só responder aqui 🐳",
+    linhaDoVideo(linkDoVideo) ??
+      "No final, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo.",
+    "Qualquer dúvida, é só responder aqui 🐳",
   ].join("\n\n");
 }
 

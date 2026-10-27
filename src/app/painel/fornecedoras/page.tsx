@@ -8,6 +8,9 @@ import { podeAlterar } from "@/lib/permissoes";
 import estilos from "../painel.module.css";
 import proprios from "../formulario.module.css";
 import { BotoesExportar } from "../exportar/botoes";
+import { situacoesDosConvites } from "@/lib/fornecedoras/convites";
+import { DIAS_PARA_LEMBRAR, precisaDeLembrete, textoDaSituacao } from "@/lib/fornecedoras/lembretes";
+import { LembrarFornecedora } from "./convites-para-lembrar";
 
 export const metadata: Metadata = { title: "Fornecedoras" };
 
@@ -29,6 +32,10 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
     prisma.peca.groupBy({ by: ["fornecedoraId"], where: { quantidade: { gt: 0 } }, _count: true }),
     prisma.peca.groupBy({ by: ["fornecedoraId"], where: { status: { in: ["vendida", "enviada", "retirada", "na_sacolinha"] } }, _count: true }),
   ]);
+  const agora = new Date();
+  const paraLembrar = usuario.acesso.administradora
+    ? (await situacoesDosConvites(agora)).filter((f) => precisaDeLembrete(f.situacao, agora))
+    : [];
   const contar = (lista: { fornecedoraId: string | null; _count: number }[], id: string) =>
     lista.find((l) => l.fornecedoraId === id)?._count ?? 0;
 
@@ -46,6 +53,29 @@ export default async function Fornecedoras({ searchParams }: PageProps<"/painel/
           )}
         </span>
       </div>
+      {paraLembrar.length > 0 && !busca && (
+        <section aria-labelledby="lembrar">
+          <h2 id="lembrar">Convites para lembrar ({paraLembrar.length})</h2>
+          <p className={proprios.dica}>
+            Quem recebeu o link de primeiro acesso há {DIAS_PARA_LEMBRAR} dias ou mais e não entrou, e quem entrou mas parou no
+            meio do cadastro. O lembrete já vai com a mensagem pronta.
+          </p>
+          <ul className={proprios.aceites}>
+            {paraLembrar.map((f) => (
+              <LembrarFornecedora
+                key={f.id}
+                f={{
+                  id: f.id,
+                  codigo: f.codigo,
+                  nome: f.nome,
+                  situacao: textoDaSituacao(f.situacao),
+                  geraLinkNovo: f.situacao.tipo !== "comecou",
+                }}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
       <form className={estilos.busca} role="search">
         <input name="q" defaultValue={busca} placeholder="Código (ex.: F06), nome ou cidade" aria-label="Buscar fornecedoras" />
         <button type="submit">Buscar</button>

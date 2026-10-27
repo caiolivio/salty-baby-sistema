@@ -29,6 +29,7 @@ const SELECAO = {
   minutosReserva: true,
   mesesDevolucao: true,
   mesesSacolinha: true,
+  videoInstalarApp: true,
   atualizadoEm: true,
 } as const;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Download, EllipsisVertical, MonitorDown, Share } from "lucide-react";
+import { Download, EllipsisVertical, MonitorDown, PlayCircle, Share } from "lucide-react";
 import { aparelhoPeloNavegador } from "@/lib/pwa/regras";
 import estilos from "./como-instalar-app.module.css";
 
@@ -16,7 +16,7 @@ const jaInstalado = () =>
  * depois do cadastro da fornecedora. Abre o passo a passo do aparelho em uso e, quando o
  * navegador oferece, tem o botão que instala direto.
  */
-export function ComoInstalarApp({ nome }: { nome: string }) {
+export function ComoInstalarApp({ nome, linkDoVideo }: { nome: string; linkDoVideo?: string }) {
   const [pedido, setPedido] = useState<PedidoDeInstalacao | null>(null);
   const instalado = useSyncExternalStore(nada, jaInstalado, () => false);
   const aparelho = useSyncExternalStore(nada, () => aparelhoPeloNavegador(navigator.userAgent), () => "outro" as const);
@@ -38,6 +38,13 @@ export function ComoInstalarApp({ nome }: { nome: string }) {
       ) : (
         <>
           <p>Assim você abre a sua área com um toque, como um aplicativo, sem precisar procurar o site.</p>
+          {linkDoVideo && (
+            <p>
+              <a href={linkDoVideo}>
+                <PlayCircle className="icone" aria-hidden /> Prefere ver em vídeo? Assista aqui
+              </a>
+            </p>
+          )}
           {pedido && (
             <button
               type="button"

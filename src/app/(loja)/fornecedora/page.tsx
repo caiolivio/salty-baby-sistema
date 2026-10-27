@@ -173,7 +173,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
-        <ComoInstalarApp nome={loja.nomeCurto} />
+        <ComoInstalarApp nome={loja.nomeCurto} linkDoVideo={loja.videoInstalarApp ? "/instalar-app" : undefined} />
         {seusDados}
       </>
     );
@@ -273,7 +273,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             Seu código de fornecedora é <strong>{fornecedora.codigo}</strong>. Ele aparece no código de cada peça sua.
           </p>
         </section>
-        <ComoInstalarApp nome={loja.nomeCurto} />
+        <ComoInstalarApp nome={loja.nomeCurto} linkDoVideo={loja.videoInstalarApp ? "/instalar-app" : undefined} />
         <section className={estilos.secaoArea}>
           <h2>O que tem na sua área</h2>
           <ComoFuncionaAArea />

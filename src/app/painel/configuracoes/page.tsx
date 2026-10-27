@@ -37,6 +37,7 @@ export default async function Configuracoes() {
           minutosReserva: String(loja.minutosReserva),
           mesesDevolucao: String(loja.mesesDevolucao),
           mesesSacolinha: String(loja.mesesSacolinha),
+          videoInstalarApp: loja.videoInstalarApp ?? "",
         }}
         imagens={{ ...imagens, logoPropria: Boolean(loja.logo), iconePropria: Boolean(loja.icone) }}
         prefixoFixo={await prefixoEmUso(loja.prefixoLoja)}

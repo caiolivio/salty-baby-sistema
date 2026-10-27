@@ -18,6 +18,7 @@ import { normalizarEmail } from "@/lib/senha";
 import { registrar, registrarCadastro } from "@/lib/historico/gravar";
 import { CAMPOS_CLIENTE, autorDe, compararParcial } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { linkDaPaginaDoVideo } from "@/lib/loja/regras";
 import { ERRO_EMAIL_EM_USO, atualizarContaPelaLoja, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 
 export type EstadoCliente = { erro?: string; valores?: Record<string, string> } | undefined;
@@ -106,7 +107,7 @@ export async function removerCrianca(dados: FormData): Promise<void> {
   revalidatePath(`/painel/clientes/${clienteId}`);
 }
 
-export type EstadoAcesso = { erro?: string; link?: string; whatsapp?: string; novaConta?: boolean } | undefined;
+export type EstadoAcesso = { erro?: string; link?: string; texto?: string; whatsapp?: string; novaConta?: boolean } | undefined;
 
 /**
  * Cria o acesso da cliente ao site (ou um link novo, para quem esqueceu a
@@ -125,11 +126,12 @@ export async function liberarAcesso(_estado: EstadoAcesso, dados: FormData): Pro
     };
   }
   const cliente = await prisma.cliente.findUniqueOrThrow({ where: { id }, select: { nome: true, telefone: true } });
-  const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
+  const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
+  const link = `${origem}/criar-senha/${r.codigo}`;
   const tel = lerTelefoneCliente(cliente.telefone);
-  const whatsapp = tel
-    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDoLink(cliente.nome, link, r.novaConta, (await lerLoja()).nome))}`
-    : undefined;
+  const loja = await lerLoja();
+  const texto = mensagemDoLink(cliente.nome, link, r.novaConta, loja.nome, r.novaConta ? linkDaPaginaDoVideo(origem, loja) : undefined);
+  const whatsapp = tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined;
   refresh();
-  return { link, whatsapp, novaConta: r.novaConta };
+  return { link, texto, whatsapp, novaConta: r.novaConta };
 }

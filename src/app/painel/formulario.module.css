@@ -468,3 +468,7 @@ label.botaoSecundario:focus-within {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.aceites li form {
+  margin-top: 8px;
+}

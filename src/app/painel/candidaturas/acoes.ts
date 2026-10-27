@@ -22,6 +22,7 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { autorDe } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { linkDaPaginaDoVideo } from "@/lib/loja/regras";
 
 // Curadoria das candidatas a fornecedora. Só a administradora decide.
 
@@ -45,9 +46,11 @@ export async function aprovar(_estado: EstadoAprovacao, dados: FormData): Promis
     };
   }
   const c = await prisma.candidatura.findUniqueOrThrow({ where: { id }, select: { nome: true, telefone: true } });
-  const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
+  const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
+  const link = `${origem}/criar-senha/${r.codigo}`;
   const tel = lerTelefoneCliente(c.telefone);
-  const texto = mensagemDeAprovacao(c.nome, link, r.novaConta, (await lerLoja()).nome);
+  const loja = await lerLoja();
+  const texto = mensagemDeAprovacao(c.nome, link, r.novaConta, loja.nome, linkDaPaginaDoVideo(origem, loja));
   const whatsapp = tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined;
   refresh();
   return { link, texto, whatsapp, novaConta: r.novaConta };
