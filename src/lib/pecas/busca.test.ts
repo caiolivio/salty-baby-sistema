@@ -49,3 +49,24 @@ describe("busca de peças no painel", () => {
     expect(resumoDaBusca(1, { pagina: 1 })).toBe("1 peça.");
   });
 });
+
+describe("filtro Sexo", () => {
+  it("lê o sexo da peça e ignora valores desconhecidos", () => {
+    expect(lerBuscaDePecas({ sexo: "feminino" }).sexo).toBe("feminino");
+    expect(lerBuscaDePecas({ sexo: "outro" }).sexo).toBeUndefined();
+    expect(filtrandoPecas(lerBuscaDePecas({ sexo: "unissex" }))).toBe(true);
+  });
+
+  it("filtra pelo gênero do cadastro, e 'Não informado' pega as peças sem gênero", () => {
+    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "masculino" }))).toMatchObject({ genero: "masculino" });
+    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "sem" }))).toMatchObject({ genero: null });
+    expect(condicaoDaBusca(lerBuscaDePecas({}))).not.toHaveProperty("genero");
+  });
+
+  it("fica no endereço e na frase da contagem", () => {
+    const f = lerBuscaDePecas({ sexo: "feminino", tamanho: "RN" });
+    expect(linkDaBuscaDePecas(f)).toContain("sexo=feminino");
+    expect(resumoDaBusca(3, f)).toBe("3 peças tamanho RN, sexo feminino.");
+    expect(resumoDaBusca(1, lerBuscaDePecas({ sexo: "sem" }))).toBe("1 peça sem sexo informado.");
+  });
+});

@@ -22,10 +22,20 @@ export type StatusDoFiltro = (typeof STATUS_DO_FILTRO)[number];
 
 export const nomeDoStatusDoFiltro = (s: StatusDoFiltro) => (s === "nao_listada" ? "Não listado" : NOMES_SITUACAO[s]);
 
+/** Opções do filtro Sexo: o gênero do cadastro da peça, mais as peças sem gênero. */
+export const SEXOS_DO_FILTRO = [
+  { valor: "masculino", nome: "Masculino" },
+  { valor: "feminino", nome: "Feminino" },
+  { valor: "unissex", nome: "Unissex" },
+  { valor: "sem", nome: "Não informado" },
+] as const;
+export type SexoDoFiltro = (typeof SEXOS_DO_FILTRO)[number]["valor"];
+
 export type BuscaDePecas = {
   busca?: string;
   categoria?: string;
   tamanho?: Tamanho;
+  sexo?: SexoDoFiltro;
   status?: StatusDoFiltro;
   pagina: number;
 };
@@ -38,13 +48,14 @@ export function lerBuscaDePecas(parametros: Parametros): BuscaDePecas {
     busca: primeiro(parametros.q)?.slice(0, 80),
     categoria: primeiro(parametros.categoria)?.slice(0, 40),
     tamanho: TAMANHOS.find((t) => t.valor === primeiro(parametros.tamanho))?.valor,
+    sexo: SEXOS_DO_FILTRO.find((s) => s.valor === primeiro(parametros.sexo))?.valor,
     status: STATUS_DO_FILTRO.find((s) => s === primeiro(parametros.status)),
     pagina: Math.min(10000, Math.max(1, Math.floor(Number(primeiro(parametros.pagina))) || 1)),
   };
 }
 
 /** Algum filtro ou texto escolhido? */
-export const filtrandoPecas = (f: BuscaDePecas) => Boolean(f.busca || f.categoria || f.tamanho || f.status);
+export const filtrandoPecas = (f: BuscaDePecas) => Boolean(f.busca || f.categoria || f.tamanho || f.sexo || f.status);
 
 /** Endereço da lista com a busca atual e uma mudança. Mudar um filtro volta para a página 1. */
 export function linkDaBuscaDePecas(atual: BuscaDePecas, mudanca: Partial<BuscaDePecas> = {}): string {
@@ -53,6 +64,7 @@ export function linkDaBuscaDePecas(atual: BuscaDePecas, mudanca: Partial<BuscaDe
   if (f.busca) busca.set("q", f.busca);
   if (f.categoria) busca.set("categoria", f.categoria);
   if (f.tamanho) busca.set("tamanho", f.tamanho);
+  if (f.sexo) busca.set("sexo", f.sexo);
   if (f.status) busca.set("status", f.status);
   if (f.pagina > 1) busca.set("pagina", String(f.pagina));
   const texto = busca.toString();
@@ -75,6 +87,7 @@ export function condicaoDaBusca(f: BuscaDePecas) {
   return {
     ...status,
     ...(f.tamanho && { tamanho: f.tamanho }),
+    ...(f.sexo && { genero: f.sexo === "sem" ? null : f.sexo }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     ...(f.busca && {
       OR: [
@@ -93,6 +106,7 @@ export function resumoDaBusca(total: number, f: BuscaDePecas, nomeDaCategoria?: 
   const partes = [
     nomeDaCategoria && `em ${nomeDaCategoria}`,
     f.tamanho && `tamanho ${f.tamanho}`,
+    f.sexo && (f.sexo === "sem" ? "sem sexo informado" : `sexo ${SEXOS_DO_FILTRO.find((s) => s.valor === f.sexo)?.nome.toLowerCase()}`),
     f.status && `status ${nomeDoStatusDoFiltro(f.status)}`,
     f.busca && `com "${f.busca}"`,
   ].filter(Boolean);

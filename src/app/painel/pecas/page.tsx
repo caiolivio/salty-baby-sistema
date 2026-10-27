@@ -16,6 +16,7 @@ import {
   linkDaBuscaDePecas,
   nomeDoStatusDoFiltro,
   resumoDaBusca,
+  SEXOS_DO_FILTRO,
   STATUS_DO_FILTRO,
 } from "@/lib/pecas/busca";
 import { EnviarAoMudar } from "./enviar-ao-mudar";
@@ -105,6 +106,17 @@ export default async function Pecas({ searchParams }: PageProps<"/painel/pecas">
               {TAMANHOS.map((t) => (
                 <option key={t.valor} value={t.valor}>
                   {t.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Sexo
+            <select name="sexo" defaultValue={f.sexo ?? ""}>
+              <option value="">Todos</option>
+              {SEXOS_DO_FILTRO.map((s) => (
+                <option key={s.valor} value={s.valor}>
+                  {s.nome}
                 </option>
               ))}
             </select>
