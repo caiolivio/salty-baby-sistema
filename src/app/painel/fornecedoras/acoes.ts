@@ -81,7 +81,7 @@ export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormD
   redirect(`/painel/fornecedoras/${id}?salva=1`);
 }
 
-export type EstadoAcesso = { erro?: string; link?: string; whatsapp?: string; tipo?: "convite" | "nova-senha" } | undefined;
+export type EstadoAcesso = { erro?: string; link?: string; texto?: string; whatsapp?: string; tipo?: "convite" | "nova-senha" } | undefined;
 
 /** Link para a fornecedora entrar na área dela: primeiro acesso (sem conta) ou nova senha. */
 export async function gerarAcesso(_estado: EstadoAcesso, dados: FormData): Promise<EstadoAcesso> {
@@ -96,5 +96,5 @@ export async function gerarAcesso(_estado: EstadoAcesso, dados: FormData): Promi
   const { nome: nomeLoja } = await lerLoja();
   const texto = r.tipo === "convite" ? mensagemDoConvite(f.nome, link, nomeLoja) : mensagemDoLink(f.nome, link, false, nomeLoja);
   refresh();
-  return { link, tipo: r.tipo, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
+  return { link, texto, tipo: r.tipo, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
 }

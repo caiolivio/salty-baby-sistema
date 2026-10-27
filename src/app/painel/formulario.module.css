@@ -450,3 +450,21 @@ label.botaoSecundario:focus-within {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+/* Mensagem pronta que vai com o link de acesso (EnvioDoLink). */
+.mensagemPronta summary {
+  cursor: pointer;
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.mensagemPronta pre {
+  margin: 8px 0 0;
+  padding: 12px;
+  border-radius: var(--raio);
+  background: var(--fundo-suave);
+  font: inherit;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

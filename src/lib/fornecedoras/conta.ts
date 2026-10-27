@@ -62,14 +62,31 @@ export function lerDadosDaFornecedora(
   return { ok: true, dados };
 }
 
-/** Mensagem que a loja manda no WhatsApp com o link de primeiro acesso. */
+/**
+ * Mensagem que a loja manda no WhatsApp com o link de primeiro acesso: explica o que
+ * tem na área, os passos do cadastro e avisa que depois dá para instalar o app.
+ * Negrito no formato do WhatsApp (*texto*).
+ */
 export function mensagemDoConvite(nome: string, link: string, nomeLoja = "Salty Baby"): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
-    "Agora você tem uma área só sua no nosso site, para acompanhar suas peças, suas vendas e quanto tem a receber.",
-    `Toque no link para terminar seu cadastro e criar sua senha (vale por ${VALIDADE_LINK_DIAS} dias):`,
-    link,
+    [
+      "Agora você tem uma *área só sua* no nosso site, para acompanhar tudo em tempo real:",
+      "• suas peças e a situação de cada uma",
+      "• suas vendas e quanto você tem a receber",
+      "• os comprovantes dos pagamentos e o relatório do mês",
+      "• enviar fotos de peças novas",
+      `• comprar na ${nomeLoja} usando o seu saldo`,
+    ].join("\n"),
+    [
+      "*Como começar* (leva uns 3 minutos):",
+      "1. Toque no link abaixo",
+      "2. Confira seus dados e crie sua senha",
+      "3. Leia e aceite o acordo de consignação",
+    ].join("\n"),
+    `Seu link (vale por ${VALIDADE_LINK_DIAS} dias e funciona uma vez só):\n${link}`,
+    "No final, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo. Qualquer dúvida, é só responder aqui 🐳",
   ].join("\n\n");
 }
 

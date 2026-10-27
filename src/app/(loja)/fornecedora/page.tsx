@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Gift, Package, PiggyBank, ShoppingBag, Tag, TrendingUp, Wallet } from "lucide-react";
 import { GraficoBarras } from "@/componentes/grafico-barras";
+import { ComoInstalarApp } from "@/componentes/como-instalar-app";
 import { Passos } from "@/componentes/passos";
 import { exigirAcesso } from "@/lib/acesso";
 import { lerPeriodo } from "@/lib/clientes/perfil";
@@ -172,6 +173,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
           </p>
         </section>
         <EnviarPecas dono={dono} titulo="Mostrar mais peças" />
+        <ComoInstalarApp nome={loja.nomeCurto} />
         {seusDados}
       </>
     );
@@ -271,6 +273,7 @@ export default async function AreaDaFornecedora({ searchParams }: PageProps<"/fo
             Seu código de fornecedora é <strong>{fornecedora.codigo}</strong>. Ele aparece no código de cada peça sua.
           </p>
         </section>
+        <ComoInstalarApp nome={loja.nomeCurto} />
         <section className={estilos.secaoArea}>
           <h2>O que tem na sua área</h2>
           <ComoFuncionaAArea />

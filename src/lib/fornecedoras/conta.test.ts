@@ -33,7 +33,10 @@ describe("dados da fornecedora", () => {
   it("mensagem do convite leva o link", () => {
     const m = mensagemDoConvite("Ana Souza", "https://x/convite/abc");
     expect(m.startsWith("Oi, Ana!")).toBe(true);
-    expect(m.endsWith("https://x/convite/abc")).toBe(true);
+    expect(m).toContain("\nhttps://x/convite/abc");
+    expect(m).toContain("*Como começar*");
+    expect(m).toContain("aceite o acordo");
+    expect(m).toContain("tela inicial");
   });
 });
 

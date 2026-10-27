@@ -163,10 +163,14 @@ export function mensagemDeAprovacao(nome: string, link: string, novaConta: boole
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   return [
     `Oi${primeiro ? `, ${primeiro}` : ""}! Aqui é da ${nomeLoja} 💛`,
-    "Suas peças foram aprovadas na curadoria! Agora é o passo 2: mostrar mais peças, com os detalhes de cada uma.",
-    novaConta
-      ? "Toque no link para criar sua senha e entrar na sua área de fornecedora (o link vale por 7 dias):"
-      : "Toque no link para criar uma nova senha e entrar na sua área de fornecedora (o link vale por 7 dias):",
-    link,
+    "Suas peças foram aprovadas na curadoria! Agora é o *passo 2*: mostrar mais peças, com os detalhes de cada uma.",
+    [
+      "*Como seguir:*",
+      novaConta ? "1. Toque no link abaixo e crie sua senha" : "1. Toque no link abaixo e crie uma nova senha",
+      "2. Na sua área de fornecedora, mande as fotos e a descrição das peças",
+      "3. Quando a parceria for efetivada, você lê e aceita o acordo de consignação",
+    ].join("\n"),
+    `Seu link (vale por 7 dias e funciona uma vez só):\n${link}`,
+    "Depois de criar a senha, o site mostra como colocar a loja na tela inicial do celular ou do computador, como um aplicativo. Qualquer dúvida, é só responder aqui 🐳",
   ].join("\n\n");
 }
