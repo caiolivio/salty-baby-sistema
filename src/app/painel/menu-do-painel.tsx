@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import {
+  ArrowLeft,
   BadgePercent,
   ChartColumn,
   ChevronDown,
@@ -187,6 +188,11 @@ export function MenuDoPainel({ itens }: { itens: ItemDoMenu[] }) {
           </button>
         </div>
         {itens.map((i) => (i.filhos ? grupo({ ...i, filhos: i.filhos }) : link(i)))}
+        {/* Fora de itensDoMenu: não é página do painel, é a vitrine (pedido do Caio, 27/10/2026). */}
+        <Link href="/" className={estilos.voltarParaLoja} onClick={() => setAberto(false)}>
+          <ArrowLeft className="icone" aria-hidden />
+          <span>Voltar para a loja</span>
+        </Link>
       </nav>
       {doFlutuante?.filhos && flutuante && (
         <div
