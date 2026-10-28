@@ -9,6 +9,7 @@ describe("menu do painel", () => {
     const itens = itensDoMenu(admin);
     expect(itens.map((i) => i.nome)).toEqual([
       "Início",
+      "Enviar hoje",
       "Finanças",
       "Peças",
       "Categorias",
@@ -26,7 +27,7 @@ describe("menu do painel", () => {
       "Histórico",
       "Configurações",
     ]);
-    expect(itens[1].filhos?.map((f) => f.chave)).toEqual(["financeiro", "acertos", "indicadores", "relatorios"]);
+    expect(itens[2].filhos?.map((f) => f.chave)).toEqual(["financeiro", "acertos", "indicadores", "relatorios"]);
     expect(itens.at(-1)?.filhos?.map((f) => f.chave)).toEqual(["configuracoes", "equipe", "backup", "importar"]);
     expect(itens.find((i) => i.chave === "paginas")?.filhos?.map((f) => f.nome)).toEqual([
       "Contrato de consignação",
@@ -45,7 +46,7 @@ describe("menu do painel", () => {
       { chave: "backup", nivel: "sim" },
     ]);
     const itens = itensDoMenu(acesso);
-    expect(itens.map((i) => i.chave)).toEqual(["", "pecas", "sacolinhas", "configuracao"]);
+    expect(itens.map((i) => i.chave)).toEqual(["", "enviar-hoje", "pecas", "sacolinhas", "configuracao"]);
     expect(itens.at(-1)?.filhos).toEqual([{ chave: "backup", nome: "Backup" }]);
   });
 

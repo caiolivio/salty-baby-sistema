@@ -755,6 +755,19 @@
   color: var(--turquesa);
 }
 
+/* "Enviar hoje": primeiro cartão do início, em destaque, ocupando a linha toda. */
+.cartao.cartaoDestaque {
+  grid-column: 1 / -1;
+  background: var(--petroleo);
+  border-color: var(--petroleo);
+  color: #fff;
+}
+
+.cartao.cartaoDestaque strong,
+.cartao.cartaoDestaque :global(.icone) {
+  color: #fff;
+}
+
 /* Texto pronto para o WhatsApp, como vai na mensagem. */
 .textoPronto {
   white-space: pre-wrap;

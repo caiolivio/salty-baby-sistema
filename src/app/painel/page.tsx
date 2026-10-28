@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClipboardList, Megaphone, Plus, Receipt, Shirt, Store, Undo2, Upload, UserPlus } from "lucide-react";
+import { AlertTriangle, ClipboardList, Megaphone, Plus, Receipt, Send, Shirt, Store, Undo2, Upload, UserPlus } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
@@ -8,6 +8,9 @@ import { podeAlterar, podeVer, type Pagina } from "@/lib/permissoes";
 import estilos from "./painel.module.css";
 import { InstalarApp } from "@/componentes/app-instalavel";
 import { lerLoja } from "@/lib/loja/servidor";
+import { pendenciasDeHoje } from "@/lib/hoje/pendencias";
+import { temExtra } from "@/lib/permissoes";
+import hoje from "./enviar-hoje/enviar-hoje.module.css";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -26,7 +29,8 @@ export default async function Painel() {
     ve("devolucoes") ? prisma.devolucao.count({ where: { situacao: "pedida" } }) : 0,
     ve("candidaturas") ? prisma.candidatura.count({ where: { etapa: { in: ["enviada", "acordo_aceito"] } } }) : 0,
   ]);
-  const loja = await lerLoja();
+  const [loja, pendencias] = await Promise.all([lerLoja(), pendenciasDeHoje(acesso)]);
+  const paraHoje = pendencias.lembretes.length + pendencias.listas.length;
   const nenhuma = !administradora && Object.keys(acesso.paginas).length === 0;
 
   return (
@@ -38,6 +42,14 @@ export default async function Painel() {
       </p>
       <h1 className={estilos.tituloGrande}>Olá, {primeiroNome}!</h1>
       <InstalarApp nome={loja.nomeCurto} className={estilos.instalarApp} />
+      {pendencias.backup && temExtra(acesso, "backup") && (
+        <p className={hoje.alerta} role="alert">
+          <AlertTriangle className="icone" aria-hidden />
+          <span>
+            {pendencias.backup.texto} <Link href="/painel/backup">Abrir o Backup</Link>
+          </span>
+        </p>
+      )}
       <div className={estilos.atalhosInicio}>
         {podeAlterar(acesso, "pecas") && (
           <Link href="/painel/pecas/nova" className={estilos.atalhoInicio}>
@@ -60,6 +72,11 @@ export default async function Painel() {
       </div>
       {nenhuma && <p>Você ainda não tem nenhuma página liberada. Peça à administradora para liberar em Equipe.</p>}
       <div className={estilos.cartoes}>
+        <Link href="/painel/enviar-hoje" className={`${estilos.cartao} ${estilos.cartaoDestaque}`}>
+          <Send className="icone" aria-hidden />
+          <strong>Enviar hoje</strong>
+          {paraHoje === 0 ? "Nada pendente" : paraHoje === 1 ? "1 coisa para fazer" : `${paraHoje} coisas para fazer`}, mais as mensagens prontas
+        </Link>
         {ve("pecas") && (
           <Link href="/painel/pecas" className={estilos.cartao}>
             <Shirt className="icone" aria-hidden />
