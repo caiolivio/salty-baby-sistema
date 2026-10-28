@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FotoAmpliada } from "@/componentes/foto-ampliada";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -228,10 +229,14 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           <div className={proprios.fotos}>
             {p.fotos.map((foto, i) => (
               <div key={foto.id} className={proprios.foto}>
-                <a href={enderecoDaFoto(foto.arquivo)} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio */}
-                  <img src={enderecoDaFoto(foto.arquivo, true)} alt={`Foto ${i + 1}`} />
-                </a>
+                <FotoAmpliada
+                  indice={i}
+                  fotos={p.fotos.map((f, j) => ({
+                    grande: enderecoDaFoto(f.arquivo),
+                    miniatura: enderecoDaFoto(f.arquivo, true),
+                    alt: `Foto ${j + 1}`,
+                  }))}
+                />
                 {i === 0 ? (
                   <span className={proprios.principal}>★ Foto em destaque</span>
                 ) : (
