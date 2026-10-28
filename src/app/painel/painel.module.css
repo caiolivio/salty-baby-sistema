@@ -182,6 +182,22 @@
   color: var(--petroleo);
 }
 
+/* "Voltar para a loja", em destaque no fim do menu. */
+.menu a.voltarParaLoja {
+  margin-top: 12px;
+  background: var(--petroleo);
+  color: #fff;
+  font-weight: 650;
+}
+
+.menu a.voltarParaLoja :global(.icone) {
+  color: #fff;
+}
+
+.menu a.voltarParaLoja:hover {
+  background: color-mix(in srgb, var(--petroleo) 85%, #000);
+}
+
 /* Grupos do menu (Finanças, Configurações): abrem na coluna ao tocar e, no computador, ao lado ao passar o mouse. */
 .grupoMenu {
   display: flex;
