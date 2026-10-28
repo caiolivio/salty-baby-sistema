@@ -47,6 +47,29 @@ export function situacaoDaDevolucao(
   return data <= hoje ? { tipo: "pode" } : { tipo: "a-partir-de", data };
 }
 
+const dataBr = (iso: string) => iso.split("-").reverse().join("/");
+
+/**
+ * Frase da página da peça no painel com o dia em que a fornecedora pode pedir
+ * a peça de volta (mesma regra de situacaoDaDevolucao). Só para peça
+ * consignada que ainda está com a loja.
+ */
+export function textoDaRetirada(
+  peca: { tipo: string; status: string; dataEntrada: Date; publicadaEm: Date | null },
+  hoje: string,
+  meses = MESES_PARA_DEVOLUCAO,
+): string | null {
+  if (peca.tipo !== "consignada") return null;
+  const s = situacaoDaDevolucao(peca.status === "reservada" ? { ...peca, status: "publicada" } : peca, hoje, meses);
+  const prazo = `${meses} ${meses === 1 ? "mês" : "meses"}`;
+  const desde = peca.publicadaEm ? `, ${prazo} depois de entrar à venda no site em ${dataBr(peca.publicadaEm.toISOString().slice(0, 10))}` : "";
+  if (s.tipo === "pedida") return "A fornecedora já pediu esta peça de volta (veja em Devoluções).";
+  if (s.tipo === "fora-do-site") return `Retirada pela fornecedora: os ${prazo} começam a contar quando a peça entrar à venda no site.`;
+  if (s.tipo === "pode") return `Retirada pela fornecedora: liberada desde ${dataBr(devolucaoDisponivelEm(peca.publicadaEm!, meses))}${desde}.`;
+  if (s.tipo === "a-partir-de") return `Retirada pela fornecedora: a partir de ${dataBr(s.data)}${desde}.`;
+  return null;
+}
+
 export type ItemVendido = { data: Date; valorPagoCentavos: number; repasseCentavos: number; repasseRecebido: boolean; quantidade: number };
 export type PecaDaFornecedora = { status: string; precoCentavos: number; quantidade: number; percentualRepasse: number | null };
 

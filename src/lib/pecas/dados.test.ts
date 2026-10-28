@@ -6,7 +6,9 @@ import {
   lerFormularioPeca,
   motivoParaNaoExcluir,
   moverNaLista,
+  OPCAO_VENDER,
   opcoesDeStatus,
+  statusParaVender,
   reaisNoCampo,
   situacaoEditavel,
   statusNoFormulario,
@@ -155,6 +157,21 @@ describe("opcoesDeStatus (página da peça)", () => {
   it("peça no estoque: os status do cadastro", () => {
     expect(valores("publicada")).toEqual(["rascunho", "publicada", "nao_listada", "devolvida", "doada", "baixa"]);
     expect(valores("baixa")).toContain("publicada");
+  });
+
+  it("quem pode vender ganha \"Vendida\", que abre a venda (nunca na peça reservada ou já vendida)", () => {
+    expect(opcoesDeStatus("publicada", true).at(-1)).toEqual(OPCAO_VENDER);
+    expect(opcoesDeStatus("baixa", true).map((o) => o.valor)).toContain("vender");
+    expect(valores("publicada")).not.toContain("vender");
+    expect(opcoesDeStatus("reservada", true).map((o) => o.valor)).not.toContain("vender");
+    expect(opcoesDeStatus("vendida", true).map((o) => o.valor)).not.toContain("vender");
+  });
+
+  it("antes de abrir a venda, a peça fora da venda volta como \"Não listado\"", () => {
+    expect(statusParaVender("publicada", false)).toBe("publicada");
+    expect(statusParaVender("publicada", true)).toBe("nao_listada");
+    expect(statusParaVender("baixa", false)).toBe("nao_listada");
+    expect(statusParaVender("rascunho", false)).toBe("nao_listada");
   });
 
   it("reservada e devolução pedida: o atual primeiro, e depois os do cadastro", () => {

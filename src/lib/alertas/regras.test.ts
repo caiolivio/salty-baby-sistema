@@ -19,6 +19,9 @@ describe("peça combina com o alerta", () => {
     expect(pecaAtende({ ...vazio, publico: "menino" }, peca)).toBe(false);
     expect(pecaAtende({ ...vazio, publico: "menino" }, { ...peca, genero: "unissex" })).toBe(true);
     expect(pecaAtende({ ...vazio, publico: "menino" }, { ...peca, genero: null })).toBe(true);
+    expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, genero: "unissex" })).toBe(true);
+    expect(pecaAtende({ ...vazio, publico: "unissex" }, peca)).toBe(false);
+    expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, genero: null })).toBe(false);
   });
 
   it("marca sem diferença de acento, maiúscula ou espaço", () => {

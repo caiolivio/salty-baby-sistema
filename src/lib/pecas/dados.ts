@@ -62,14 +62,31 @@ const NOMES_EM_ANDAMENTO: Record<string, string> = {
 export type OpcaoDeStatus = { valor: string; nome: string };
 
 /**
+ * "Vendida" no campo Status de uma peça do estoque: não muda o status direto
+ * (a venda precisa do valor pago, do repasse e do lucro), abre a venda direta
+ * com a peça. Só para quem pode alterar Vendas.
+ */
+export const OPCAO_VENDER: OpcaoDeStatus = { valor: "vender", nome: "Vendida (registrar a venda)" };
+
+/**
+ * Status gravado antes de abrir a venda: peça à venda fica como está; peça em
+ * rascunho, baixa, doada ou devolvida volta a estar à venda, mas "Não listado"
+ * (fora da vitrine), porque a venda direta só aceita peça à venda.
+ */
+export function statusParaVender(atual: string, naoListada: boolean): "publicada" | "nao_listada" {
+  return atual === "publicada" && !naoListada ? "publicada" : "nao_listada";
+}
+
+/**
  * Status que a página da peça oferece, a partir do atual.
  * - Reservada: qualquer status do cadastro (a peça sai do pedido).
  * - Devolução pedida: "Devolvida" conclui o pedido de devolução; os outros cancelam.
  * - Vendida e depois: só os passos da entrega.
+ * - Peça do estoque, para quem pode vender: mais "Vendida", que abre a venda (OPCAO_VENDER).
  */
-export function opcoesDeStatus(atual: string): OpcaoDeStatus[] {
+export function opcoesDeStatus(atual: string, podeVender = false): OpcaoDeStatus[] {
   if (SITUACOES_DEPOIS_DA_VENDA.some((s) => s.valor === atual)) return [...SITUACOES_DEPOIS_DA_VENDA];
-  if (situacaoEditavel(atual)) return [...SITUACOES_DO_CADASTRO];
+  if (situacaoEditavel(atual)) return [...SITUACOES_DO_CADASTRO, ...(podeVender ? [OPCAO_VENDER] : [])];
   return [{ valor: atual, nome: NOMES_EM_ANDAMENTO[atual] ?? atual }, ...SITUACOES_DO_CADASTRO];
 }
 

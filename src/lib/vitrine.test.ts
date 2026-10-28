@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   enderecoDaPeca,
   generosDoPublico,
+  paraQuem,
+  publicoIncluiSemGenero,
   lerFiltros,
   linkDaVitrine,
   linkWhatsapp,
@@ -55,7 +57,23 @@ describe("vitrine", () => {
   it("menina e menino incluem as peças unissex", () => {
     expect(generosDoPublico("menina")).toEqual(["feminino", "unissex"]);
     expect(generosDoPublico("menino")).toEqual(["masculino", "unissex"]);
+    expect(generosDoPublico("unissex")).toEqual(["unissex"]);
     expect(generosDoPublico()).toEqual([]);
+  });
+
+  it("peça sem gênero entra em menina e menino, mas não em unissex", () => {
+    expect(publicoIncluiSemGenero("menina")).toBe(true);
+    expect(publicoIncluiSemGenero("menino")).toBe(true);
+    expect(publicoIncluiSemGenero("unissex")).toBe(false);
+    expect(publicoIncluiSemGenero()).toBe(true);
+    expect(lerFiltros({ publico: "unissex" }).publico).toBe("unissex");
+  });
+
+  it("mostra para quem é a peça", () => {
+    expect(paraQuem("feminino")).toBe("Menina");
+    expect(paraQuem("masculino")).toBe("Menino");
+    expect(paraQuem("unissex")).toBe("Unissex (menina e menino)");
+    expect(paraQuem(null)).toBeNull();
   });
 
   it("lista os tamanhos com peça na ordem oficial", () => {

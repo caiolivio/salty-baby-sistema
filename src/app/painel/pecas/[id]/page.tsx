@@ -17,7 +17,8 @@ import { listarGruposEmUso } from "@/lib/grupos/opcoes";
 import { gruposSugeridos, linkDoPost, textoDoPost, type PecaDoPost } from "@/lib/grupos/regras";
 import { precoDoPost } from "@/lib/promocoes/regras";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
-import { avisoDaTroca, opcoesDeStatus, reaisNoCampo, statusNoFormulario } from "@/lib/pecas/dados";
+import { avisoDaTroca, hojeEmSaoPaulo, opcoesDeStatus, reaisNoCampo, statusNoFormulario } from "@/lib/pecas/dados";
+import { textoDaRetirada } from "@/lib/fornecedoras/saldos";
 import { motivoParaNaoExcluirPeca } from "@/lib/pecas/gravar";
 import { TAMANHOS } from "@/lib/tamanhos";
 import { nomeDoStatus } from "@/lib/situacoes";
@@ -63,6 +64,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
   const valores = temExtra(acesso, "valores");
   const podeExcluir = temExtra(acesso, "excluir_peca");
   const loja = await lerLoja();
+  const retirada = textoDaRetirada(p, hojeEmSaoPaulo(), loja.mesesDevolucao);
   const naoExclui = podeExcluir ? await motivoParaNaoExcluirPeca(prisma, p.id) : null;
 
   // Post pronto para os grupos de WhatsApp, com o grupo sugerido marcado.
@@ -159,6 +161,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
         Status: <strong>{situacao}</strong> · entrada em {formatarData(p.dataEntrada)}
         {p.codigoAntigo && ` · código antigo ${p.codigoAntigo}`}
       </p>
+      {retirada && <p>{retirada}</p>}
       {p.favoritos.length > 0 && (
         <p>
           ★ Favoritada por{" "}
@@ -288,7 +291,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           texto: p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : `${loja.nomeCurto} (peça da loja)`,
           consignada: p.tipo === "consignada",
         }}
-        opcoesDeStatus={opcoesDeStatus(p.status)}
+        opcoesDeStatus={opcoesDeStatus(p.status, podeAlterar(acesso, "vendas"))}
         avisoDoStatus={avisoDaTroca(p.status)}
         iniciais={{
           id: p.id,

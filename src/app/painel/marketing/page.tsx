@@ -16,7 +16,7 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAlterar, podeVer } from "@/lib/permissoes";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { generosDoPublico, lerFiltros, PUBLICOS } from "@/lib/vitrine";
+import { generosDoPublico, lerFiltros, PUBLICOS, publicoIncluiSemGenero, TODOS_OS_PUBLICOS } from "@/lib/vitrine";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { incluirNaDivulgacao, limparDivulgacao, tirarDaDivulgacao } from "./acoes";
@@ -50,7 +50,9 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
     ...(f.tamanho && { tamanho: f.tamanho }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     AND: [
-      generos.length > 0 ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] } : {},
+      generos.length > 0
+        ? { OR: [{ genero: { in: generos as Genero[] } }, ...(publicoIncluiSemGenero(f.publico) ? [{ genero: null }] : [])] }
+        : {},
       f.busca
         ? {
             OR: [
@@ -202,7 +204,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
           <label className={proprios.campo}>
             Para
             <select name="publico" defaultValue={f.publico ?? ""}>
-              <option value="">Menina e menino</option>
+              <option value="">{TODOS_OS_PUBLICOS}</option>
               {PUBLICOS.map((p) => (
                 <option key={p.valor} value={p.valor}>
                   {p.nome}
@@ -216,7 +218,7 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
         </form>
         <p>
           {total} peça(s) à venda{buscou ? " com estes filtros" : ""}
-          {total > RESULTADOS && `, mostrando as ${RESULTADOS} mais novas`}. Peça sem gênero aparece para menina e menino.
+          {total > RESULTADOS && `, mostrando as ${RESULTADOS} mais novas`}. Peça sem gênero aparece para menina e menino, mas não em unissex.
           As peças &quot;Não listado&quot; também aparecem aqui: não estão na vitrine, mas quem recebe o link pode comprar.
         </p>
         {encontradas.length > 0 && (

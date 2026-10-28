@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lerPeriodo } from "../clientes/perfil";
-import { calcularSaldos, devolucaoDisponivelEm, situacaoDaDevolucao, vendasNoPeriodo } from "./saldos";
+import { calcularSaldos, devolucaoDisponivelEm, situacaoDaDevolucao, textoDaRetirada, vendasNoPeriodo } from "./saldos";
 
 const d = (t: string) => new Date(`${t}T00:00:00Z`);
 
@@ -73,5 +73,22 @@ describe("saldos", () => {
     const agosto = vendasNoPeriodo(itens, lerPeriodo({ periodo: "mensal", mes: "2026-08" }, "2026-10-01"));
     expect(agosto.pecas).toBe(1);
     expect(agosto.barras).toHaveLength(31);
+  });
+});
+
+describe("data de retirada na página da peça", () => {
+  const peca = { tipo: "consignada", status: "publicada", dataEntrada: d("2026-03-01"), publicadaEm: d("2026-04-10") };
+  it("mostra a data, contando da entrada à venda no site", () => {
+    expect(textoDaRetirada(peca, "2026-10-01")).toBe(
+      "Retirada pela fornecedora: a partir de 10/10/2026, 6 meses depois de entrar à venda no site em 10/04/2026.",
+    );
+    expect(textoDaRetirada(peca, "2026-10-10")).toMatch(/liberada desde 10\/10\/2026/);
+    expect(textoDaRetirada({ ...peca, status: "reservada" }, "2026-10-01")).toMatch(/a partir de 10\/10\/2026/);
+  });
+  it("peça fora do site, pedida de volta, vendida ou da loja", () => {
+    expect(textoDaRetirada({ ...peca, publicadaEm: null, status: "rascunho" }, "2026-10-01")).toMatch(/começam a contar/);
+    expect(textoDaRetirada({ ...peca, status: "devolucao_pedida" }, "2026-10-01")).toMatch(/já pediu/);
+    expect(textoDaRetirada({ ...peca, status: "vendida" }, "2026-10-01")).toBeNull();
+    expect(textoDaRetirada({ ...peca, tipo: "loja" }, "2026-10-01")).toBeNull();
   });
 });
