@@ -1,0 +1,103 @@
+/* Foto ampliada por cima da página (painel). */
+
+/* Seletores reforçados: as listas de fotos do painel estilizam img e button. */
+button.miniatura {
+  display: block;
+  border-radius: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  width: 100%;
+}
+
+button.miniatura img {
+  display: block;
+  width: 100%;
+}
+
+.dialogo {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgb(0 0 0 / 0.92);
+  overflow: auto;
+}
+
+.dialogo[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialogo::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.dialogo img.grande {
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: none;
+  max-width: 100%;
+  max-height: 100dvh;
+  object-fit: contain;
+  touch-action: pinch-zoom;
+}
+
+.dialogo button.fechar,
+.dialogo button.seta {
+  position: fixed;
+  padding: 0;
+  font: inherit;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.fechar {
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+}
+
+.seta {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.antes {
+  left: 12px;
+}
+
+.depois {
+  right: 12px;
+}
+
+.contador {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: var(--tinta);
+  font-size: 0.9rem;
+}
+
+.fechar :global(.icone),
+.seta :global(.icone) {
+  width: 24px;
+  height: 24px;
+}

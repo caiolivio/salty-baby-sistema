@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FotoAmpliada } from "@/componentes/foto-ampliada";
 import { CONSERVACOES, GENEROS } from "@/lib/pecas/dados";
 import { enderecoDaFoto } from "@/lib/fotos";
 import { TAMANHOS } from "@/lib/tamanhos";
@@ -47,10 +48,10 @@ export function PropostasNoPainel({
         ].filter(Boolean);
         return (
           <li key={p.id} className={`${visual.proposta} ${p.situacao === "recusada" ? visual.recusada : ""}`}>
-            <a href={enderecoDaFoto(p.foto)} target="_blank" rel="noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element -- miniatura já reduzida no envio */}
-              <img src={enderecoDaFoto(p.foto, true)} alt={p.nome ?? "Foto da peça"} />
-            </a>
+            <FotoAmpliada
+              indice={0}
+              fotos={[{ grande: enderecoDaFoto(p.foto), miniatura: enderecoDaFoto(p.foto, true), alt: p.nome ?? "Foto da peça" }]}
+            />
             {p.nome && <strong>{p.nome}</strong>}
             <p>{p.descricao}</p>
             {detalhes.length > 0 && <p className={proprios.dica}>{detalhes.join(" · ")}</p>}
