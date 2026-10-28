@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { EnvioDoLink } from "../envio-do-link";
 import estilos from "../formulario.module.css";
 import { gerarAcesso } from "./acoes";
 
 /** Gera o link de primeiro acesso (ou de nova senha) para mandar no WhatsApp da fornecedora. */
 export function AcessoDaFornecedora({ id, temConta }: { id: string; temConta: boolean }) {
   const [estado, acao, enviando] = useActionState(gerarAcesso, undefined);
-  const [copiado, setCopiado] = useState(false);
 
   if (estado?.link) {
     return (
@@ -19,20 +19,7 @@ export function AcessoDaFornecedora({ id, temConta }: { id: string; temConta: bo
           Ele vale por 7 dias e funciona uma vez só, e não aparece de novo depois que você sair desta página.
         </p>
         <code className={estilos.linkGerado}>{estado.link}</code>
-        <div className={estilos.acoes}>
-          {estado.whatsapp && (
-            <a className={estilos.botao} href={estado.whatsapp} target="_blank" rel="noopener noreferrer">
-              Enviar no WhatsApp dela
-            </a>
-          )}
-          <button
-            type="button"
-            className={estado.whatsapp ? estilos.botaoSecundario : estilos.botao}
-            onClick={() => navigator.clipboard?.writeText(estado.link!).then(() => setCopiado(true), () => {})}
-          >
-            {copiado ? "Link copiado" : "Copiar link"}
-          </button>
-        </div>
+        <EnvioDoLink link={estado.link} texto={estado.texto ?? estado.link} whatsapp={estado.whatsapp} />
       </div>
     );
   }

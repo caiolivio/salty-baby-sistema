@@ -33,7 +33,14 @@ describe("dados da fornecedora", () => {
   it("mensagem do convite leva o link", () => {
     const m = mensagemDoConvite("Ana Souza", "https://x/convite/abc");
     expect(m.startsWith("Oi, Ana!")).toBe(true);
-    expect(m.endsWith("https://x/convite/abc")).toBe(true);
+    expect(m).toContain("\nhttps://x/convite/abc");
+    expect(m).toContain("*Como começar*");
+    expect(m).toContain("aceite o acordo");
+    expect(m).toContain("tela inicial");
+    expect(m).not.toContain("Vídeo");
+    expect(mensagemDoConvite("Ana", "https://x/convite/abc", "Salty Baby", "https://x/instalar-app")).toContain(
+      "Vídeo de 1 minuto mostrando como colocar a loja na tela inicial do celular, como um aplicativo:\nhttps://x/instalar-app",
+    );
   });
 });
 

@@ -59,9 +59,13 @@ describe("link de criar senha", () => {
   it("monta a mensagem para o WhatsApp", () => {
     const m = mensagemDoLink("Maria da Silva", "https://x/criar-senha/abc", true);
     expect(m).toContain("Oi, Maria!");
-    expect(m).toContain("Criamos sua conta");
+    expect(m).toContain("Criamos a sua *conta*");
     expect(m).toContain("https://x/criar-senha/abc");
+    expect(m).not.toContain("Vídeo");
     expect(mensagemDoLink("Maria", "https://x", false)).toContain("nova senha");
+    expect(mensagemDoLink("Maria", "https://x", true, "Salty Baby", "https://x/instalar-app")).toContain(
+      "tela inicial do celular, como um aplicativo:\nhttps://x/instalar-app",
+    );
   });
 });
 

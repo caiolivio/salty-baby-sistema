@@ -25,6 +25,8 @@ export type Loja = {
   mesesDevolucao: number;
   /** Prazo da sacolinha (depois dele, as peças são doadas). */
   mesesSacolinha: number;
+  /** Link do vídeo de como instalar o app, ou null. */
+  videoInstalarApp: string | null;
 };
 
 /** Os dados da Salty Baby, os mesmos que a migração grava. Valem se o banco ainda não respondeu. */
@@ -45,6 +47,7 @@ export const LOJA_PADRAO: Loja = {
   minutosReserva: 15,
   mesesDevolucao: 6,
   mesesSacolinha: 3,
+  videoInstalarApp: null,
 };
 
 /** Logo e ícone de quando a loja ainda não enviou os dela. */
@@ -119,6 +122,46 @@ const instagram = z.string().transform((t, ctx) => {
   return usuario || null;
 });
 
+/** Link do vídeo: só https, até 300 caracteres. Vazio = sem vídeo. */
+const linkDoVideo = z.string().transform((t, ctx) => {
+  const valor = t.trim();
+  if (!valor) return null;
+  let url: URL | undefined;
+  try {
+    url = new URL(valor);
+  } catch {
+    url = undefined;
+  }
+  if (!url || url.protocol !== "https:" || valor.length > 300) {
+    ctx.addIssue({ code: "custom", message: "Cole o link completo do vídeo, começando com https://." });
+    return z.NEVER;
+  }
+  return url.toString();
+});
+
+/**
+ * Endereço para mostrar o vídeo dentro da página: links do YouTube e de
+ * arquivos do Google Drive. Outros links abrem num botão.
+ */
+export function videoParaIncorporar(link: string | null): string | null {
+  if (!link) return null;
+  let url: URL;
+  try {
+    url = new URL(link);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.replace(/^(www\.|m\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+  else if (host === "youtube.com") {
+    id = url.searchParams.get("v") ?? url.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)/)?.[1] ?? null;
+  }
+  if (id) return /^[\w-]{6,20}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+  const doDrive = host === "drive.google.com" ? url.pathname.match(/^\/file\/d\/([\w-]{10,80})(?:\/|$)/)?.[1] : undefined;
+  return doDrive ? `https://drive.google.com/file/d/${doDrive}/preview` : null;
+}
+
 const repasse = z.string().transform((t, ctx) => {
   let valor: number | undefined;
   try {
@@ -158,6 +201,7 @@ export const camposLoja = z.object({
   minutosReserva: inteiro(5, 1440, "A reserva vai de 5 a 1440 minutos (24 horas)."),
   mesesDevolucao: inteiro(0, 36, "O prazo para pedir a peça de volta vai de 0 a 36 meses."),
   mesesSacolinha: inteiro(1, 24, "O prazo da sacolinha vai de 1 a 24 meses."),
+  videoInstalarApp: linkDoVideo,
 });
 
 export type DadosLoja = z.output<typeof camposLoja>;
@@ -200,4 +244,9 @@ export function whatsappNaTela(digitos: string): string {
 /** "Salty Baby · Moda Sustentável". */
 export function nomeComSlogan(loja: Pick<Loja, "nome" | "slogan">): string {
   return loja.slogan ? `${loja.nome} · ${loja.slogan}` : loja.nome;
+}
+
+/** Endereço da página com o vídeo de instalar o app, para as mensagens de acesso (só quando a loja tem vídeo). */
+export function linkDaPaginaDoVideo(origem: string, loja: Pick<Loja, "videoInstalarApp">): string | undefined {
+  return loja.videoInstalarApp ? `${origem.replace(/\/+$/, "")}/instalar-app` : undefined;
 }

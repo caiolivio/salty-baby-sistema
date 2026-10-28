@@ -11,12 +11,14 @@ import { atualizarFornecedora, criarFornecedora } from "@/lib/fornecedoras/grava
 import { ERRO_EMAIL_EM_USO, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 import { mensagemDoLink } from "@/lib/clientes/conta";
 import { mensagemDoConvite } from "@/lib/fornecedoras/conta";
-import { gerarAcessoDaFornecedora } from "@/lib/fornecedoras/convites";
+import { gerarAcessoDaFornecedora, situacoesDosConvites } from "@/lib/fornecedoras/convites";
 import { origemDaRequisicao } from "@/lib/etiquetas";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { registrarCadastro } from "@/lib/historico/gravar";
 import { autorDe } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { linkDaPaginaDoVideo } from "@/lib/loja/regras";
+import { mensagemDeLembrete } from "@/lib/fornecedoras/lembretes";
 
 export type EstadoFornecedora = { erro?: string; valores?: Record<string, string> } | undefined;
 
@@ -81,7 +83,7 @@ export async function salvarFornecedora(_estado: EstadoFornecedora, dados: FormD
   redirect(`/painel/fornecedoras/${id}?salva=1`);
 }
 
-export type EstadoAcesso = { erro?: string; link?: string; whatsapp?: string; tipo?: "convite" | "nova-senha" } | undefined;
+export type EstadoAcesso = { erro?: string; link?: string; texto?: string; whatsapp?: string; tipo?: "convite" | "nova-senha" } | undefined;
 
 /** Link para a fornecedora entrar na área dela: primeiro acesso (sem conta) ou nova senha. */
 export async function gerarAcesso(_estado: EstadoAcesso, dados: FormData): Promise<EstadoAcesso> {
@@ -93,8 +95,33 @@ export async function gerarAcesso(_estado: EstadoAcesso, dados: FormData): Promi
   const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
   const link = `${origem}/${r.tipo === "convite" ? "convite" : "criar-senha"}/${r.codigo}`;
   const tel = lerTelefoneCliente(f.telefone);
-  const { nome: nomeLoja } = await lerLoja();
-  const texto = r.tipo === "convite" ? mensagemDoConvite(f.nome, link, nomeLoja) : mensagemDoLink(f.nome, link, false, nomeLoja);
+  const loja = await lerLoja();
+  const video = linkDaPaginaDoVideo(origem, loja);
+  const texto = r.tipo === "convite" ? mensagemDoConvite(f.nome, link, loja.nome, video) : mensagemDoLink(f.nome, link, false, loja.nome);
   refresh();
-  return { link, tipo: r.tipo, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
+  return { link, texto, tipo: r.tipo, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
+}
+
+/**
+ * Lembrete para quem recebeu o link e não entrou (gera um link novo, que cancela
+ * o anterior) ou para quem entrou e parou no meio do cadastro (manda o endereço de entrar).
+ */
+export async function lembrarFornecedora(_estado: EstadoAcesso, dados: FormData): Promise<EstadoAcesso> {
+  const id = String(dados.get("id") ?? "");
+  await exigirAcesso("painel-administracao", "/painel/fornecedoras");
+  const [f] = await situacoesDosConvites(new Date(), [id]);
+  if (!f) return { erro: "Fornecedora inativa ou não encontrada." };
+  const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
+  const loja = await lerLoja();
+  let link = `${origem}/entrar`;
+  if (f.situacao.tipo !== "comecou") {
+    if (f.situacao.tipo === "concluido") return { erro: "Ela já terminou o cadastro." };
+    const r = await gerarAcessoDaFornecedora(id);
+    if (!r.ok || r.tipo !== "convite") return { erro: "Não deu para gerar o link. Abra a página dela e tente de novo." };
+    link = `${origem}/convite/${r.codigo}`;
+  }
+  const texto = mensagemDeLembrete(f.nome, f.situacao, link, loja.nome, linkDaPaginaDoVideo(origem, loja));
+  const tel = lerTelefoneCliente(f.telefone);
+  // Sem refresh(): com o link novo ela sai da lista, e a mensagem pronta sumiria da tela.
+  return { link, texto, whatsapp: tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined };
 }

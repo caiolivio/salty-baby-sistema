@@ -12,6 +12,7 @@ type Valores = {
   descricao: string;
   whatsapp: string;
   instagram: string;
+  videoInstalarApp: string;
   corDestaque: string;
   corPrincipal: string;
   corTexto: string;
@@ -87,6 +88,14 @@ export function FormularioLoja({
             Instagram
             <input name="instagram" maxLength={60} defaultValue={v("instagram")} placeholder="@perfil" />
             <span className={estilos.dica}>Opcional. Aparece no rodapé do site.</span>
+          </label>
+          <label className={estilos.campo}>
+            Vídeo de como instalar o app
+            <input name="videoInstalarApp" type="url" maxLength={300} defaultValue={v("videoInstalarApp")} placeholder="https://youtu.be/..." />
+            <span className={estilos.dica}>
+              Opcional. Cole o link do vídeo (o YouTube como &ldquo;Não listado&rdquo; é o melhor: abre direto no celular e só vê quem tem o
+              link). Ele aparece na página /instalar-app e vai nas mensagens de primeiro acesso.
+            </span>
           </label>
         </div>
       </fieldset>

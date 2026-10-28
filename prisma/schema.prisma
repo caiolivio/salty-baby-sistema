@@ -841,6 +841,8 @@ model ConfiguracaoLoja {
   mesesDevolucao Int      @map("meses_devolucao")
   /// Prazo da sacolinha, contado da primeira peça. Depois dele, as peças são doadas.
   mesesSacolinha Int      @default(3) @map("meses_sacolinha")
+  /// Link do vídeo de como instalar o app (YouTube não listado, Google Drive...). Vai nas mensagens de acesso.
+  videoInstalarApp String? @map("video_instalar_app") @db.VarChar(300)
   atualizadoEm   DateTime @updatedAt @map("atualizado_em")
 
   @@map("configuracao_loja")

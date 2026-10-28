@@ -22,12 +22,13 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
 import { autorDe } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { linkDaPaginaDoVideo } from "@/lib/loja/regras";
 
 // Curadoria das candidatas a fornecedora. Só a administradora decide.
 
 const textoDe = (dados: FormData, campo: string) => String(dados.get(campo) ?? "").trim();
 
-export type EstadoAprovacao = { erro?: string; link?: string; whatsapp?: string; novaConta?: boolean } | undefined;
+export type EstadoAprovacao = { erro?: string; link?: string; texto?: string; whatsapp?: string; novaConta?: boolean } | undefined;
 
 /** Aprova o passo 1 (ou gera um link novo) e devolve o link para mandar no WhatsApp. */
 export async function aprovar(_estado: EstadoAprovacao, dados: FormData): Promise<EstadoAprovacao> {
@@ -45,13 +46,14 @@ export async function aprovar(_estado: EstadoAprovacao, dados: FormData): Promis
     };
   }
   const c = await prisma.candidatura.findUniqueOrThrow({ where: { id }, select: { nome: true, telefone: true } });
-  const link = `${origemDaRequisicao(await headers()).replace(/\/+$/, "")}/criar-senha/${r.codigo}`;
+  const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
+  const link = `${origem}/criar-senha/${r.codigo}`;
   const tel = lerTelefoneCliente(c.telefone);
-  const whatsapp = tel
-    ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(mensagemDeAprovacao(c.nome, link, r.novaConta, (await lerLoja()).nome))}`
-    : undefined;
+  const loja = await lerLoja();
+  const texto = mensagemDeAprovacao(c.nome, link, r.novaConta, loja.nome, linkDaPaginaDoVideo(origem, loja));
+  const whatsapp = tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined;
   refresh();
-  return { link, whatsapp, novaConta: r.novaConta };
+  return { link, texto, whatsapp, novaConta: r.novaConta };
 }
 
 export async function recusar(dados: FormData): Promise<void> {

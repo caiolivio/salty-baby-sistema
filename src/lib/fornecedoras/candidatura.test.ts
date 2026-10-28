@@ -76,9 +76,11 @@ describe("mensagem de aprovação", () => {
     const texto = mensagemDeAprovacao("  Maria Clara Souza", "https://teste.saltybaby.com.br/criar-senha/abc", true);
     expect(texto.startsWith("Oi, Maria! Aqui é da Salty Baby")).toBe(true);
     expect(texto).toContain("passo 2");
-    expect(texto).toContain("criar sua senha");
-    expect(texto.endsWith("https://teste.saltybaby.com.br/criar-senha/abc")).toBe(true);
+    expect(texto).toContain("crie sua senha");
+    expect(texto).toContain("\nhttps://teste.saltybaby.com.br/criar-senha/abc");
+    expect(texto).toContain("tela inicial");
     expect(mensagemDeAprovacao("Ana", "x", false)).toContain("nova senha");
+    expect(mensagemDeAprovacao("Ana", "x", true, "Salty Baby", "https://x/instalar-app")).toContain("\nhttps://x/instalar-app");
   });
 });
 

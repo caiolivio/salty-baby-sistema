@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { contraste, cssDasCores, LOJA_PADRAO, lerFormularioLoja, nomeComSlogan, whatsappNaTela } from "./regras";
+import {
+  contraste,
+  cssDasCores,
+  LOJA_PADRAO,
+  lerFormularioLoja,
+  linkDaPaginaDoVideo,
+  nomeComSlogan,
+  videoParaIncorporar,
+  whatsappNaTela,
+} from "./regras";
 
 const formulario = {
   nome: "Salty Baby",
@@ -35,6 +44,7 @@ describe("lerFormularioLoja", () => {
         minutosReserva: 15,
         mesesDevolucao: 6,
         mesesSacolinha: 3,
+        videoInstalarApp: null,
       },
     });
   });
@@ -86,5 +96,32 @@ describe("cores e textos", () => {
     expect(whatsappNaTela("5512981053623")).toBe("(12) 98105-3623");
     expect(nomeComSlogan(LOJA_PADRAO)).toBe("Salty Baby · Moda Sustentável");
     expect(nomeComSlogan({ nome: "Loja X", slogan: null })).toBe("Loja X");
+  });
+});
+
+describe("vídeo de como instalar o app", () => {
+  it("aceita só link https", () => {
+    const ok = lerFormularioLoja({ ...formulario, videoInstalarApp: " https://youtu.be/abc123XYZ " });
+    expect(ok.ok && ok.dados.videoInstalarApp).toBe("https://youtu.be/abc123XYZ");
+    expect(lerFormularioLoja({ ...formulario, videoInstalarApp: "youtu.be/abc" }).ok).toBe(false);
+    expect(lerFormularioLoja({ ...formulario, videoInstalarApp: "http://exemplo.com/v.mp4" }).ok).toBe(false);
+  });
+
+  it("mostra dentro da página os vídeos do YouTube e do Google Drive", () => {
+    expect(videoParaIncorporar("https://youtu.be/abc123XYZ")).toBe("https://www.youtube-nocookie.com/embed/abc123XYZ?rel=0");
+    expect(videoParaIncorporar("https://www.youtube.com/watch?v=abc123XYZ&t=3")).toBe("https://www.youtube-nocookie.com/embed/abc123XYZ?rel=0");
+    expect(videoParaIncorporar("https://youtube.com/shorts/abc123XYZ")).toBe("https://www.youtube-nocookie.com/embed/abc123XYZ?rel=0");
+    expect(videoParaIncorporar("https://drive.google.com/file/d/1k4PwJL9zMnuyLN-QHyOhxMushUwIQ30R/view?usp=drive_link")).toBe(
+      "https://drive.google.com/file/d/1k4PwJL9zMnuyLN-QHyOhxMushUwIQ30R/preview",
+    );
+    expect(videoParaIncorporar("https://exemplo.com/video.mp4")).toBeNull();
+    expect(videoParaIncorporar(null)).toBeNull();
+  });
+});
+
+describe("link da página do vídeo", () => {
+  it("só vai nas mensagens quando a loja tem vídeo", () => {
+    expect(linkDaPaginaDoVideo("https://x.com/", { videoInstalarApp: "https://youtu.be/a" })).toBe("https://x.com/instalar-app");
+    expect(linkDaPaginaDoVideo("https://x.com", { videoInstalarApp: null })).toBeUndefined();
   });
 });
