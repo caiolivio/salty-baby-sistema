@@ -23,6 +23,7 @@ import {
   Receipt,
   RefreshCw,
   ScrollText,
+  Send,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -46,6 +47,7 @@ import estilos from "./painel.module.css";
 
 const ICONES: Record<string, LucideIcon> = {
   "": LayoutDashboard,
+  "enviar-hoje": Send,
   financas: PiggyBank,
   financeiro: Landmark,
   acertos: Wallet,

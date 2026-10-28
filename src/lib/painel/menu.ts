@@ -18,6 +18,7 @@ export function itensDoMenu(acesso: Acesso): ItemDoMenu[] {
 
   return [
     { chave: "", nome: "Início" },
+    { chave: "enviar-hoje", nome: "Enviar hoje" },
     ...grupo("financas", "Finanças", [
       ...soAdmin("financeiro", "Financeiro"),
       ...soAdmin("acertos", "Contas a pagar"),
