@@ -4,7 +4,7 @@ import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { reduzirFotosDoFormulario } from "@/componentes/reduzir-foto";
 import { FotosNovas, type FotoNova } from "./fotos-novas";
-import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, NOTA_MAXIMA, NOTA_MINIMA, SITUACOES_DO_CADASTRO } from "@/lib/pecas/dados";
+import { CONSERVACOES, FORNECEDORA_LOJA, GENEROS, NOTA_MAXIMA, NOTA_MINIMA, OPCAO_VENDER, SITUACOES_DO_CADASTRO } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
 import estilos from "../formulario.module.css";
 import type { EstadoPeca } from "./acoes";
@@ -82,6 +82,7 @@ export function FormularioPeca({
   const [fotos, setFotos] = useState<FotoNova[]>([]);
   const marcadas = new Set(estado?.categorias ?? categoriasMarcadas);
   const v = (campo: keyof ValoresPeca) => (estado?.valores ? estado.valores[campo] : iniciais[campo]);
+  const [vendendo, setVendendo] = useState(v("status") === OPCAO_VENDER.valor);
   const [fornecedoraId, setFornecedoraId] = useState(v("fornecedoraId") ?? "");
   const escolhida = fornecedoras?.find((f) => f.id === fornecedoraId);
   const consignada = fornecedoraFixa ? fornecedoraFixa.consignada : fornecedoraId !== FORNECEDORA_LOJA;
@@ -230,14 +231,21 @@ export function FormularioPeca({
           </label>
           <label className={estilos.campo}>
             Status
-            <select name="status" defaultValue={v("status") ?? "rascunho"}>
+            <select name="status" defaultValue={v("status") ?? "rascunho"} onChange={(e) => setVendendo(e.target.value === OPCAO_VENDER.valor)}>
               {opcoesDeStatus.map((s) => (
                 <option key={s.valor} value={s.valor}>
                   {s.nome}
                 </option>
               ))}
             </select>
-            {avisoDoStatus && <span className={estilos.dica}>{avisoDoStatus}</span>}
+            {vendendo ? (
+              <span className={estilos.dica}>
+                Ao salvar, abre a venda com esta peça para você informar o valor pago, a forma de pagamento e o canal. Assim o
+                repasse e o lucro ficam certos. Não use &quot;Baixa&quot; para peça vendida.
+              </span>
+            ) : (
+              avisoDoStatus && <span className={estilos.dica}>{avisoDoStatus}</span>
+            )}
           </label>
           <label className={estilos.campo}>
             Data de entrada

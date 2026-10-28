@@ -4,17 +4,21 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirExtra, exigirPagina } from "@/lib/acesso";
 import { mostrarPercentual } from "@/lib/fornecedoras/dados";
-import { temExtra } from "@/lib/permissoes";
+import { podeAlterar, temExtra } from "@/lib/permissoes";
 import { prisma } from "@/lib/banco";
 import {
   escolherCategorias,
   FORNECEDORA_LOJA,
   hojeEmSaoPaulo,
   lerFormularioPeca,
+  OPCAO_VENDER,
   reaisNoCampo,
   situacaoEditavel,
   statusNoFormulario,
+  statusParaVender,
 } from "@/lib/pecas/dados";
+import { incluirNoCarrinho } from "@/lib/pedidos/regras";
+import { gravarPecas, pecasDaVenda } from "../vendas/nova/pecas-da-venda";
 import { autorDe } from "@/lib/historico/regras";
 import {
   adicionarFotos,
@@ -117,6 +121,15 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
   }
   const categorias = await categoriasMarcadas(dados, id);
 
+  // "Vendida (registrar a venda)": grava a peça à venda e abre a venda direta
+  // com ela, onde entram o valor pago, a forma de pagamento e o canal.
+  const vender = valores.status === OPCAO_VENDER.valor && situacaoEditavel(peca.status);
+  if (vender) {
+    if (!podeAlterar(usuario.acesso, "vendas")) return { erro: "Você não tem acesso para registrar vendas.", valores, categorias };
+    valores.status = statusParaVender(peca.status, peca.naoListada);
+  }
+  const comoDigitado = vender ? { ...valores, status: OPCAO_VENDER.valor } : valores;
+
   // Peça reservada, com devolução pedida ou vendida: a troca de status mexe no
   // pedido, na devolução ou só na entrega (mudarStatusDaPeca).
   const novo = valores.status ?? "";
@@ -128,13 +141,20 @@ export async function salvarPeca(_estado: EstadoPeca, dados: FormData): Promise<
     repassePadrao: peca.fornecedora?.percentualRepassePadrao ?? 0,
     hoje: peca.dataEntrada.toISOString().slice(0, 10),
   });
-  if (!lido.ok) return { erro: lido.erro, valores, categorias };
+  if (!lido.ok) return { erro: vender ? lido.erro.replace("colocar à venda", "vender") : lido.erro, valores: comoDigitado, categorias };
+  if (vender && lido.dados.quantidade < 1) {
+    return { erro: "Para vender, a quantidade precisa ser pelo menos 1.", valores: comoDigitado, categorias };
+  }
 
   if (trocaEspecial) {
     const r = await mudarStatusDaPeca(id, novo, autorDe(usuario));
     if (!r.ok) return { erro: r.erro, valores, categorias };
   }
   await atualizarPeca(id, lido.dados, categorias, autorDe(usuario), editavel ? undefined : (fica as StatusPeca));
+  if (vender) {
+    await gravarPecas(incluirNoCarrinho(await pecasDaVenda(), id));
+    redirect("/painel/vendas/nova");
+  }
   redirect(`/painel/pecas/${id}?salva=1`);
 }
 

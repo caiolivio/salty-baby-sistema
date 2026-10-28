@@ -4,7 +4,7 @@
 
 import { formatarReais } from "../dinheiro";
 import { TAMANHOS, type Tamanho } from "../tamanhos";
-import { marcaComparavel, PUBLICOS, type Publico } from "../vitrine";
+import { marcaComparavel, PUBLICOS, publicoIncluiSemGenero, type Publico } from "../vitrine";
 
 export { marcaComparavel };
 
@@ -28,12 +28,12 @@ export type PecaParaAlerta = {
 };
 
 
-/** A peça combina com tudo o que o alerta pede? Peça sem gênero vale para menina e menino (igual à vitrine). */
+/** A peça combina com tudo o que o alerta pede? Peça sem gênero vale para menina e menino, não para unissex (igual à vitrine). */
 export function pecaAtende(alerta: Alerta, peca: PecaParaAlerta): boolean {
   if (alerta.tamanho && peca.tamanho !== alerta.tamanho) return false;
   if (alerta.publico) {
     const generos: readonly string[] = PUBLICOS.find((p) => p.valor === alerta.publico)?.generos ?? [];
-    if (peca.genero && !generos.includes(peca.genero)) return false;
+    if (peca.genero ? !generos.includes(peca.genero) : !publicoIncluiSemGenero(alerta.publico)) return false;
   }
   if (alerta.categoriaId && !peca.categorias.includes(alerta.categoriaId)) return false;
   if (alerta.marca && (!peca.marca || marcaComparavel(peca.marca) !== marcaComparavel(alerta.marca))) return false;

@@ -6,12 +6,14 @@ import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import {
   generosDoPublico,
+  publicoIncluiSemGenero,
   lerFiltros,
   linkDaVitrine,
   marcaEscolhida,
   marcasDaVitrine,
   POR_PAGINA_VITRINE,
   PUBLICOS,
+  TODOS_OS_PUBLICOS,
   tamanhosDisponiveis,
 } from "@/lib/vitrine";
 import { CartaoPeca, SELECAO_CARTAO } from "./cartao-peca";
@@ -42,7 +44,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
   );
   const marca = marcaEscolhida(marcas, f.marca);
   if (f.marca && !marca) f.marca = undefined;
-  // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino.
+  // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino (publicoIncluiSemGenero).
   const onde: Prisma.PecaWhereInput = {
     ...A_VENDA,
     ...(f.tamanho && { tamanho: f.tamanho }),
@@ -50,7 +52,9 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     ...(marca && { marca: { in: marca.grafias } }),
     AND: [
       f.promocao ? ondeEmPromocao() : {},
-      generos.length > 0 ? { OR: [{ genero: { in: generos as Genero[] } }, { genero: null }] } : {},
+      generos.length > 0
+        ? { OR: [{ genero: { in: generos as Genero[] } }, ...(publicoIncluiSemGenero(f.publico) ? [{ genero: null }] : [])] }
+        : {},
       f.busca
         ? {
             OR: [{ nome: { contains: f.busca } }, { marca: { contains: f.busca } }, { codigo: { contains: f.busca } }],
@@ -110,7 +114,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
         <label>
           Para
           <select name="publico" defaultValue={f.publico ?? ""}>
-            <option value="">Menina e menino</option>
+            <option value="">{TODOS_OS_PUBLICOS}</option>
             {PUBLICOS.map((p) => (
               <option key={p.valor} value={p.valor}>
                 {p.nome}

@@ -4,11 +4,19 @@ import { TAMANHOS, type Tamanho } from "./tamanhos";
 
 export const POR_PAGINA_VITRINE = 24;
 
-/** "Menina" mostra roupas femininas e unissex; "Menino", masculinas e unissex. */
+/**
+ * Filtro "Para": "Menina" mostra roupas femininas e unissex; "Menino",
+ * masculinas e unissex; "Unissex", só as unissex. Peça sem gênero cadastrado
+ * (as importadas do Notion) entra em menina e menino, mas não em unissex.
+ */
 export const PUBLICOS = [
-  { valor: "menina", nome: "Menina", generos: ["feminino", "unissex"] },
-  { valor: "menino", nome: "Menino", generos: ["masculino", "unissex"] },
+  { valor: "menina", nome: "Menina", generos: ["feminino", "unissex"], semGenero: true },
+  { valor: "menino", nome: "Menino", generos: ["masculino", "unissex"], semGenero: true },
+  { valor: "unissex", nome: "Unissex", generos: ["unissex"], semGenero: false },
 ] as const;
+
+/** Primeira opção do filtro "Para" (sem filtro). */
+export const TODOS_OS_PUBLICOS = "Todos";
 export type Publico = (typeof PUBLICOS)[number]["valor"];
 
 export type FiltrosVitrine = {
@@ -97,6 +105,19 @@ export function marcaEscolhida(marcas: MarcaDaVitrine[], escolhida?: string): Ma
 /** Gêneros que entram no filtro escolhido (vazio = todos). */
 export function generosDoPublico(publico?: Publico): string[] {
   return publico ? [...PUBLICOS.find((p) => p.valor === publico)!.generos] : [];
+}
+
+/** Peça sem gênero cadastrado entra no filtro escolhido? (Sem filtro, entra.) */
+export function publicoIncluiSemGenero(publico?: string | null): boolean {
+  return PUBLICOS.find((p) => p.valor === publico)?.semGenero ?? true;
+}
+
+/** "Para" mostrado na página da peça, a partir do gênero do cadastro. */
+export function paraQuem(genero: string | null): string | null {
+  if (genero === "feminino") return "Menina";
+  if (genero === "masculino") return "Menino";
+  if (genero === "unissex") return "Unissex (menina e menino)";
+  return null;
 }
 
 /** Endereço público de uma peça: /peca/f06-00001. */

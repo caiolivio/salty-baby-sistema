@@ -9,7 +9,7 @@ import { fichaDaCliente } from "@/lib/clientes/contas";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { PUBLICOS } from "@/lib/vitrine";
+import { PUBLICOS, TODOS_OS_PUBLICOS } from "@/lib/vitrine";
 import { CartaoPeca, SELECAO_CARTAO } from "../../cartao-peca";
 import estilos from "../../loja.module.css";
 import { apagarAviso, criarAviso, sairDaFilaDeEspera } from "../acoes";
@@ -90,7 +90,7 @@ export default async function Avisos({ searchParams }: PageProps<"/minha-conta/a
           <label>
             Para
             <select name="publico" defaultValue={primeiro(busca.publico)}>
-              <option value="">Menina e menino</option>
+              <option value="">{TODOS_OS_PUBLICOS}</option>
               {PUBLICOS.map((p) => (
                 <option key={p.valor} value={p.valor}>
                   {p.nome}

@@ -19,6 +19,7 @@ import {
   linkWhatsapp,
   mensagemDaPeca,
   mensagemParaAmiga,
+  paraQuem,
 } from "@/lib/vitrine";
 import { incluir } from "../../carrinho/acoes";
 import { entrarNaFilaDeEspera, sairDaFilaDeEspera } from "../../minha-conta/acoes";
@@ -47,6 +48,7 @@ const buscarPeca = cache(async (codigo: string) =>
       naoListada: true,
       quantidade: true,
       tamanho: true,
+      genero: true,
       conservacao: true,
       variacao: true,
       marca: true,
@@ -137,6 +139,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
     ),
   );
   const detalhes: [string, string | null | undefined][] = [
+    ["Para", paraQuem(peca.genero)],
     ["Tamanho", tamanho],
     ["Conservação", conservacao],
     ["Marca", peca.marca],
