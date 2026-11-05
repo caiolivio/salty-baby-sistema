@@ -5,10 +5,8 @@ import estilos from "@/componentes/formulario.module.css";
 import { usuarioAtual } from "@/lib/acesso";
 import { destinoInicial, enderecoDeVoltaSeguro } from "@/lib/permissoes";
 import { existeAdministradora } from "@/lib/usuarios";
-import { linkWhatsapp } from "@/lib/vitrine";
 import { FormularioEntrar } from "./formulario-entrar";
 import { LogoDaLoja } from "@/componentes/logo-da-loja";
-import { lerLoja } from "@/lib/loja/servidor";
 import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -19,12 +17,6 @@ export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
   const usuario = await usuarioAtual();
   if (usuario) redirect(voltar ?? destinoInicial(usuario.perfis));
   if (!(await existeAdministradora())) redirect("/primeiro-acesso");
-  // Sem envio de e-mail no sistema: a loja manda um link de nova senha pelo WhatsApp.
-  const loja = await lerLoja();
-  const esqueci = linkWhatsapp(
-    loja.whatsapp,
-    `Oi! Esqueci a senha da minha conta no site da ${loja.nome}. Pode me mandar um link para criar uma nova?`,
-  );
 
   return (
     <main className={estilos.pagina}>
@@ -39,14 +31,9 @@ export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
           Ainda não tem conta?{" "}
           <Link href={voltar ? `/cadastro?voltar=${encodeURIComponent(voltar)}` : "/cadastro"}>Criar conta de cliente</Link>
         </p>
-        {esqueci && (
-          <p className={estilos.rodape}>
-            Esqueceu a senha?{" "}
-            <a href={esqueci} target="_blank" rel="noopener noreferrer">
-              Peça um link novo à loja no WhatsApp
-            </a>
-          </p>
-        )}
+        <p className={estilos.rodape}>
+          <Link href="/esqueci-senha">Esqueci a senha</Link>
+        </p>
       </div>
     </main>
   );
