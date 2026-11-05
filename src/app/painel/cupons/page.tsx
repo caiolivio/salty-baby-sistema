@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
-import { descricaoDoCupom } from "@/lib/cupons/regras";
+import { descricaoDeBoasVindas, descricaoDoCupom } from "@/lib/cupons/regras";
 import { listarCupons } from "@/lib/cupons/servidor";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import proprios from "../formulario.module.css";
@@ -65,6 +65,7 @@ export default async function Cupons() {
                     <td>
                       {descricaoDoCupom(c)}
                       {c.clienteId && <small> · só para uma cliente</small>}
+                      {descricaoDeBoasVindas(c) && <small> · {descricaoDeBoasVindas(c)}</small>}
                     </td>
                     <td className={estilos.curta}>
                       {c.inicio || c.fim ? `${c.inicio ? dataBr(c.inicio) : "já"} a ${c.fim ? dataBr(c.fim) : "sem fim"}` : "Sem prazo"}
