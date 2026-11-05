@@ -30,6 +30,7 @@ import { Estrela } from "../../estrela";
 import { lerLoja } from "@/lib/loja/servidor";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import estilos from "../../loja.module.css";
+import { GaleriaDaPeca } from "./galeria";
 import { quemVeALoja } from "../../quem-ve";
 
 // Só peças à venda ou reservadas aparecem para o público. Nada de fornecedora,
@@ -163,29 +164,14 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
           {peca.fotos.length === 0 ? (
             <span className={estilos.semFoto}>Sem foto</span>
           ) : (
-            <>
-              <div className={estilos.fotosGrandes}>
-                {peca.fotos.map((foto, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element -- fotos já reduzidas no envio
-                  <img
-                    key={foto.id}
-                    id={`foto-${i + 1}`}
-                    src={enderecoDaFoto(foto.arquivo)}
-                    alt={`${peca.nome}, foto ${i + 1}`}
-                  />
-                ))}
-              </div>
-              {peca.fotos.length > 1 && (
-                <nav className={estilos.miniaturas} aria-label="Fotos">
-                  {peca.fotos.map((foto, i) => (
-                    <a key={foto.id} href={`#foto-${i + 1}`}>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- miniatura */}
-                      <img src={enderecoDaFoto(foto.arquivo, true)} alt={`Ver foto ${i + 1}`} />
-                    </a>
-                  ))}
-                </nav>
-              )}
-            </>
+            <GaleriaDaPeca
+              fotos={peca.fotos.map((foto, i) => ({
+                id: foto.id,
+                grande: enderecoDaFoto(foto.arquivo),
+                miniatura: enderecoDaFoto(foto.arquivo, true),
+                alt: `${peca.nome}, foto ${i + 1}`,
+              }))}
+            />
           )}
         </div>
         <div className={estilos.info}>
