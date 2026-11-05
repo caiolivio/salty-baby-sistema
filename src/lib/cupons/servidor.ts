@@ -2,7 +2,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "../banco";
 import { hojeEmSaoPaulo } from "../pecas/dados";
-import { aplicarCupom, type DadosDoCupom, type PecaDoCupom, type RegraDoCupom } from "./regras";
+import { aplicarCupom, exigeConta, type CompradoraDoCupom, type DadosDoCupom, type PecaDoCupom, type RegraDoCupom } from "./regras";
 
 // Banco dos cupons: busca pelo código, usos, aplicação no carrinho e cadastro.
 
@@ -28,6 +28,10 @@ const regraDe = (c: LinhaDoCupom): RegraDoCupom => ({
   tamanho: c.tamanho,
   genero: c.genero,
   fornecedoraId: c.fornecedoraId,
+  soPrimeiraCompra: c.soPrimeiraCompra,
+  cadastroDesde: c.cadastroDesde?.toISOString() ?? null,
+  cadastroAte: c.cadastroAte?.toISOString() ?? null,
+  diasParaUsar: c.diasParaUsar,
 });
 
 /** Pedidos que usaram o cupom e ainda contam (reservados ou pagos). */
@@ -43,7 +47,21 @@ export async function cupomNoCarrinho(codigo: string, pecas: readonly PecaDoCupo
   const linha = await db.cupom.findUnique({ where: { codigo } });
   const regra = linha ? regraDe(linha) : null;
   const usos = regra ? await usosDoCupom(regra.id, db) : 0;
-  return aplicarCupom(regra, pecas, { hoje: hojeEmSaoPaulo(), clienteId, usos });
+  const compradora = regra && exigeConta(regra) && clienteId ? await compradoraDoCupom(clienteId, db) : null;
+  return aplicarCupom(regra, pecas, { hoje: hojeEmSaoPaulo(), clienteId, usos, agora: new Date(), compradora });
+}
+
+/**
+ * Para o cupom de boas-vindas: quando a conta do site foi criada e quantos
+ * pedidos do site a cliente já fez (reservados ou pagos). Vendas feitas no
+ * WhatsApp ou na loja não contam: é a primeira compra pelo site.
+ */
+export async function compradoraDoCupom(clienteId: string, db: Cliente = prisma): Promise<CompradoraDoCupom> {
+  const [ficha, pedidosNoSite] = await Promise.all([
+    db.cliente.findUnique({ where: { id: clienteId }, select: { usuario: { select: { criadoEm: true } } } }),
+    db.pedido.count({ where: { clienteId, status: { in: ["reservado", "pago"] } } }),
+  ]);
+  return { contaCriadaEm: ficha?.usuario?.criadoEm.toISOString() ?? null, pedidosNoSite };
 }
 
 export async function listarCupons() {
@@ -69,7 +87,13 @@ export async function lerCupomDoBanco(id: string) {
   return c ? { ...regraDe(c), quem: c.quem, pedidos: c.pedidos } : null;
 }
 
-const paraOBanco = (d: DadosDoCupom) => ({ ...d, inicio: dia(d.inicio), fim: dia(d.fim) });
+const paraOBanco = (d: DadosDoCupom) => ({
+  ...d,
+  inicio: dia(d.inicio),
+  fim: dia(d.fim),
+  cadastroDesde: d.cadastroDesde ? new Date(d.cadastroDesde) : null,
+  cadastroAte: d.cadastroAte ? new Date(d.cadastroAte) : null,
+});
 
 /** Cria ou salva o cupom. Recusa um código que já existe em outro cupom. */
 export async function gravarCupom(

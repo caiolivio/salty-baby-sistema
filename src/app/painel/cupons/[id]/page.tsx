@@ -5,6 +5,7 @@ import { Voltar } from "@/componentes/voltar";
 import { exigirAcesso } from "@/lib/acesso";
 import { formatarDataHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
+import { dataHoraSPNoCampo } from "@/lib/cupons/regras";
 import { lerCupomDoBanco } from "@/lib/cupons/servidor";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
@@ -47,6 +48,10 @@ export default async function Cupom({ params, searchParams }: PageProps<"/painel
           tamanho: c.tamanho ?? "",
           genero: c.genero ?? "",
           fornecedoraId: c.fornecedoraId ?? "",
+          soPrimeiraCompra: c.soPrimeiraCompra ? "on" : "",
+          cadastroDesde: dataHoraSPNoCampo(c.cadastroDesde),
+          cadastroAte: dataHoraSPNoCampo(c.cadastroAte),
+          diasParaUsar: c.diasParaUsar === null ? "" : String(c.diasParaUsar),
         }}
       />
 

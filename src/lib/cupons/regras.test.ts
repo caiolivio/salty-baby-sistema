@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { dividirDescontos, lerPlanoDeDesconto } from "../vendas/descontos";
 import {
   aplicarCupom,
+  dataHoraSP,
+  dataHoraSPNoCampo,
+  descricaoDeBoasVindas,
   descricaoDoCupom,
+  lerDataHoraSP,
   lerCodigoDoCupom,
   lerCupom,
   pecaEntraNoCupom,
@@ -27,6 +31,10 @@ const cupom = (c: Partial<RegraDoCupom> = {}): RegraDoCupom => ({
   tamanho: null,
   genero: null,
   fornecedoraId: null,
+  soPrimeiraCompra: false,
+  cadastroDesde: null,
+  cadastroAte: null,
+  diasParaUsar: null,
   ...c,
 });
 const peca = (p: Partial<PecaDoCupom> & { id: string; precoCentavos: number }): PecaDoCupom => ({
@@ -194,5 +202,95 @@ describe("desconto do pedido na confirmação", () => {
         descontoCentavos: 300,
       }),
     ).toEqual({ "peca_desconto:a": "3,00", "peca_tipo:a": "reais", "peca_quem:a": "loja", desconto_motivo: "Cupom CARTERS" });
+  });
+});
+
+describe("cupom de boas-vindas", () => {
+  const pecas = [peca({ id: "a", precoCentavos: 5000 })];
+  const boas = cupom({
+    valor: 1000,
+    soPrimeiraCompra: true,
+    cadastroDesde: "2026-11-10T12:00:00.000Z",
+    cadastroAte: "2026-11-11T12:00:00.000Z",
+    diasParaUsar: 7,
+  });
+  const agora = new Date("2026-11-12T12:00:00.000Z");
+  const comConta = (contaCriadaEm: string | null, pedidosNoSite = 0) => ({
+    ...ctx,
+    clienteId: "c1",
+    agora,
+    compradora: { contaCriadaEm, pedidosNoSite },
+  });
+
+  it("vale para quem se cadastrou no período e ainda não comprou pelo site", () => {
+    const r = aplicarCupom(boas, pecas, comConta("2026-11-10T15:00:00.000Z"));
+    expect(r.ok && r.cupom.descontoCentavos).toBe(500);
+  });
+
+  it("pede para entrar na conta", () => {
+    expect(aplicarCupom(boas, pecas, ctx)).toEqual({
+      ok: false,
+      erro: "Este cupom é para quem tem cadastro no site. Entre na sua conta ou cadastre-se para usar.",
+    });
+  });
+
+  it("recusa cadastro fora do período", () => {
+    for (const quando of ["2026-11-10T11:59:00.000Z", "2026-11-11T12:01:00.000Z"]) {
+      const r = aplicarCupom(boas, pecas, comConta(quando));
+      expect(r).toEqual({ ok: false, erro: "Este cupom é só para quem se cadastrou no período da campanha." });
+    }
+  });
+
+  it("vale só na primeira compra pelo site", () => {
+    const r = aplicarCupom(boas, pecas, comConta("2026-11-10T15:00:00.000Z", 1));
+    expect(r).toEqual({ ok: false, erro: "Este cupom vale só na primeira compra pelo site." });
+  });
+
+  it("acaba N dias depois do cadastro", () => {
+    const r = aplicarCupom(boas, pecas, { ...comConta("2026-11-10T15:00:00.000Z"), agora: new Date("2026-11-17T15:01:00.000Z") });
+    expect(r).toEqual({ ok: false, erro: "O prazo deste cupom acabou: ele valia até 7 dias depois do seu cadastro." });
+    const ainda = aplicarCupom(boas, pecas, { ...comConta("2026-11-10T15:00:00.000Z"), agora: new Date("2026-11-17T14:59:00.000Z") });
+    expect(ainda.ok).toBe(true);
+  });
+
+  it("cupom comum continua sem exigir conta", () => {
+    expect(aplicarCupom(cupom({ valor: 1000 }), pecas, ctx).ok).toBe(true);
+  });
+
+  it("lê data e hora de Brasília e mostra de volta", () => {
+    expect(lerDataHoraSP("2026-11-10T09:00")).toBe("2026-11-10T12:00:00.000Z");
+    expect(dataHoraSPNoCampo("2026-11-10T12:00:00.000Z")).toBe("2026-11-10T09:00");
+    expect(dataHoraSP("2026-11-10T12:00:00.000Z")).toBe("10/11/2026 09:00");
+    expect(lerDataHoraSP("10/11/2026")).toBeNull();
+  });
+
+  it("lê os campos do formulário", () => {
+    const r = lerCupom({
+      codigo: "bemvinda10",
+      tipo: "percentual",
+      valor: "10",
+      soPrimeiraCompra: "on",
+      cadastroDesde: "2026-11-10T09:00",
+      cadastroAte: "2026-11-11T09:00",
+      diasParaUsar: "7",
+    });
+    expect(r.ok && r.dados).toMatchObject({
+      soPrimeiraCompra: true,
+      cadastroDesde: "2026-11-10T12:00:00.000Z",
+      cadastroAte: "2026-11-11T12:00:00.000Z",
+      diasParaUsar: 7,
+    });
+    expect(lerCupom({ codigo: "X10", valor: "10", cadastroDesde: "2026-11-11T09:00", cadastroAte: "2026-11-10T09:00" })).toEqual({
+      ok: false,
+      erro: "O fim do cadastro precisa ser depois do início.",
+    });
+    expect(lerCupom({ codigo: "X10", valor: "10", diasParaUsar: "0" }).ok).toBe(false);
+  });
+
+  it("descreve as regras", () => {
+    expect(descricaoDeBoasVindas(boas)).toBe(
+      "só na primeira compra pelo site, para quem se cadastrou entre 10/11/2026 09:00 e 11/11/2026 09:00, em até 7 dias depois do cadastro",
+    );
+    expect(descricaoDeBoasVindas(cupom({}))).toBe("");
   });
 });

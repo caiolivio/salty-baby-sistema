@@ -952,6 +952,13 @@ model Cupom {
   tamanho              String?      @db.VarChar(30)
   genero               Genero?
   fornecedoraId        String?      @map("fornecedora_id")
+  /// Boas-vindas: só na primeira compra pelo site (exige conta, uma vez por cliente).
+  soPrimeiraCompra     Boolean      @default(false) @map("so_primeira_compra")
+  /// Boas-vindas: só para contas criadas neste intervalo.
+  cadastroDesde        DateTime?    @map("cadastro_desde")
+  cadastroAte          DateTime?    @map("cadastro_ate")
+  /// Boas-vindas: vale até N dias depois de a conta ser criada.
+  diasParaUsar         Int?         @map("dias_para_usar")
   quem                 String       @db.VarChar(191)
   criadoEm             DateTime     @default(now()) @map("criado_em")
   atualizadoEm         DateTime     @updatedAt @map("atualizado_em")

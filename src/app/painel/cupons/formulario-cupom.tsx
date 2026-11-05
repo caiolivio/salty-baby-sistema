@@ -92,6 +92,35 @@ export function FormularioCupom({
         )}
       </fieldset>
       <fieldset className={estilos.grupo}>
+        <legend>Boas-vindas (opcional)</legend>
+        <span className={estilos.dica}>
+          Para campanhas de cadastro, como &quot;10% na primeira compra para quem se cadastrar até amanhã&quot;. Com qualquer um destes campos, a
+          cliente precisa entrar na conta para usar o cupom.
+        </span>
+        <label className={estilos.marcar}>
+          <input type="checkbox" name="soPrimeiraCompra" defaultChecked={v.soPrimeiraCompra === "on"} /> Só na primeira compra pelo site (uma
+          vez por cliente)
+        </label>
+        <div className={estilos.grade}>
+          <label className={estilos.campo}>
+            Cadastro feito a partir de
+            <input type="datetime-local" name="cadastroDesde" defaultValue={v.cadastroDesde} />
+          </label>
+          <label className={estilos.campo}>
+            Cadastro feito até
+            <input type="datetime-local" name="cadastroAte" defaultValue={v.cadastroAte} />
+          </label>
+          <label className={estilos.campo}>
+            Prazo para usar (dias depois do cadastro)
+            <input name="diasParaUsar" defaultValue={v.diasParaUsar} inputMode="numeric" placeholder="Sem prazo" />
+          </label>
+        </div>
+        <span className={estilos.dica}>
+          Horário de Brasília. Vendas feitas no WhatsApp ou na loja não contam como compra pelo site. O cadastro é a data em que a cliente criou a
+          conta no site.
+        </span>
+      </fieldset>
+      <fieldset className={estilos.grupo}>
         <legend>Só para (opcional)</legend>
         <span className={estilos.dica}>Deixe tudo em branco para o cupom valer para todas as clientes e peças.</span>
         <div className={estilos.grade}>
