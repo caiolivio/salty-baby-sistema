@@ -9,6 +9,7 @@ import { linkWhatsapp } from "@/lib/vitrine";
 import { FormularioEntrar } from "./formulario-entrar";
 import { LogoDaLoja } from "@/componentes/logo-da-loja";
 import { lerLoja } from "@/lib/loja/servidor";
+import { Voltar } from "@/componentes/voltar";
 
 export const metadata: Metadata = { title: "Entrar" };
 
@@ -28,7 +29,10 @@ export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
   return (
     <main className={estilos.pagina}>
       <div className={estilos.cartao}>
-        <LogoDaLoja className={estilos.logo} largura={400} altura={400} />
+        <Voltar href="/">Voltar para a loja</Voltar>
+        <Link href="/" className={estilos.logo}>
+          <LogoDaLoja alt="Ir para a loja" largura={400} altura={400} />
+        </Link>
         <h1 className={estilos.titulo}>Entrar</h1>
         <FormularioEntrar voltar={voltar} />
         <p className={estilos.rodape}>
