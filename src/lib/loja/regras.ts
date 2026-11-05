@@ -27,6 +27,10 @@ export type Loja = {
   mesesSacolinha: number;
   /** Link do vídeo de como instalar o app, ou null. */
   videoInstalarApp: string | null;
+  /** Link do vídeo de como comprar no site (/como-comprar), ou null. */
+  videoComoComprar: string | null;
+  /** Mimo de quem indica uma amiga que compra, ou null (vale MIMO_PADRAO). */
+  mimoIndicacao: string | null;
 };
 
 /** Os dados da Salty Baby, os mesmos que a migração grava. Valem se o banco ainda não respondeu. */
@@ -48,6 +52,8 @@ export const LOJA_PADRAO: Loja = {
   mesesDevolucao: 6,
   mesesSacolinha: 3,
   videoInstalarApp: null,
+  videoComoComprar: null,
+  mimoIndicacao: null,
 };
 
 /** Logo e ícone de quando a loja ainda não enviou os dela. */
@@ -202,6 +208,8 @@ export const camposLoja = z.object({
   mesesDevolucao: inteiro(0, 36, "O prazo para pedir a peça de volta vai de 0 a 36 meses."),
   mesesSacolinha: inteiro(1, 24, "O prazo da sacolinha vai de 1 a 24 meses."),
   videoInstalarApp: linkDoVideo,
+  videoComoComprar: linkDoVideo,
+  mimoIndicacao: opcional(160, "o mimo da indicação"),
 });
 
 export type DadosLoja = z.output<typeof camposLoja>;

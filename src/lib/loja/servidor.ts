@@ -30,6 +30,8 @@ const SELECAO = {
   mesesDevolucao: true,
   mesesSacolinha: true,
   videoInstalarApp: true,
+  videoComoComprar: true,
+  mimoIndicacao: true,
   atualizadoEm: true,
 } as const;
 

@@ -45,6 +45,8 @@ describe("lerFormularioLoja", () => {
         mesesDevolucao: 6,
         mesesSacolinha: 3,
         videoInstalarApp: null,
+        videoComoComprar: null,
+        mimoIndicacao: null,
       },
     });
   });

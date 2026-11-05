@@ -7,6 +7,7 @@ import { conferirEnvioHumano, novoDesafio, type Desafio } from "@/lib/desafio/se
 import { enderecoDeVoltaSeguro } from "@/lib/permissoes";
 import { linkWhatsapp } from "@/lib/vitrine";
 import { lerLoja } from "@/lib/loja/servidor";
+import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 
 export type EstadoCadastro =
   | {
@@ -15,6 +16,10 @@ export type EstadoCadastro =
       nome?: string;
       email?: string;
       telefone?: string;
+      mensagens?: boolean;
+      bebeNome?: string;
+      bebeNascimento?: string;
+      bebeSexo?: string;
       /** Imagem nova do desafio contra robôs (a anterior já foi usada). */
       desafio?: Desafio;
     }
@@ -27,9 +32,13 @@ export async function cadastrar(_estado: EstadoCadastro, dados: FormData): Promi
     nome: String(valores.nome ?? ""),
     email: String(valores.email ?? ""),
     telefone: String(valores.telefone ?? ""),
+    mensagens: valores.mensagens === "sim",
+    bebeNome: String(valores.bebeNome ?? ""),
+    bebeNascimento: String(valores.bebeNascimento ?? ""),
+    bebeSexo: String(valores.bebeSexo ?? ""),
     desafio: await novoDesafio(),
   };
-  const lido = lerCadastro(valores);
+  const lido = lerCadastro(valores, hojeEmSaoPaulo());
   if (!lido.ok) return { erro: lido.erro, ...digitado };
   const robo = await conferirEnvioHumano(dados);
   if (robo) return { erro: robo, ...digitado };

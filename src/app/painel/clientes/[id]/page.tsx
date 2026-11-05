@@ -20,12 +20,13 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { formatarReais } from "@/lib/dinheiro";
 import { formatarTelefone, lerTelefoneCliente, linkWhatsappCliente } from "@/lib/pedidos/regras";
-import { podeAcessar, podeVer, temExtra } from "@/lib/permissoes";
+import { podeAcessar, podeAlterar, podeVer, temExtra } from "@/lib/permissoes";
+import { indicadasPor } from "@/lib/clientes/indicacao-servidor";
 import { CANAIS_DIRETOS, FORMAS_PAGAMENTO } from "@/lib/vendas/regras";
 import proprios from "../../formulario.module.css";
 import estilos from "../../painel.module.css";
 import { AcessoAoSite } from "../acesso-ao-site";
-import { salvarCliente } from "../acoes";
+import { mudarMensagensDaCliente, salvarCliente } from "../acoes";
 import visual from "../cliente.module.css";
 import { FormularioCrianca } from "../criancas";
 import { EscolherPeriodo } from "../escolher-periodo";
@@ -83,6 +84,10 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
     ).map((x) => [x.id, x.nome]),
   );
   const tel = lerTelefoneCliente(c.telefone);
+  const [indicadaPor, indicadas] = await Promise.all([
+    c.indicadaPorId ? prisma.cliente.findUnique({ where: { id: c.indicadaPorId }, select: { id: true, nome: true } }) : null,
+    indicadasPor(c.id),
+  ]);
   const gasto = c.vendas.reduce((s, v) => s + v.totalCentavos, 0);
   const tamanhos = [...new Set(c.vendas.flatMap((v) => v.itens.map((i) => i.peca.tamanho)).filter(Boolean))];
   const agora = new Date();
@@ -145,6 +150,45 @@ export default async function Cliente({ params, searchParams }: PageProps<"/pain
           observacao: c.observacao ?? "",
         }}
       />
+
+      <h2 id="mensagens">Mensagens no WhatsApp</h2>
+      <p>
+        {c.aceitaMensagens
+          ? "Aceita receber novidades, aniversários e lembretes do desconto."
+          : "Não quer receber novidades. Mande só o que é dos pedidos, da sacolinha e dos avisos que ela pediu."}
+        {c.mensagensAlteradoEm && ` Escolha registrada em ${formatarDataHora(c.mensagensAlteradoEm)}.`}
+      </p>
+      {podeAlterar(usuario.acesso, "clientes") && (
+        <form action={mudarMensagensDaCliente}>
+          <input type="hidden" name="clienteId" value={c.id} />
+          <input type="hidden" name="mensagens" value={c.aceitaMensagens ? "nao" : "sim"} />
+          <button type="submit" className={proprios.botaoSecundario}>
+            {c.aceitaMensagens ? "Ela pediu para sair das mensagens" : "Ela quer voltar a receber"}
+          </button>
+        </form>
+      )}
+      {(indicadaPor || indicadas.length > 0) && (
+        <p>
+          {indicadaPor && (
+            <>
+              Indicada por <Link href={`/painel/clientes/${indicadaPor.id}`}>{indicadaPor.nome}</Link>.{" "}
+            </>
+          )}
+          {indicadas.length > 0 && (
+            <>
+              Indicou {indicadas.length === 1 ? "1 amiga" : `${indicadas.length} amigas`}:{" "}
+              {indicadas.map((a, i) => (
+                <span key={a.id}>
+                  {i > 0 && ", "}
+                  <Link href={`/painel/clientes/${a.id}`}>{a.nome}</Link>
+                  {a.comprou ? " (comprou)" : ""}
+                </span>
+              ))}
+              .
+            </>
+          )}
+        </p>
+      )}
 
       <h2 id="acesso">Acesso ao site</h2>
       {c.usuario ? (

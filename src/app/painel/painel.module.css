@@ -870,3 +870,19 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Lista simples com uma ação por linha (ex.: links da campanha). */
+.listaSimples {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.listaSimples li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

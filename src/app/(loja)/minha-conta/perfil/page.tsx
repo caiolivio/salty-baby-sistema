@@ -7,7 +7,8 @@ import { FormularioPerfil, FormularioSenha } from "./formularios";
 import { prisma } from "@/lib/banco";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { FormularioCrianca } from "@/app/painel/clientes/criancas";
-import { gravarMinhaCrianca, removerMinhaCrianca } from "../acoes";
+import { gravarMinhaCrianca, mudarMensagens, removerMinhaCrianca } from "../acoes";
+import { formatarData } from "@/lib/datas";
 
 export const metadata: Metadata = { title: "Meus dados" };
 
@@ -16,7 +17,7 @@ export default async function MeusDados() {
   const ficha = await fichaDaCliente(usuario);
   const endereco = await prisma.cliente.findUnique({
     where: { id: ficha.id },
-    select: { endereco: true, cep: true, cidade: true, estado: true },
+    select: { endereco: true, cep: true, cidade: true, estado: true, aceitaMensagens: true, mensagensAlteradoEm: true },
   });
   const criancas = await prisma.crianca.findMany({
     where: { clienteId: ficha.id },
@@ -64,6 +65,21 @@ export default async function MeusDados() {
           ))}
           <FormularioCrianca clienteId={ficha.id} hoje={hoje} gravar={gravarMinhaCrianca} remover={removerMinhaCrianca} />
         </div>
+      </section>
+      <section className={estilos.secao} aria-labelledby="titulo-mensagens">
+        <h2 id="titulo-mensagens">Mensagens no WhatsApp</h2>
+        <p>
+          {endereco?.aceitaMensagens
+            ? "Você recebe as novidades no tamanho das suas crianças, os aniversários e o aviso antes do seu desconto vencer."
+            : "Você não recebe novidades da loja. Os avisos dos seus pedidos, da sacolinha e dos que você pediu continuam chegando."}
+          {endereco?.mensagensAlteradoEm && ` Escolha feita em ${formatarData(endereco.mensagensAlteradoEm)}.`}
+        </p>
+        <form action={mudarMensagens} >
+          <input type="hidden" name="mensagens" value={endereco?.aceitaMensagens ? "nao" : "sim"} />
+          <button type="submit" className={estilos.botaoSimples}>
+            {endereco?.aceitaMensagens ? "Não quero mais receber novidades" : "Quero receber as novidades"}
+          </button>
+        </form>
       </section>
       <section className={estilos.secao} aria-labelledby="titulo-senha">
         <h2 id="titulo-senha">Trocar senha</h2>

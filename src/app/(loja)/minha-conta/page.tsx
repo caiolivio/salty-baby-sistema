@@ -12,7 +12,14 @@ import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { promocoesDasPecas } from "@/lib/promocoes/servidor";
 import { CartaoPeca, SELECAO_CARTAO } from "../cartao-peca";
 import { tamanhoDaCrianca } from "@/lib/clientes/perfil";
-import { Baby } from "lucide-react";
+import { Baby, MessageCircle } from "lucide-react";
+import { headers } from "next/headers";
+import { origemDaRequisicao } from "@/lib/etiquetas";
+import { lerLoja } from "@/lib/loja/servidor";
+import { campanhaAtiva } from "@/lib/campanhas/servidor";
+import { codigoDeIndicacaoDa, indicadasPor } from "@/lib/clientes/indicacao-servidor";
+import { linkDeIndicacao, mensagemParaIndicar, MIMO_PADRAO } from "@/lib/clientes/indicacao";
+import { CopiarTexto } from "@/componentes/copiar-texto";
 import estilos from "../loja.module.css";
 
 export const metadata: Metadata = { title: "Minha conta" };
@@ -67,6 +74,8 @@ export default async function MinhaConta() {
   );
   const promocoes = await promocoesDasPecas(sugestoes.pecas);
   const noCarrinho = lerCarrinho((await cookies()).get(COOKIE_CARRINHO)?.value).length;
+  const [loja, campanha, codigo, amigas] = await Promise.all([lerLoja(), campanhaAtiva(), codigoDeIndicacaoDa(ficha.id), indicadasPor(ficha.id)]);
+  const linkIndicacao = linkDeIndicacao(origemDaRequisicao(await headers()), codigo);
 
   return (
     <>
@@ -137,6 +146,30 @@ export default async function MinhaConta() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className={estilos.secao} aria-labelledby="titulo-indicar">
+        <h2 id="titulo-indicar">Indique uma amiga</h2>
+        <p>
+          Mande o seu link para uma amiga. Quando ela se cadastrar por ele e fizer a primeira compra, você ganha{" "}
+          {loja.mimoIndicacao?.trim() || MIMO_PADRAO}.
+          {amigas.length > 0 &&
+            ` ${amigas.length === 1 ? "1 amiga já se cadastrou" : `${amigas.length} amigas já se cadastraram`} pelo seu link${
+              amigas.some((a) => a.comprou) ? `, e ${amigas.filter((a) => a.comprou).length} já comprou` : ""
+            }.`}
+        </p>
+        <div className={estilos.acoesIndicar}>
+          <a
+            className={estilos.botaoWhats}
+            href={`https://wa.me/?text=${encodeURIComponent(mensagemParaIndicar({ nomeLoja: loja.nome, link: linkIndicacao, cupom: campanha?.cupom }))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageCircle className="icone" aria-hidden />
+            Indicar no WhatsApp
+          </a>
+          <CopiarTexto texto={linkIndicacao} className={estilos.botaoSimples} />
+        </div>
       </section>
 
       <section className={estilos.secao} aria-labelledby="titulo-resumo">

@@ -20,6 +20,7 @@ describe("menu do painel", () => {
       "Sacolinhas",
       "Promoções",
       "Cupons",
+      "Campanhas",
       "WhatsApp Marketing",
       "Fornecedores",
       "Seja fornecedora",

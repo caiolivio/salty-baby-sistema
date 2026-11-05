@@ -93,6 +93,9 @@ export type DadosCrianca = {
 };
 
 /** Lê o formulário de uma criança. A data vem do campo de data (aaaa-mm-dd) e é opcional. */
+/** Até quantos meses à frente vale a data prevista do parto. */
+export const MESES_DE_PREVISAO = 10;
+
 export function lerCrianca(
   valores: { nome?: unknown; nascimento?: unknown; sexo?: unknown; tamanho?: unknown },
   hoje: string,
@@ -106,7 +109,10 @@ export function lerCrianca(
     if (!/^\d{4}-\d{2}-\d{2}$/.test(texto) || Number.isNaN(Date.parse(`${texto}T00:00:00Z`))) {
       return { ok: false, erro: "A data de nascimento não é válida." };
     }
-    if (texto > hoje) return { ok: false, erro: "A data de nascimento não pode ser no futuro." };
+    // Data no futuro é a previsão do parto (gestante), até 10 meses à frente.
+    if (Date.parse(`${texto}T00:00:00Z`) > Date.parse(`${hoje}T00:00:00Z`) + MESES_DE_PREVISAO * 31 * 24 * 60 * 60 * 1000) {
+      return { ok: false, erro: "Confira a data: a previsão do parto pode ser de até 10 meses a partir de hoje." };
+    }
     if (Number(texto.slice(0, 4)) < Number(hoje.slice(0, 4)) - 25) return { ok: false, erro: "Confira o ano de nascimento." };
     nascimento = new Date(`${texto}T00:00:00Z`);
   }

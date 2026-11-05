@@ -157,3 +157,30 @@
   color: var(--petroleo);
   font-weight: 600;
 }
+
+/* Grupo de campos opcionais (ex.: o bebê no cadastro). */
+.grupoOpcional {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--borda, #d9e2e6);
+  border-radius: var(--raio);
+  min-width: 0;
+}
+
+.grupoOpcional legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+}
+
+.grupoOpcional .dica {
+  margin: 0;
+}
+
+/* Aviso de privacidade curto, logo abaixo do botão. */
+.avisoLgpd {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-suave, #4a5a63);
+}

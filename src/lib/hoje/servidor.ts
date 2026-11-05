@@ -5,6 +5,9 @@ import { lerTelefoneCliente } from "../pedidos/regras";
 import { hojeEmSaoPaulo } from "../pecas/dados";
 import { enderecoDaPeca } from "../vitrine";
 import { lerTamanho, type Tamanho } from "../tamanhos";
+import { lembrarDoCupom, venceEm } from "../campanhas/regras";
+import { usarAte } from "../cupons/regras";
+import { descricaoDoDesconto } from "../promocoes/regras";
 import {
   aniversarioProximo,
   DIAS_PECA_VENDIDA,
@@ -157,7 +160,8 @@ export async function clientesSumidas(agora = new Date()) {
   });
   const avisadas = new Set(recentes.map((r) => r.referencia.split(":")[0]));
   const clientes = await prisma.cliente.findMany({
-    where: { id: { in: ids.filter((id) => !avisadas.has(id)) } },
+    // LGPD: só quem aceita receber novidades.
+    where: { id: { in: ids.filter((id) => !avisadas.has(id)) }, aceitaMensagens: true },
     select: {
       id: true,
       nome: true,
@@ -198,7 +202,7 @@ export async function clientesSumidas(agora = new Date()) {
 export async function aniversariosDaSemana(agora = new Date()) {
   const hoje = hojeEmSaoPaulo(agora);
   const criancas = await prisma.crianca.findMany({
-    where: { nascimento: { not: null }, cliente: { telefone: { not: null } } },
+    where: { nascimento: { not: null }, cliente: { telefone: { not: null }, aceitaMensagens: true } },
     select: {
       id: true,
       nome: true,
@@ -227,4 +231,80 @@ export async function aniversariosDaSemana(agora = new Date()) {
     });
   }
   return lista.sort((a, b) => a.dia.localeCompare(b.dia)).slice(0, MAXIMO_POR_LISTA);
+}
+
+/**
+ * Cupons de boas-vindas (que exigem conta): quem se cadastrou no período, aceita
+ * mensagens, ainda não usou o cupom e tem o prazo vencendo nos próximos 3 dias.
+ */
+export async function cuponsSemUso(agora = new Date()) {
+  const cupons = await prisma.cupom.findMany({
+    where: {
+      ativo: true,
+      OR: [{ soPrimeiraCompra: true }, { cadastroDesde: { not: null } }, { cadastroAte: { not: null } }, { diasParaUsar: { not: null } }],
+    },
+  });
+  const lista = [];
+  for (const c of cupons) {
+    const fim = c.fim ? c.fim.toISOString().slice(0, 10) : null;
+    // Sem prazo para usar e sem fim, o cupom nunca vence: não há o que lembrar.
+    if (!c.diasParaUsar && !fim) continue;
+    const contas = await prisma.cliente.findMany({
+      where: {
+        aceitaMensagens: true,
+        telefone: { not: null },
+        usuario: {
+          criadoEm: {
+            ...(c.cadastroDesde && { gte: c.cadastroDesde }),
+            ...(c.cadastroAte && { lte: c.cadastroAte }),
+            // Só quem ainda está no prazo (com folga de um dia).
+            ...(c.diasParaUsar && { gte: new Date(Math.max(c.cadastroDesde?.getTime() ?? 0, agora.getTime() - (c.diasParaUsar + 1) * DIA)) }),
+          },
+        },
+        pedidos: {
+          none: c.soPrimeiraCompra ? { status: { in: ["reservado", "pago"] } } : { cupomId: c.id, status: { in: ["reservado", "pago"] } },
+        },
+      },
+      select: { id: true, nome: true, telefone: true, usuario: { select: { criadoEm: true } } },
+      take: 200,
+    });
+    for (const k of contas) {
+      const vence = venceEm(usarAte(c, k.usuario!.criadoEm.toISOString()), fim);
+      const telefone = lerTelefoneCliente(k.telefone);
+      if (!vence || !telefone || !lembrarDoCupom(vence, agora)) continue;
+      lista.push({ referencia: `${c.id}:${k.id}`, cliente: { id: k.id, nome: k.nome, telefone }, cupom: c, vence });
+    }
+  }
+  const enviadas = await jaEnviadas("cupom_sem_uso", lista.map((l) => l.referencia));
+  return lista
+    .filter((l) => !enviadas.has(l.referencia))
+    .sort((a, b) => a.vence.getTime() - b.vence.getTime())
+    .slice(0, MAXIMO_POR_LISTA * 2)
+    .map((l) => ({ ...l, desconto: descricaoDoDesconto(l.cupom) }));
+}
+
+/** Amigas indicadas que já compraram: a loja agradece a quem indicou com o mimo. */
+export async function indicacoesParaAgradecer() {
+  const amigas = await prisma.cliente.findMany({
+    where: { indicadaPorId: { not: null }, vendas: { some: {} } },
+    orderBy: { criadoEm: "desc" },
+    select: { id: true, nome: true, indicadaPorId: true },
+    take: 200,
+  });
+  if (amigas.length === 0) return [];
+  const enviadas = await jaEnviadas("indicacao", amigas.map((a) => a.id));
+  const pendentes = amigas.filter((a) => !enviadas.has(a.id));
+  const quemIndicou = await prisma.cliente.findMany({
+    where: { id: { in: [...new Set(pendentes.map((a) => a.indicadaPorId!))] } },
+    select: { id: true, nome: true, telefone: true },
+  });
+  const porId = new Map(quemIndicou.map((q) => [q.id, q]));
+  return pendentes
+    .map((a) => {
+      const q = porId.get(a.indicadaPorId!);
+      const telefone = lerTelefoneCliente(q?.telefone);
+      return q && telefone ? { referencia: a.id, amiga: { id: a.id, nome: a.nome }, cliente: { id: q.id, nome: q.nome, telefone } } : null;
+    })
+    .filter((x) => x !== null)
+    .slice(0, MAXIMO_POR_LISTA);
 }

@@ -5,6 +5,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { lerTelefoneCliente } from "../pedidos/regras";
 import { normalizarEmail, problemaNaSenha } from "../senha";
+import { lerCrianca, type DadosCrianca } from "./dados";
+import { lerCodigoDeIndicacao } from "./indicacao";
 
 /** Quantos dias o link de criar senha vale. */
 export const VALIDADE_LINK_DIAS = 7;
@@ -63,17 +65,48 @@ export function lerEnderecoDoPerfil(valores: Record<string, unknown>): Lido<Ende
   return { ok: true, dados };
 }
 
-export type DadosCadastro = DadosPerfil & { senha: string };
+export type DadosCadastro = DadosPerfil & {
+  senha: string;
+  /** LGPD: marcou "Quero receber novidades pelo WhatsApp". */
+  aceitaMensagens: boolean;
+  /** Bebê informado no cadastro (nascimento ou previsão do parto), opcional. */
+  bebe: DadosCrianca | null;
+  /** Código de quem indicou (link "Indique uma amiga"). */
+  indicacao: string | null;
+};
 
 /** Cadastro feito pela própria cliente no site. Precisa aceitar o aviso de privacidade. */
-export function lerCadastro(valores: Record<string, unknown>): Lido<DadosCadastro> {
+export function lerCadastro(valores: Record<string, unknown>, hoje: string): Lido<DadosCadastro> {
   const perfil = lerPerfil(valores);
   if (!perfil.ok) return perfil;
   const senha = texto(valores, "senha");
   const problema = conferirSenhas(senha, texto(valores, "confirmacao"));
   if (problema) return { ok: false, erro: problema };
   if (valores.privacidade !== "sim") return { ok: false, erro: "Para criar a conta, aceite o aviso de privacidade." };
-  return { ok: true, dados: { ...perfil.dados, senha } };
+  const bebe = lerBebeDoCadastro(valores, hoje);
+  if (!bebe.ok) return bebe;
+  return {
+    ok: true,
+    dados: {
+      ...perfil.dados,
+      senha,
+      aceitaMensagens: valores.mensagens === "sim",
+      bebe: bebe.dados,
+      indicacao: lerCodigoDeIndicacao(valores.indicacao),
+    },
+  };
+}
+
+/**
+ * Bebê do cadastro (opcional): data de nascimento ou previsão do parto, nome e
+ * menina/menino. Sem data e sem nome, nada é gravado. Sem nome, vira "Bebê".
+ */
+export function lerBebeDoCadastro(valores: Record<string, unknown>, hoje: string): Lido<DadosCrianca | null> {
+  const nascimento = texto(valores, "bebeNascimento").trim();
+  const nome = texto(valores, "bebeNome").trim();
+  if (!nascimento && !nome) return { ok: true, dados: null };
+  const lido = lerCrianca({ nome: nome || "Bebê", nascimento, sexo: valores.bebeSexo }, hoje);
+  return lido.ok ? lido : { ok: false, erro: `Bebê: ${lido.erro}` };
 }
 
 /** Nova senha (troca na área do cliente ou pelo link): duas vezes igual. */

@@ -13,6 +13,8 @@ type Valores = {
   whatsapp: string;
   instagram: string;
   videoInstalarApp: string;
+  videoComoComprar: string;
+  mimoIndicacao: string;
   corDestaque: string;
   corPrincipal: string;
   corTexto: string;
@@ -95,6 +97,19 @@ export function FormularioLoja({
             <span className={estilos.dica}>
               Opcional. Cole o link do vídeo (o YouTube como &ldquo;Não listado&rdquo; é o melhor: abre direto no celular e só vê quem tem o
               link). Ele aparece na página /instalar-app e vai nas mensagens de primeiro acesso.
+            </span>
+          </label>
+          <label className={estilos.campo}>
+            Vídeo de como comprar no site
+            <input name="videoComoComprar" type="url" maxLength={300} defaultValue={v("videoComoComprar")} placeholder="https://youtu.be/..." />
+            <span className={estilos.dica}>Opcional. Aparece na página /como-comprar, junto com o passo a passo.</span>
+          </label>
+          <label className={estilos.campo}>
+            Mimo de quem indica uma amiga
+            <input name="mimoIndicacao" maxLength={160} defaultValue={v("mimoIndicacao")} placeholder="frete grátis no próximo envio" />
+            <span className={estilos.dica}>
+              Aparece em &ldquo;Indique uma amiga&rdquo;, na conta da cliente, e na mensagem de agradecimento quando a amiga faz a
+              primeira compra.
             </span>
           </label>
         </div>

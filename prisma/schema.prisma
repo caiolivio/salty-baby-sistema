@@ -308,6 +308,14 @@ model Cliente {
   observacao   String?         @db.Text
   /// Conta de acesso ao site (área do cliente), criada pela cliente ou pela loja.
   usuarioId    String?         @unique @map("usuario_id")
+  /// LGPD: aceita receber novidades e lembretes da loja pelo WhatsApp. Avisos que
+  /// a própria cliente pediu (pedido, sacolinha, fila, "me avise") não dependem disto.
+  aceitaMensagens     Boolean   @default(true) @map("aceita_mensagens")
+  mensagensAlteradoEm DateTime? @map("mensagens_alterado_em")
+  /// Código do link "Indique uma amiga" (/cadastro?indicacao=<código>), criado na primeira vez.
+  codigoIndicacao     String?   @unique @map("codigo_indicacao") @db.VarChar(12)
+  /// Quem indicou esta cliente (sem chave estrangeira: some só a ligação).
+  indicadaPorId       String?   @map("indicada_por_id")
   criadoEm     DateTime        @default(now()) @map("criado_em")
   atualizadoEm DateTime        @updatedAt @map("atualizado_em")
   usuario      Usuario?        @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
@@ -320,6 +328,7 @@ model Cliente {
   avisosAlerta AvisoDeAlerta[]
   filaEspera   FilaDeEspera[]
 
+  @@index([indicadaPorId])
   @@map("clientes")
 }
 
@@ -845,6 +854,10 @@ model ConfiguracaoLoja {
   mesesSacolinha   Int      @default(3) @map("meses_sacolinha")
   /// Link do vídeo de como instalar o app (YouTube não listado, Google Drive...). Vai nas mensagens de acesso.
   videoInstalarApp String?  @map("video_instalar_app") @db.VarChar(300)
+  /// Link do vídeo de como comprar no site, mostrado em /como-comprar.
+  videoComoComprar String?  @map("video_como_comprar") @db.VarChar(300)
+  /// Mimo de quem indica uma amiga que faz a primeira compra (ex.: "frete grátis no próximo envio").
+  mimoIndicacao    String?  @map("mimo_indicacao") @db.VarChar(160)
   atualizadoEm     DateTime @updatedAt @map("atualizado_em")
 
   @@map("configuracao_loja")
@@ -1096,4 +1109,30 @@ model MensagemEnviada {
 
   @@unique([tipo, referencia])
   @@map("mensagens_enviadas")
+}
+
+/// Campanha de lançamento (ex.: "Lançamento RN"): página /c/<código> com as
+/// peças dos tamanhos escolhidos, inclusive as "Não listado", e a faixa no alto
+/// do site com a contagem regressiva.
+model Campanha {
+  id           String    @id @default(cuid())
+  nome         String    @db.VarChar(80)
+  /// Endereço da página: /c/<código> (letras minúsculas, números e hífen).
+  codigo       String    @unique @db.VarChar(40)
+  titulo       String    @db.VarChar(120)
+  texto        String?   @db.Text
+  /// Tamanhos das peças da página, separados por vírgula (ex.: "Prematuro,RN").
+  tamanhos     String    @db.VarChar(255)
+  /// Frase da faixa no alto do site (vazia: sem faixa).
+  faixa        String?   @db.VarChar(160)
+  /// Fim da contagem regressiva (a faixa some depois dele).
+  ate          DateTime?
+  /// Código do cupom divulgado na página (só texto, o cupom é cadastrado em Cupons).
+  cupom        String?   @db.VarChar(30)
+  ativa        Boolean   @default(true)
+  quem         String    @db.VarChar(191)
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+
+  @@map("campanhas")
 }

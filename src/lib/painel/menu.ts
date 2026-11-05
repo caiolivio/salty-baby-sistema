@@ -34,6 +34,7 @@ export function itensDoMenu(acesso: Acesso): ItemDoMenu[] {
     ...pagina("sacolinhas"),
     ...soAdmin("promocoes", "Promoções"),
     ...soAdmin("cupons", "Cupons"),
+    ...soAdmin("campanhas", "Campanhas"),
     ...pagina("marketing"),
     ...pagina("fornecedoras"),
     ...pagina("candidaturas"),
