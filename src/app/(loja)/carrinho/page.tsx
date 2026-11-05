@@ -144,7 +144,17 @@ export default async function Carrinho({ searchParams }: PageProps<"/carrinho">)
                   </span>
                   {cupom?.ok && <strong>−{formatarReais(descontoCupom)}</strong>}
                 </p>
-                {cupom && !cupom.ok && <p className={estilos.aviso}>{cupom.erro}</p>}
+                {cupom && !cupom.ok && (
+                  <p className={estilos.aviso}>
+                    {cupom.erro}
+                    {!usuario && cupom.erro.includes("cadastro no site") && (
+                      <>
+                        {" "}
+                        <Link href="/entrar?voltar=/carrinho">Entrar</Link> · <Link href="/cadastro?voltar=/carrinho">Criar conta</Link>
+                      </>
+                    )}
+                  </p>
+                )}
                 <form action={tirarCupom}>
                   <button type="submit" className={estilos.linkBotao}>
                     Tirar cupom

@@ -26,6 +26,10 @@ const CAMPOS = [
   "tamanho",
   "genero",
   "fornecedoraId",
+  "soPrimeiraCompra",
+  "cadastroDesde",
+  "cadastroAte",
+  "diasParaUsar",
 ] as const;
 
 export async function salvarCupom(_anterior: EstadoCupom, dados: FormData): Promise<EstadoCupom> {

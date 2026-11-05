@@ -28,6 +28,21 @@ export type RegraDoCupom = {
   tamanho: string | null;
   genero: "masculino" | "feminino" | "unissex" | null;
   fornecedoraId: string | null;
+  /** Só na primeira compra pelo site: exige conta e vale uma vez por cliente. */
+  soPrimeiraCompra: boolean;
+  /** Só para contas criadas neste intervalo (ISO, UTC). */
+  cadastroDesde: string | null;
+  cadastroAte: string | null;
+  /** Vale até N dias depois de a conta ser criada. */
+  diasParaUsar: number | null;
+};
+
+/** Quem está comprando, para os cupons de boas-vindas. */
+export type CompradoraDoCupom = {
+  /** Quando a conta do site foi criada (ISO); vazio sem conta. */
+  contaCriadaEm: string | null;
+  /** Pedidos do site dela que contam (reservados ou pagos). */
+  pedidosNoSite: number;
 };
 
 /** Peça do carrinho, com o preço que a cliente paga antes do cupom (já com a promoção). */
@@ -79,7 +94,7 @@ export const restrito = (c: Pick<RegraDoCupom, "marca" | "tamanho" | "genero" | 
 export function aplicarCupom(
   cupom: RegraDoCupom | null,
   pecas: readonly PecaDoCupom[],
-  contexto: { hoje: string; clienteId: string | null; usos: number },
+  contexto: { hoje: string; clienteId: string | null; usos: number; agora?: Date; compradora?: CompradoraDoCupom | null },
 ): { ok: true; cupom: CupomAplicado } | { ok: false; erro: string } {
   const invalido = { ok: false as const, erro: "Este cupom não existe ou não vale mais." };
   if (!cupom || !cupom.ativo) return invalido;
@@ -92,6 +107,8 @@ export function aplicarCupom(
       ? { ok: false, erro: "Este cupom é de outra cliente." }
       : { ok: false, erro: "Este cupom é pessoal. Entre na sua conta para usar." };
   }
+  const recusa = recusaDeBoasVindas(cupom, contexto.clienteId, contexto.compradora ?? null, contexto.agora ?? new Date());
+  if (recusa) return { ok: false, erro: recusa };
   const subtotal = pecas.reduce((s, p) => s + p.precoCentavos, 0);
   if (subtotal < cupom.pedidoMinimoCentavos) {
     return { ok: false, erro: `Este cupom vale para pedidos a partir de ${formatarReais(cupom.pedidoMinimoCentavos)}.` };
@@ -115,6 +132,66 @@ export function aplicarCupom(
       porPeca: Object.fromEntries(entram.map((p, i) => [p.id, p.precoCentavos - pagos[i]])),
     },
   };
+}
+
+const DIA_MS = 24 * 60 * 60 * 1000;
+
+/** Cupom de boas-vindas: precisa de conta? */
+export const exigeConta = (c: Pick<RegraDoCupom, "soPrimeiraCompra" | "cadastroDesde" | "cadastroAte" | "diasParaUsar">) =>
+  c.soPrimeiraCompra || Boolean(c.cadastroDesde || c.cadastroAte || c.diasParaUsar);
+
+/** Último instante em que a cliente pode usar o cupom, pelo prazo contado do cadastro. */
+export function usarAte(cupom: Pick<RegraDoCupom, "diasParaUsar">, contaCriadaEm: string | null): Date | null {
+  if (!cupom.diasParaUsar || !contaCriadaEm) return null;
+  return new Date(Date.parse(contaCriadaEm) + cupom.diasParaUsar * DIA_MS);
+}
+
+/** Por que o cupom de boas-vindas não vale para esta cliente (ou null se vale). */
+export function recusaDeBoasVindas(
+  cupom: Pick<RegraDoCupom, "soPrimeiraCompra" | "cadastroDesde" | "cadastroAte" | "diasParaUsar">,
+  clienteId: string | null,
+  compradora: CompradoraDoCupom | null,
+  agora: Date,
+): string | null {
+  if (!exigeConta(cupom)) return null;
+  if (!clienteId || !compradora?.contaCriadaEm) return "Este cupom é para quem tem cadastro no site. Entre na sua conta ou cadastre-se para usar.";
+  const criada = Date.parse(compradora.contaCriadaEm);
+  if (cupom.cadastroDesde && criada < Date.parse(cupom.cadastroDesde)) return "Este cupom é só para quem se cadastrou no período da campanha.";
+  if (cupom.cadastroAte && criada > Date.parse(cupom.cadastroAte)) return "Este cupom é só para quem se cadastrou no período da campanha.";
+  const ate = usarAte(cupom, compradora.contaCriadaEm);
+  if (ate && agora.getTime() > ate.getTime()) return `O prazo deste cupom acabou: ele valia até ${cupom.diasParaUsar} dias depois do seu cadastro.`;
+  if (cupom.soPrimeiraCompra && compradora.pedidosNoSite > 0) return "Este cupom vale só na primeira compra pelo site.";
+  return null;
+}
+
+/** Data e hora de São Paulo ("aaaa-mm-ddThh:mm", campo datetime-local) para ISO. O Brasil não tem horário de verão. */
+export function lerDataHoraSP(t: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(t)) return null;
+  const d = new Date(`${t}:00-03:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** ISO para o campo datetime-local, na hora de São Paulo. */
+export const dataHoraSPNoCampo = (iso: string | null) => (iso ? new Date(Date.parse(iso) - 3 * 60 * 60 * 1000).toISOString().slice(0, 16) : "");
+
+/** "05/11/2026 09:00", na hora de São Paulo. */
+export const dataHoraSP = (iso: string) => {
+  const [d, h] = dataHoraSPNoCampo(iso).split("T");
+  return `${d.split("-").reverse().join("/")} ${h}`;
+};
+
+/** "Só na primeira compra pelo site, para quem se cadastrou entre ..., em até 7 dias depois do cadastro". */
+export function descricaoDeBoasVindas(c: Pick<RegraDoCupom, "soPrimeiraCompra" | "cadastroDesde" | "cadastroAte" | "diasParaUsar">) {
+  const partes = [
+    c.soPrimeiraCompra ? "só na primeira compra pelo site" : exigeConta(c) && "só para quem tem cadastro no site",
+    c.cadastroDesde && c.cadastroAte
+      ? `para quem se cadastrou entre ${dataHoraSP(c.cadastroDesde)} e ${dataHoraSP(c.cadastroAte)}`
+      : c.cadastroDesde
+        ? `para quem se cadastrou a partir de ${dataHoraSP(c.cadastroDesde)}`
+        : c.cadastroAte && `para quem se cadastrou até ${dataHoraSP(c.cadastroAte)}`,
+    c.diasParaUsar && `em até ${c.diasParaUsar} ${c.diasParaUsar === 1 ? "dia" : "dias"} depois do cadastro`,
+  ].filter(Boolean);
+  return partes.join(", ");
 }
 
 /** "10% de desconto em peças da marca Carters, tamanho 2, a partir de R$ 50,00". */
@@ -175,6 +252,18 @@ export function lerCupom(valores: Record<string, unknown>): { ok: true; dados: D
     return { ok: false, erro: "Escreva o pedido mínimo em reais, como 50 (ou deixe vazio)." };
   }
   if (pedidoMinimoCentavos < 0) return { ok: false, erro: "O pedido mínimo não pode ser negativo." };
+  const tDesde = texto(valores.cadastroDesde);
+  const tAte = texto(valores.cadastroAte);
+  const cadastroDesde = tDesde ? lerDataHoraSP(tDesde) : null;
+  const cadastroAte = tAte ? lerDataHoraSP(tAte) : null;
+  if (tDesde && !cadastroDesde) return { ok: false, erro: "Confira a data e a hora de início do cadastro." };
+  if (tAte && !cadastroAte) return { ok: false, erro: "Confira a data e a hora de fim do cadastro." };
+  if (cadastroDesde && cadastroAte && cadastroAte <= cadastroDesde) return { ok: false, erro: "O fim do cadastro precisa ser depois do início." };
+  const tDias = texto(valores.diasParaUsar);
+  const diasParaUsar = tDias ? Number(tDias) : null;
+  if (diasParaUsar !== null && (!Number.isInteger(diasParaUsar) || diasParaUsar < 1 || diasParaUsar > 365)) {
+    return { ok: false, erro: "O prazo para usar precisa ser um número de dias, como 7 (ou vazio, sem prazo)." };
+  }
   const tamanho = TAMANHOS.find((t) => t.valor === valores.tamanho)?.valor ?? null;
   const genero = valores.genero === "masculino" || valores.genero === "feminino" || valores.genero === "unissex" ? valores.genero : null;
   const marca = texto(valores.marca).replace(/\s+/g, " ").slice(0, 80) || null;
@@ -195,6 +284,10 @@ export function lerCupom(valores: Record<string, unknown>): { ok: true; dados: D
       tamanho,
       genero,
       fornecedoraId: texto(valores.fornecedoraId) || null,
+      soPrimeiraCompra: valores.soPrimeiraCompra === "on" || valores.soPrimeiraCompra === true,
+      cadastroDesde,
+      cadastroAte,
+      diasParaUsar,
     },
   };
 }
