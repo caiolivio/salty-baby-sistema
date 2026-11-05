@@ -31,6 +31,17 @@ export const SEXOS_DO_FILTRO = [
 ] as const;
 export type SexoDoFiltro = (typeof SEXOS_DO_FILTRO)[number]["valor"];
 
+/**
+ * Condição do filtro Sexo, pelas caixinhas do cadastro (src/lib/pecas/generos.ts):
+ * Feminino traz as peças com "Menina" marcada, Masculino com "Menino" e Unissex
+ * com "Unissex".
+ */
+export function condicaoDoSexo(sexo: SexoDoFiltro) {
+  if (sexo === "sem") return { genero: null };
+  if (sexo === "unissex") return { unissex: true };
+  return { OR: [{ genero: sexo }, { genero: "unissex" as const, unissex: false }] };
+}
+
 export type BuscaDePecas = {
   busca?: string;
   categoria?: string;
@@ -87,7 +98,7 @@ export function condicaoDaBusca(f: BuscaDePecas) {
   return {
     ...status,
     ...(f.tamanho && { tamanho: f.tamanho }),
-    ...(f.sexo && { genero: f.sexo === "sem" ? null : f.sexo }),
+    ...(f.sexo && { AND: [condicaoDoSexo(f.sexo)] }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     ...(f.busca && {
       OR: [

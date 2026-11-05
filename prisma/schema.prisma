@@ -242,6 +242,8 @@ model Peca {
   quantidade        Int             @default(1)
   tamanho           String?         @db.VarChar(20)
   genero            Genero?
+  /// A peça também aparece no filtro Unissex (caixinha "Unissex"; ver src/lib/pecas/generos.ts).
+  unissex           Boolean         @default(false)
   conservacao       Conservacao?
   /// Nota da peça, de 5 a 10, escolhida pela administradora. Vai no post dos grupos.
   nota              Int?            @db.TinyInt

@@ -4,7 +4,7 @@
 
 import { formatarReais } from "../dinheiro";
 import { TAMANHOS, type Tamanho } from "../tamanhos";
-import { marcaComparavel, PUBLICOS, publicoIncluiSemGenero, type Publico } from "../vitrine";
+import { marcaComparavel, pecaNoPublico, PUBLICOS, type Publico } from "../vitrine";
 
 export { marcaComparavel };
 
@@ -23,6 +23,7 @@ export type Alerta = {
 export type PecaParaAlerta = {
   tamanho: string | null;
   genero: string | null;
+  unissex: boolean;
   marca: string | null;
   categorias: readonly string[];
 };
@@ -31,10 +32,7 @@ export type PecaParaAlerta = {
 /** A peça combina com tudo o que o alerta pede? Peça sem gênero vale para menina e menino, não para unissex (igual à vitrine). */
 export function pecaAtende(alerta: Alerta, peca: PecaParaAlerta): boolean {
   if (alerta.tamanho && peca.tamanho !== alerta.tamanho) return false;
-  if (alerta.publico) {
-    const generos: readonly string[] = PUBLICOS.find((p) => p.valor === alerta.publico)?.generos ?? [];
-    if (peca.genero ? !generos.includes(peca.genero) : !publicoIncluiSemGenero(alerta.publico)) return false;
-  }
+  if (alerta.publico && !pecaNoPublico(peca, alerta.publico)) return false;
   if (alerta.categoriaId && !peca.categorias.includes(alerta.categoriaId)) return false;
   if (alerta.marca && (!peca.marca || marcaComparavel(peca.marca) !== marcaComparavel(alerta.marca))) return false;
   return true;

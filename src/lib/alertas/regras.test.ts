@@ -3,7 +3,7 @@ import { formatarReais } from "../dinheiro";
 import { descricaoDoAlerta, lerAlerta, mensagemDoAlerta, mesmoAlerta, pecaAtende } from "./regras";
 
 const vazio = { tamanho: null, publico: null, categoriaId: null, marca: null };
-const peca = { tamanho: "2 anos", genero: "feminino", marca: "Zara Kids", categorias: ["roupas"] };
+const peca = { tamanho: "2 anos", genero: "feminino", unissex: false, marca: "Zara Kids", categorias: ["roupas"] };
 
 describe("peça combina com o alerta", () => {
   it("confere cada escolha", () => {
@@ -19,7 +19,10 @@ describe("peça combina com o alerta", () => {
     expect(pecaAtende({ ...vazio, publico: "menino" }, peca)).toBe(false);
     expect(pecaAtende({ ...vazio, publico: "menino" }, { ...peca, genero: "unissex" })).toBe(true);
     expect(pecaAtende({ ...vazio, publico: "menino" }, { ...peca, genero: null })).toBe(true);
-    expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, genero: "unissex" })).toBe(true);
+    expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, genero: "unissex", unissex: true })).toBe(true);
+    // Menina + Unissex: entra em menina e unissex, não em menino.
+    expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, unissex: true })).toBe(true);
+    expect(pecaAtende({ ...vazio, publico: "menino" }, { ...peca, unissex: true })).toBe(false);
     expect(pecaAtende({ ...vazio, publico: "unissex" }, peca)).toBe(false);
     expect(pecaAtende({ ...vazio, publico: "unissex" }, { ...peca, genero: null })).toBe(false);
   });

@@ -58,9 +58,12 @@ describe("filtro Sexo", () => {
   });
 
   it("filtra pelo gênero do cadastro, e 'Não informado' pega as peças sem gênero", () => {
-    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "masculino" }))).toMatchObject({ genero: "masculino" });
-    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "sem" }))).toMatchObject({ genero: null });
-    expect(condicaoDaBusca(lerBuscaDePecas({}))).not.toHaveProperty("genero");
+    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "masculino" }))).toMatchObject({
+      AND: [{ OR: [{ genero: "masculino" }, { genero: "unissex", unissex: false }] }],
+    });
+    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "unissex" }))).toMatchObject({ AND: [{ unissex: true }] });
+    expect(condicaoDaBusca(lerBuscaDePecas({ sexo: "sem" }))).toMatchObject({ AND: [{ genero: null }] });
+    expect(condicaoDaBusca(lerBuscaDePecas({}))).not.toHaveProperty("AND");
   });
 
   it("fica no endereço e na frase da contagem", () => {

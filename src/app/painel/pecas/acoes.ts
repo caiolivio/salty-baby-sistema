@@ -1,5 +1,6 @@
 "use server";
 
+import { lerGeneros } from "@/lib/pecas/generos";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirExtra, exigirPagina } from "@/lib/acesso";
@@ -39,8 +40,13 @@ export type EstadoPeca =
 
 const TAMANHO_MAXIMO_FOTO = 12 * 1024 * 1024;
 
-const valoresDigitados = (dados: FormData) =>
-  Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+/** Campos digitados; as caixinhas de gênero viram `genero` e `unissex` (src/lib/pecas/generos.ts). */
+function valoresDigitados(dados: FormData): Record<string, string> {
+  const valores = Object.fromEntries([...dados.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  delete valores.generos;
+  const g = lerGeneros(dados.getAll("generos"));
+  return { ...valores, genero: g.genero ?? "", unissex: g.unissex ? "on" : "" };
+}
 
 /** Categorias marcadas que podem ser usadas: as ativas e as que a peça já tinha. */
 async function categoriasMarcadas(dados: FormData, pecaId?: string): Promise<string[]> {

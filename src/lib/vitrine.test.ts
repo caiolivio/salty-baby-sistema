@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   enderecoDaPeca,
   generosDoPublico,
+  condicaoDoPublico,
   paraQuem,
+  pecaNoPublico,
   publicoIncluiSemGenero,
   lerFiltros,
   linkDaVitrine,
@@ -74,6 +76,27 @@ describe("vitrine", () => {
     expect(paraQuem("masculino")).toBe("Menino");
     expect(paraQuem("unissex")).toBe("Unissex (menina e menino)");
     expect(paraQuem(null)).toBeNull();
+    expect(paraQuem("feminino", true)).toBe("Menina (também unissex)");
+    expect(paraQuem("unissex", false)).toBe("Menina e menino");
+  });
+
+  it("filtro Para com as caixinhas", () => {
+    const meninaUnissex = { genero: "feminino", unissex: true };
+    expect(pecaNoPublico(meninaUnissex, "menina")).toBe(true);
+    expect(pecaNoPublico(meninaUnissex, "unissex")).toBe(true);
+    expect(pecaNoPublico(meninaUnissex, "menino")).toBe(false);
+    const soUnissex = { genero: "unissex", unissex: true };
+    expect(["menina", "menino", "unissex"].every((p) => pecaNoPublico(soUnissex, p))).toBe(true);
+    const meninaEMenino = { genero: "unissex", unissex: false };
+    expect(pecaNoPublico(meninaEMenino, "unissex")).toBe(false);
+    expect(pecaNoPublico(meninaEMenino, "menino")).toBe(true);
+    const semGenero = { genero: null, unissex: false };
+    expect(pecaNoPublico(semGenero, "menina")).toBe(true);
+    expect(pecaNoPublico(semGenero, "unissex")).toBe(false);
+    expect(pecaNoPublico(semGenero, undefined)).toBe(true);
+    expect(condicaoDoPublico("unissex")).toEqual({ unissex: true });
+    expect(condicaoDoPublico("menina")).toEqual({ OR: [{ genero: { in: ["feminino", "unissex"] } }, { genero: null }] });
+    expect(condicaoDoPublico()).toEqual({});
   });
 
   it("lista os tamanhos com peça na ordem oficial", () => {

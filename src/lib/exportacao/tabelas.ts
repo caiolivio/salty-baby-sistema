@@ -1,10 +1,11 @@
+import { nomeDosGeneros } from "../pecas/generos";
 import "server-only";
 import { prisma } from "../banco";
 import { nomeDaFormaAcerto } from "../acertos/regras";
 import { NOMES_ETAPA } from "../fornecedoras/candidatura";
 import { NOMES_TABELA, type TabelaDoHistorico } from "../historico/regras";
 import { NOMES_QUEM_PAGA } from "../vendas/descontos";
-import { CONSERVACOES, GENEROS } from "../pecas/dados";
+import { CONSERVACOES } from "../pecas/dados";
 import { formatarTelefone } from "../pedidos/regras";
 import type { Pagina } from "../permissoes";
 import { descontoDaPromocao, descricaoDoDesconto } from "../promocoes/regras";
@@ -61,7 +62,7 @@ async function pecas(ver: Visao) {
       { titulo: "Fornecedora", valor: (p) => (p.fornecedora ? `${p.fornecedora.codigo} · ${p.fornecedora.nome}` : "Peça da loja") },
       { titulo: "Categorias", valor: (p) => p.categorias.map((c) => c.categoria.nome).join(", ") },
       { titulo: "Tamanho", valor: (p) => nomeDe(TAMANHOS, p.tamanho) },
-      { titulo: "Gênero", valor: (p) => nomeDe(GENEROS, p.genero) },
+      { titulo: "Gênero", valor: (p) => nomeDosGeneros(p.genero, p.unissex) },
       { titulo: "Conservação", valor: (p) => nomeDe(CONSERVACOES, p.conservacao) },
       { titulo: "Nota", tipo: "numero", valor: (p) => p.nota },
       { titulo: "Marca", valor: (p) => p.marca },
