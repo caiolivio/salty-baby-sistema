@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { ArrowRight, Camera, HandHeart, LogIn, MessageCircle, ShoppingBag, UserRound } from "lucide-react";
+import { ArrowRight, Camera, HandHeart, LogIn, MessageCircle, ShoppingBag, Timer, UserRound } from "lucide-react";
+import { campanhaAtiva } from "@/lib/campanhas/servidor";
+import { faixaNoAr } from "@/lib/campanhas/regras";
+import { ContagemRegressiva } from "@/componentes/contagem-regressiva";
 import { usuarioAtual } from "@/lib/acesso";
 import { COOKIE_CARRINHO, lerCarrinho } from "@/lib/pedidos/regras";
 import { destinoInicial } from "@/lib/permissoes";
@@ -17,8 +20,21 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
   const usuario = await usuarioAtual();
   const loja = await lerLoja();
   const paginas = await paginasNoAr();
+  const campanha = await campanhaAtiva();
+  const faixa = campanha && faixaNoAr(campanha, new Date()) ? campanha : null;
   return (
     <div className={estilos.estrutura}>
+      {faixa && (
+        <Link href={`/c/${faixa.codigo}`} className={estilos.faixaCampanha}>
+          <span>{faixa.faixa}</span>
+          {faixa.ate && (
+            <span className={estilos.faixaRelogio}>
+              <Timer className="icone" aria-hidden />
+              <ContagemRegressiva ate={faixa.ate.toISOString()} />
+            </span>
+          )}
+        </Link>
+      )}
       <header className={estilos.topo}>
         <Link href="/" className={estilos.marca} aria-label={`${loja.nome} · início`}>
           <LogoDaLoja alt={nomeComSlogan(loja)} />
@@ -64,15 +80,14 @@ export default async function LayoutLoja({ children }: LayoutProps<"/">) {
               )}
             </nav>
             <InstalarApp nome={loja.nomeCurto} className={estilos.instalarApp} />
-            {paginas.length > 0 && (
-              <nav className={estilos.linksRodape} aria-label="Informações">
-                {paginas.map((p) => (
-                  <Link key={p.endereco} href={p.endereco}>
-                    {p.nome}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            <nav className={estilos.linksRodape} aria-label="Informações">
+              <Link href="/como-comprar">Como comprar</Link>
+              {paginas.map((p) => (
+                <Link key={p.endereco} href={p.endereco}>
+                  {p.nome}
+                </Link>
+              ))}
+            </nav>
           </div>
           <div className={estilos.chamadaFornecedora}>
             <HandHeart className="icone" aria-hidden />

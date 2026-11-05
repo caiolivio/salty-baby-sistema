@@ -16,6 +16,7 @@ import { lerCrianca } from "@/lib/clientes/dados";
 import { gravarCriancaDaCliente, removerCriancaDaCliente } from "@/lib/clientes/criancas";
 import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import type { EstadoCrianca } from "@/app/painel/clientes/acoes";
+import { gravarAceiteDeMensagens } from "@/lib/clientes/mensagens";
 
 // Ações da área do cliente. Cada uma confere o login e só mexe na conta e na
 // ficha de quem está logado.
@@ -146,5 +147,13 @@ export async function removerMinhaCrianca(dados: FormData): Promise<void> {
   const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
   const ficha = await fichaDaCliente(usuario);
   await removerCriancaDaCliente(ficha.id, String(dados.get("id") ?? ""));
+  refresh();
+}
+
+/** LGPD: "Quero receber novidades pelo WhatsApp" em Meus dados. */
+export async function mudarMensagens(dados: FormData): Promise<void> {
+  const usuario = await exigirAcesso("area-cliente", "/minha-conta/perfil");
+  const ficha = await fichaDaCliente(usuario);
+  await gravarAceiteDeMensagens(ficha.id, dados.get("mensagens") === "sim", autorDe(usuario));
   refresh();
 }

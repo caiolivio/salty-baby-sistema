@@ -9,7 +9,7 @@ import { formatarReais } from "../dinheiro";
 const DIA = 24 * 60 * 60 * 1000;
 
 /** Tipos de mensagem da lista "Enviar hoje" guardados em `mensagens_enviadas`. */
-export const TIPOS_DE_MENSAGEM = ["peca_vendida", "pedido_nao_pago", "cliente_sumida", "aniversario"] as const;
+export const TIPOS_DE_MENSAGEM = ["peca_vendida", "pedido_nao_pago", "cliente_sumida", "aniversario", "cupom_sem_uso", "indicacao"] as const;
 export type TipoDeMensagem = (typeof TIPOS_DE_MENSAGEM)[number];
 
 /** Cliente sem compra há 60 dias (e há menos de um ano) entra na lista de sumidas. */

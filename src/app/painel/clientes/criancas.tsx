@@ -51,8 +51,8 @@ export function FormularioCrianca({
             <input name="nome" defaultValue={nova && estado?.ok ? "" : v.nome} maxLength={80} required />
           </label>
           <label className={estilos.campo}>
-            Nascimento
-            <input name="nascimento" type="date" max={hoje} defaultValue={nova && estado?.ok ? "" : v.nascimento} />
+            Nascimento (ou previsão do parto)
+            <input name="nascimento" type="date" max={new Date(Date.parse(`${hoje}T00:00:00Z`) + 300 * 864e5).toISOString().slice(0, 10)} defaultValue={nova && estado?.ok ? "" : v.nascimento} />
           </label>
           <label className={estilos.campo}>
             Sexo

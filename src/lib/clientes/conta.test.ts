@@ -10,24 +10,50 @@ const cadastro = {
   privacidade: "sim",
 };
 
+const H = "2026-11-05";
+const ler = (v: Record<string, unknown>) => lerCadastro(v, H);
+
 describe("cadastro da cliente", () => {
   it("lê nome, e-mail e WhatsApp do jeito que são guardados", () => {
-    expect(lerCadastro(cadastro)).toEqual({
+    expect(ler(cadastro)).toEqual({
       ok: true,
-      dados: { nome: "Maria da Silva", email: "maria@email.com", telefone: "12981053623", senha: "moda2026x" },
+      dados: {
+        nome: "Maria da Silva",
+        email: "maria@email.com",
+        telefone: "12981053623",
+        senha: "moda2026x",
+        aceitaMensagens: false,
+        bebe: null,
+        indicacao: null,
+      },
     });
   });
 
+  it("guarda o aceite das mensagens, o bebê e quem indicou", () => {
+    const lido = ler({ ...cadastro, mensagens: "sim", bebeNascimento: "2027-01-20", bebeSexo: "feminino", indicacao: " Abc23xy " });
+    expect(lido).toMatchObject({
+      ok: true,
+      dados: {
+        aceitaMensagens: true,
+        bebe: { nome: "Bebê", nascimento: new Date("2027-01-20T00:00:00Z"), sexo: "feminino", tamanho: null },
+        indicacao: "abc23xy",
+      },
+    });
+    expect(ler({ ...cadastro, bebeNome: "Lis" })).toMatchObject({ ok: true, dados: { bebe: { nome: "Lis", nascimento: null } } });
+    expect(ler({ ...cadastro, bebeNascimento: "2030-01-01" })).toMatchObject({ ok: false, erro: expect.stringContaining("Bebê:") });
+    expect(ler({ ...cadastro, indicacao: "x" })).toMatchObject({ ok: true, dados: { indicacao: null } });
+  });
+
   it("explica o que falta", () => {
-    expect(lerCadastro({ ...cadastro, nome: "" })).toEqual({ ok: false, erro: "Escreva seu nome." });
-    expect(lerCadastro({ ...cadastro, email: "maria" })).toEqual({ ok: false, erro: "Confira o e-mail." });
-    expect(lerCadastro({ ...cadastro, telefone: "98105-3623" })).toEqual({
+    expect(ler({ ...cadastro, nome: "" })).toEqual({ ok: false, erro: "Escreva seu nome." });
+    expect(ler({ ...cadastro, email: "maria" })).toEqual({ ok: false, erro: "Confira o e-mail." });
+    expect(ler({ ...cadastro, telefone: "98105-3623" })).toEqual({
       ok: false,
       erro: "Escreva o WhatsApp com DDD, por exemplo (11) 98765-4321.",
     });
-    expect(lerCadastro({ ...cadastro, senha: "curta1", confirmacao: "curta1" }).ok).toBe(false);
-    expect(lerCadastro({ ...cadastro, confirmacao: "outra2026" })).toEqual({ ok: false, erro: "As duas senhas não são iguais." });
-    expect(lerCadastro({ ...cadastro, privacidade: undefined })).toEqual({
+    expect(ler({ ...cadastro, senha: "curta1", confirmacao: "curta1" }).ok).toBe(false);
+    expect(ler({ ...cadastro, confirmacao: "outra2026" })).toEqual({ ok: false, erro: "As duas senhas não são iguais." });
+    expect(ler({ ...cadastro, privacidade: undefined })).toEqual({
       ok: false,
       erro: "Para criar a conta, aceite o aviso de privacidade.",
     });

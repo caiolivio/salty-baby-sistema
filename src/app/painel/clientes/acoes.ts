@@ -18,6 +18,7 @@ import { normalizarEmail } from "@/lib/senha";
 import { registrar, registrarCadastro } from "@/lib/historico/gravar";
 import { CAMPOS_CLIENTE, autorDe, compararParcial } from "@/lib/historico/regras";
 import { lerLoja } from "@/lib/loja/servidor";
+import { gravarAceiteDeMensagens } from "@/lib/clientes/mensagens";
 import { linkDaPaginaDoVideo } from "@/lib/loja/regras";
 import { ERRO_EMAIL_EM_USO, atualizarContaPelaLoja, emailDeEntradaEmUso } from "@/lib/contas/pela-loja";
 
@@ -134,4 +135,12 @@ export async function liberarAcesso(_estado: EstadoAcesso, dados: FormData): Pro
   const whatsapp = tel ? `${linkWhatsappCliente(tel)}?text=${encodeURIComponent(texto)}` : undefined;
   refresh();
   return { link, texto, whatsapp, novaConta: r.novaConta };
+}
+
+/** LGPD: a cliente pediu para sair (ou voltar) das mensagens de novidade. */
+export async function mudarMensagensDaCliente(dados: FormData): Promise<void> {
+  const usuario = await exigirPagina("clientes", "alterar");
+  const clienteId = String(dados.get("clienteId") ?? "");
+  await gravarAceiteDeMensagens(clienteId, dados.get("mensagens") === "sim", autorDe(usuario));
+  revalidatePath(`/painel/clientes/${clienteId}`);
 }

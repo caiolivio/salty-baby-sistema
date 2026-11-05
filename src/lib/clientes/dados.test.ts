@@ -47,9 +47,13 @@ describe("dados da criança", () => {
     expect(lerCrianca({ nome: "Theo", tamanho: "99 anos" }, hoje)).toEqual({ ok: false, erro: "Escolha um tamanho da lista." });
   });
 
-  it("recusa sem nome, data no futuro ou muito antiga", () => {
+  it("aceita a previsão do parto até 10 meses à frente", () => {
+    expect(lerCrianca({ nome: "Bebê", nascimento: "2027-03-15" }, hoje)).toMatchObject({ ok: true, dados: { nascimento: new Date("2027-03-15T00:00:00Z") } });
+  });
+
+  it("recusa sem nome, data longe demais no futuro ou muito antiga", () => {
     expect(lerCrianca({ nome: "" }, hoje)).toEqual({ ok: false, erro: "Escreva o nome da criança." });
-    expect(lerCrianca({ nome: "Theo", nascimento: "2026-10-01" }, hoje)).toMatchObject({ ok: false });
+    expect(lerCrianca({ nome: "Theo", nascimento: "2027-09-01" }, hoje)).toMatchObject({ ok: false });
     expect(lerCrianca({ nome: "Theo", nascimento: "1990-01-01" }, hoje)).toEqual({ ok: false, erro: "Confira o ano de nascimento." });
   });
 });

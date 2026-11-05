@@ -150,6 +150,7 @@ async function clientes(ver: Visao) {
       { titulo: "Estado", valor: (c) => c.estado },
       { titulo: "Observação", valor: (c) => c.observacao },
       { titulo: "Conta no site", valor: (c) => c.usuario?.email ?? null },
+      { titulo: "Aceita mensagens", valor: (c) => (c.aceitaMensagens ? "Sim" : "Não") },
       { titulo: "Crianças cadastradas", tipo: "numero", valor: (c) => c._count.criancas },
       { titulo: "Compras", tipo: "numero", valor: (c) => c._count.vendas },
       ...so<L>(ver.vendas, [

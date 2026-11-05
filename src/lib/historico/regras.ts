@@ -227,6 +227,8 @@ export type EstadoLoja = {
   mesesDevolucao: number;
   mesesSacolinha: number;
   videoInstalarApp: string | null;
+  videoComoComprar: string | null;
+  mimoIndicacao: string | null;
 };
 
 
@@ -249,6 +251,8 @@ export const CAMPOS_LOJA: readonly Campo<EstadoLoja>[] = [
   { titulo: "Meses para pedir devolução", ler: (l) => l.mesesDevolucao },
   { titulo: "Meses de prazo da sacolinha", ler: (l) => l.mesesSacolinha },
   { titulo: "Vídeo de como instalar o app", ler: (l) => l.videoInstalarApp },
+  { titulo: "Vídeo de como comprar", ler: (l) => l.videoComoComprar },
+  { titulo: "Mimo da indicação", ler: (l) => l.mimoIndicacao },
 ];
 
 // ---------------------------------------------------------------- tela

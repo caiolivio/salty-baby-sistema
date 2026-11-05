@@ -90,12 +90,34 @@ export async function criarContaDeCliente(dados: DadosCadastro): Promise<Resulta
       const usuario = await tx.usuario.create({
         data: { nome: dados.nome, email: dados.email, senhaHash, perfis: { create: { perfil: "cliente" } } },
       });
+      const agora = new Date();
+      const indicou = dados.indicacao
+        ? await tx.cliente.findUnique({ where: { codigoIndicacao: dados.indicacao }, select: { id: true } })
+        : null;
+      const lgpd = { aceitaMensagens: dados.aceitaMensagens, mensagensAlteradoEm: agora };
+      let clienteId: string;
       if (ficha) {
-        await tx.cliente.update({ where: { id: ficha.id }, data: { usuarioId: usuario.id, telefone: dados.telefone } });
-      } else {
-        await tx.cliente.create({
-          data: { nome: dados.nome, email: dados.email, telefone: dados.telefone, usuarioId: usuario.id },
+        await tx.cliente.update({
+          where: { id: ficha.id },
+          data: { usuarioId: usuario.id, telefone: dados.telefone, ...lgpd },
         });
+        clienteId = ficha.id;
+      } else {
+        const nova = await tx.cliente.create({
+          data: {
+            nome: dados.nome,
+            email: dados.email,
+            telefone: dados.telefone,
+            usuarioId: usuario.id,
+            ...lgpd,
+            // Só quem é cliente nova conta como indicação.
+            indicadaPorId: indicou?.id ?? null,
+          },
+        });
+        clienteId = nova.id;
+      }
+      if (dados.bebe) {
+        await tx.crianca.create({ data: { ...dados.bebe, clienteId, tamanhoEm: dados.bebe.tamanho ? agora : null } });
       }
       return { ok: true as const, usuarioId: usuario.id };
     },

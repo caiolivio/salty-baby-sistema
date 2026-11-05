@@ -15,7 +15,18 @@ import {
   mensagemPecaVendida,
   mensagemPedidoNaoPago,
 } from "@/lib/hoje/regras";
-import { aniversariosDaSemana, clientesSumidas, pecasVendidasParaAvisar, pedidosNaoPagos } from "@/lib/hoje/servidor";
+import {
+  aniversariosDaSemana,
+  clientesSumidas,
+  cuponsSemUso,
+  indicacoesParaAgradecer,
+  pecasVendidasParaAvisar,
+  pedidosNaoPagos,
+} from "@/lib/hoje/servidor";
+import { campanhaAtiva } from "@/lib/campanhas/servidor";
+import { linkDaCampanha, mensagemDoCupomSemUso } from "@/lib/campanhas/regras";
+import { mensagemDoMimo } from "@/lib/clientes/indicacao";
+import { dataHoraSP } from "@/lib/cupons/regras";
 import { pendenciasDeHoje } from "@/lib/hoje/pendencias";
 import estilos from "../painel.module.css";
 import proprios from "../formulario.module.css";
@@ -34,19 +45,24 @@ export default async function EnviarHoje() {
   const origem = origemDaRequisicao(await headers()).replace(/\/+$/, "");
   const vitrine = (tamanho: string) => `${origem}${linkDaVitrine({ pagina: 1 }, { tamanho: tamanho as never })}`;
 
-  const [loja, pendencias, vendidas, naoPagos, sumidas, aniversarios] = await Promise.all([
+  const [loja, pendencias, vendidas, naoPagos, sumidas, aniversarios, semUso, indicacoes, campanha] = await Promise.all([
     lerLoja(),
     pendenciasDeHoje(acesso, agora),
     admin ? pecasVendidasParaAvisar(agora) : [],
     pedidos ? pedidosNaoPagos(agora) : [],
     clientes ? clientesSumidas(agora) : [],
     clientes ? aniversariosDaSemana(agora) : [],
+    clientes ? cuponsSemUso(agora) : [],
+    clientes ? indicacoesParaAgradecer() : [],
+    campanhaAtiva(),
   ]);
+  const linkDoCupom = (codigo: string) =>
+    campanha?.cupom === codigo ? linkDaCampanha(origem, campanha.codigo) : `${origem}/`;
   const nada =
     !pendencias.backup &&
     pendencias.lembretes.length === 0 &&
     pendencias.listas.length === 0 &&
-    vendidas.length + naoPagos.length + sumidas.length + aniversarios.length === 0;
+    vendidas.length + naoPagos.length + sumidas.length + aniversarios.length + semUso.length + indicacoes.length === 0;
 
   return (
     <>
@@ -160,6 +176,69 @@ export default async function EnviarHoje() {
                     numero: p.numero,
                     pecas: p.pecas.map((x) => ({ ...x, link: `${origem}${x.endereco}` })),
                   })}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {semUso.length > 0 && (
+        <section aria-labelledby="cupom-sem-uso">
+          <h2 id="cupom-sem-uso">Desconto de boas-vindas vencendo ({semUso.length})</h2>
+          <p className={proprios.dica}>
+            Quem se cadastrou na campanha, ainda não usou o cupom e tem até 3 dias para usar. Só aparece quem aceitou receber
+            mensagens.
+          </p>
+          <ul className={visual.mensagens}>
+            {semUso.map((c) => (
+              <li key={c.referencia}>
+                <strong>
+                  <Link href={`/painel/clientes/${c.cliente.id}`}>{c.cliente.nome}</Link>
+                </strong>
+                <span className={proprios.dica}>
+                  Cupom {c.cupom.codigo} vale até {dataHoraSP(c.vence.toISOString())} · {formatarTelefone(c.cliente.telefone)}
+                </span>
+                <EnviarMensagem
+                  tipo="cupom_sem_uso"
+                  referencia={c.referencia}
+                  telefone={c.cliente.telefone}
+                  texto={mensagemDoCupomSemUso({
+                    nomeCliente: c.cliente.nome,
+                    nomeLoja: loja.nome,
+                    codigo: c.cupom.codigo,
+                    desconto: c.desconto,
+                    vence: c.vence,
+                    link: linkDoCupom(c.cupom.codigo),
+                  })}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {indicacoes.length > 0 && (
+        <section aria-labelledby="indicacoes">
+          <h2 id="indicacoes">Indicações que viraram compra ({indicacoes.length})</h2>
+          <p className={proprios.dica}>
+            Amigas que se cadastraram pelo link de uma cliente e já compraram. Agradeça a quem indicou e combine o mimo (
+            {loja.mimoIndicacao?.trim() || "frete grátis no próximo envio"}, em Configurações).
+          </p>
+          <ul className={visual.mensagens}>
+            {indicacoes.map((i) => (
+              <li key={i.referencia}>
+                <strong>
+                  <Link href={`/painel/clientes/${i.cliente.id}`}>{i.cliente.nome}</Link>
+                </strong>
+                <span className={proprios.dica}>
+                  Indicou <Link href={`/painel/clientes/${i.amiga.id}`}>{i.amiga.nome}</Link> · {formatarTelefone(i.cliente.telefone)}
+                </span>
+                <EnviarMensagem
+                  tipo="indicacao"
+                  referencia={i.referencia}
+                  telefone={i.cliente.telefone}
+                  texto={mensagemDoMimo({ nomeCliente: i.cliente.nome, nomeAmiga: i.amiga.nome, nomeLoja: loja.nome, mimo: loja.mimoIndicacao })}
                 />
               </li>
             ))}

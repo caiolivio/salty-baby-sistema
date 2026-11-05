@@ -338,20 +338,30 @@ WhatsApp {whatsapp}.`,
   },
   privacidade: {
     titulo: "Aviso de privacidade",
-    conteudo: `A {loja} guarda os dados do seu cadastro só para atender você. Este aviso explica quais dados são esses e o que fazemos com eles.
+    conteudo: `A {loja} guarda os dados do seu cadastro só para atender você, como manda a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018). Este aviso explica quais dados são esses, o que fazemos com eles e como você decide sobre eles.
 
 ## Quais dados guardamos
 - Nome, e-mail e WhatsApp, que você informa ao criar a conta ou ao fazer um pedido.
-- Suas compras, pedidos e as peças que você marca como favoritas.
-- Se você quiser informar, dados das crianças (como idade e tamanho), para sugerir peças que sirvam.
+- Endereço, se você informar, para o envio das compras.
+- Suas compras, pedidos, a sacolinha e as peças que você marca como favoritas.
+- Se você quiser informar, dados das crianças ou do bebê que está para nascer (nome, data de nascimento ou previsão do parto, menina ou menino e tamanho), para mostrar peças que sirvam.
+- Se você chegou por indicação, quem indicou você (para agradecer a ela).
 
 ## Para que usamos
-- Combinar pagamento, envio ou retirada dos seus pedidos.
+- Combinar pagamento, envio ou retirada dos seus pedidos, e avisar sobre a sua sacolinha e os avisos que você pediu. Isso faz parte da sua compra.
 - Mostrar suas compras e favoritos na sua conta e sugerir peças do seu interesse.
-- Avisar sobre novidades da loja pelo WhatsApp, se você quiser recebê-las.
+- Mandar novidades, aniversários das crianças e o aviso antes do seu desconto vencer pelo WhatsApp, **só se você marcar que quer receber**.
+
+## Mensagens no WhatsApp
+- Você escolhe no cadastro se quer receber novidades. Pode mudar quando quiser em **Minha conta > Meus dados > Mensagens no WhatsApp**.
+- Para parar, também pode responder **SAIR** em qualquer mensagem da loja. A gente registra o pedido e para de mandar novidades.
+- Os grupos de WhatsApp da loja são abertos: o que você escreve lá é visto pelas outras participantes. Você pode sair do grupo quando quiser.
 
 ## Com quem compartilhamos
 Com ninguém de fora da loja, a não ser quando for necessário para entregar sua compra (por exemplo, os Correios ou um entregador). Não vendemos seus dados.
+
+## Por quanto tempo guardamos
+Enquanto você tiver conta ou comprar com a gente. As compras ficam guardadas pelo tempo que a lei pede para a loja.
 
 ## Seus direitos
 Você pode ver e corrigir seus dados na sua conta a qualquer momento. Para pedir uma cópia dos seus dados ou a exclusão do cadastro, fale com a loja pelo WhatsApp {whatsapp}.`,
