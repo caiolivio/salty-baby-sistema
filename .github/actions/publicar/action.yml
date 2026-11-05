@@ -14,6 +14,10 @@ inputs:
   codigo-primeiro-acesso: { description: Código para criar a primeira administradora, default: "" }
   google-client-id: { description: Chave do Google Drive, default: "" }
   google-client-secret: { description: Chave do Google Drive, default: "" }
+  smtp-host: { description: Servidor de e-mail da loja (Esqueci a senha), default: "" }
+  smtp-porta: { description: Porta do servidor de e-mail, default: "" }
+  smtp-usuario: { description: E-mail que envia, default: "" }
+  smtp-senha: { description: Senha do e-mail que envia, default: "" }
 
 runs:
   using: composite
@@ -87,6 +91,10 @@ runs:
         CODIGO_PRIMEIRO_ACESSO: ${{ inputs.codigo-primeiro-acesso }}
         GOOGLE_CLIENT_ID: ${{ inputs.google-client-id }}
         GOOGLE_CLIENT_SECRET: ${{ inputs.google-client-secret }}
+        SMTP_HOST: ${{ inputs.smtp-host }}
+        SMTP_PORTA: ${{ inputs.smtp-porta }}
+        SMTP_USUARIO: ${{ inputs.smtp-usuario }}
+        SMTP_SENHA: ${{ inputs.smtp-senha }}
       run: |
         # Remove espaços e quebras de linha que às vezes entram ao colar o segredo.
         limpar() { printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
@@ -111,6 +119,13 @@ runs:
           if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
             printf 'GOOGLE_CLIENT_ID=`%s`\n' "$(limpar "$GOOGLE_CLIENT_ID")"
             printf 'GOOGLE_CLIENT_SECRET=`%s`\n' "$(limpar "$GOOGLE_CLIENT_SECRET")"
+          fi
+          # E-mail da loja para o "Esqueci a senha" (só se já foi cadastrado).
+          if [ -n "$SMTP_HOST" ] && [ -n "$SMTP_USUARIO" ] && [ -n "$SMTP_SENHA" ]; then
+            printf 'SMTP_HOST=`%s`\n' "$(limpar "$SMTP_HOST")"
+            printf 'SMTP_USUARIO=`%s`\n' "$(limpar "$SMTP_USUARIO")"
+            printf 'SMTP_SENHA=`%s`\n' "$(limpar "$SMTP_SENHA")"
+            if [ -n "$SMTP_PORTA" ]; then printf 'SMTP_PORTA=`%s`\n' "$(limpar "$SMTP_PORTA")"; fi
           fi
         } | ssh "$DESTINO" 'umask 077 && mkdir -p ~/saltybaby/upload && cat > ~/saltybaby/.env'
 

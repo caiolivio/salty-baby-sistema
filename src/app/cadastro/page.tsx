@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Voltar } from "@/componentes/voltar";
 import { redirect } from "next/navigation";
 import estilos from "@/componentes/formulario.module.css";
 import { usuarioAtual } from "@/lib/acesso";
@@ -18,6 +19,7 @@ export default async function Cadastro({ searchParams }: PageProps<"/cadastro">)
   return (
     <main className={estilos.pagina}>
       <div className={estilos.cartao}>
+        <Voltar href="/">Voltar para a loja</Voltar>
         <Link href="/" className={estilos.logo}>
           <LogoDaLoja alt="Voltar ao início" />
         </Link>

@@ -150,9 +150,15 @@ export async function criarAcessoPelaLoja(clienteId: string, email: string, agor
 }
 
 /** Grava um link de criar senha. Um link novo cancela os anteriores que ainda não foram usados. */
-export async function gravarLinkDeSenha(tx: Prisma.TransactionClient, usuarioId: string, codigo: string, agora: Date) {
+export async function gravarLinkDeSenha(
+  tx: Prisma.TransactionClient,
+  usuarioId: string,
+  codigo: string,
+  agora: Date,
+  expiraEm: Date = fimDoLink(agora),
+) {
   await tx.linkDeSenha.updateMany({ where: { usuarioId, usadoEm: null }, data: { usadoEm: agora } });
-  await tx.linkDeSenha.create({ data: { usuarioId, codigoHash: hashDoCodigo(codigo), expiraEm: fimDoLink(agora) } });
+  await tx.linkDeSenha.create({ data: { usuarioId, codigoHash: hashDoCodigo(codigo), expiraEm } });
 }
 
 /**
