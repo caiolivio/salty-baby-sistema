@@ -472,3 +472,18 @@ label.botaoSecundario:focus-within {
 .aceites li form {
   margin-top: 8px;
 }
+
+/* Rascunho guardado no aparelho (cadastro de peça). */
+.rascunho {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--raio);
+  border: 1px solid var(--turquesa);
+  background: var(--fundo-suave);
+}
+
+.rascunho p {
+  margin: 0;
+}
