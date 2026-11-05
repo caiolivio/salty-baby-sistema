@@ -2,7 +2,7 @@ import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import type { Genero, Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { exigirPagina } from "@/lib/acesso";
 import { prisma } from "@/lib/banco";
 import { formatarReais } from "@/lib/dinheiro";
@@ -16,7 +16,7 @@ import { hojeEmSaoPaulo } from "@/lib/pecas/dados";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import { podeAlterar, podeVer } from "@/lib/permissoes";
 import { TAMANHOS } from "@/lib/tamanhos";
-import { generosDoPublico, lerFiltros, PUBLICOS, publicoIncluiSemGenero, TODOS_OS_PUBLICOS } from "@/lib/vitrine";
+import { condicaoDoPublico, lerFiltros, PUBLICOS, TODOS_OS_PUBLICOS } from "@/lib/vitrine";
 import proprios from "../formulario.module.css";
 import estilos from "../painel.module.css";
 import { incluirNaDivulgacao, limparDivulgacao, tirarDaDivulgacao } from "./acoes";
@@ -43,16 +43,13 @@ export default async function WhatsappMarketing({ searchParams }: PageProps<"/pa
   const buscou = Boolean(f.busca || f.categoria || f.tamanho || f.publico);
 
   // Busca de peças à venda para a divulgação: mesmos filtros da vitrine.
-  const generos = generosDoPublico(f.publico);
   const onde: Prisma.PecaWhereInput = {
     status: "publicada",
     quantidade: { gt: 0 },
     ...(f.tamanho && { tamanho: f.tamanho }),
     ...(f.categoria && { categorias: { some: { categoriaId: f.categoria } } }),
     AND: [
-      generos.length > 0
-        ? { OR: [{ genero: { in: generos as Genero[] } }, ...(publicoIncluiSemGenero(f.publico) ? [{ genero: null }] : [])] }
-        : {},
+      condicaoDoPublico(f.publico),
       f.busca
         ? {
             OR: [

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BellRing, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import type { Genero, Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/banco";
 import { liberarReservasVencidas } from "@/lib/pedidos/gravar";
 import {
-  generosDoPublico,
-  publicoIncluiSemGenero,
+  condicaoDoPublico,
   lerFiltros,
   linkDaVitrine,
   marcaEscolhida,
@@ -38,13 +37,12 @@ const A_VENDA: Prisma.PecaWhereInput = {
 export default async function Vitrine({ searchParams }: PageProps<"/">) {
   const f = lerFiltros(await searchParams);
   await liberarReservasVencidas();
-  const generos = generosDoPublico(f.publico);
   const marcas = marcasDaVitrine(
     (await prisma.peca.findMany({ where: { ...A_VENDA, marca: { not: null } }, select: { marca: true } })).map((p) => p.marca),
   );
   const marca = marcaEscolhida(marcas, f.marca);
   if (f.marca && !marca) f.marca = undefined;
-  // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino (publicoIncluiSemGenero).
+  // Peça sem gênero cadastrado (as importadas do Notion) aparece para menina e menino (condicaoDoPublico).
   const onde: Prisma.PecaWhereInput = {
     ...A_VENDA,
     ...(f.tamanho && { tamanho: f.tamanho }),
@@ -52,9 +50,7 @@ export default async function Vitrine({ searchParams }: PageProps<"/">) {
     ...(marca && { marca: { in: marca.grafias } }),
     AND: [
       f.promocao ? ondeEmPromocao() : {},
-      generos.length > 0
-        ? { OR: [{ genero: { in: generos as Genero[] } }, ...(publicoIncluiSemGenero(f.publico) ? [{ genero: null }] : [])] }
-        : {},
+      condicaoDoPublico(f.publico),
       f.busca
         ? {
             OR: [{ nome: { contains: f.busca } }, { marca: { contains: f.busca } }, { codigo: { contains: f.busca } }],

@@ -487,3 +487,28 @@ label.botaoSecundario:focus-within {
 .rascunho p {
   margin: 0;
 }
+
+/* "Para" da peça: caixinhas Menina, Menino e Unissex. */
+.generos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.generos legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.caixinhas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-weight: 400;
+}

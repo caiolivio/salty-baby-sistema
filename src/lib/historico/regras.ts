@@ -1,6 +1,7 @@
+import { nomeDosGeneros } from "../pecas/generos";
 import { formatarData } from "../datas";
 import { formatarReais } from "../dinheiro";
-import { CONSERVACOES, GENEROS } from "../pecas/dados";
+import { CONSERVACOES } from "../pecas/dados";
 import { whatsappNaTela } from "../loja/regras";
 import { formatarTelefone } from "../pedidos/regras";
 import { nomeDoStatus } from "../situacoes";
@@ -87,6 +88,7 @@ export type EstadoPeca = {
   quantidade: number;
   tamanho: string | null;
   genero: string | null;
+  unissex: boolean;
   conservacao: string | null;
   nota: number | null;
   variacao: string | null;
@@ -108,7 +110,7 @@ export const CAMPOS_PECA: readonly Campo<EstadoPeca>[] = [
   { titulo: "Nome", ler: (p) => p.nome },
   { titulo: "Categorias", ler: (p) => p.categorias },
   { titulo: "Tamanho", ler: (p) => p.tamanho, mostrar: nomeDe(TAMANHOS) },
-  { titulo: "Gênero", ler: (p) => p.genero, mostrar: nomeDe(GENEROS) },
+  { titulo: "Gênero", ler: (p) => nomeDosGeneros(p.genero, p.unissex) || null },
   { titulo: "Conservação", ler: (p) => p.conservacao, mostrar: nomeDe(CONSERVACOES) },
   { titulo: "Nota", ler: (p) => p.nota },
   { titulo: "Variação", ler: (p) => p.variacao },

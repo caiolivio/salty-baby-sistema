@@ -50,6 +50,7 @@ const buscarPeca = cache(async (codigo: string) =>
       quantidade: true,
       tamanho: true,
       genero: true,
+      unissex: true,
       conservacao: true,
       variacao: true,
       marca: true,
@@ -140,7 +141,7 @@ export default async function PaginaPeca({ params, searchParams }: PageProps<"/p
     ),
   );
   const detalhes: [string, string | null | undefined][] = [
-    ["Para", paraQuem(peca.genero)],
+    ["Para", paraQuem(peca.genero, peca.unissex)],
     ["Tamanho", tamanho],
     ["Conservação", conservacao],
     ["Marca", peca.marca],

@@ -158,6 +158,8 @@ const campos = z.object({
   nome: z.string().trim().min(2, "Escreva o nome da peça, por exemplo Macacão.").max(160, "Use no máximo 160 caracteres."),
   tamanho: opcao(TAMANHOS, "Escolha um tamanho da lista."),
   genero: opcao(GENEROS, "Escolha o gênero."),
+  /** Caixinha Unissex (vem de `lerGeneros`, ver src/lib/pecas/generos.ts). */
+  unissex: z.string().transform((t) => t === "on"),
   conservacao: opcao(CONSERVACOES, "Escolha a conservação."),
   nota: z
     .string()
@@ -186,6 +188,8 @@ export type DadosPeca = {
   nome: string;
   tamanho: string | null;
   genero: (typeof GENEROS)[number]["valor"] | null;
+  /** A peça também aparece no filtro Unissex. */
+  unissex: boolean;
   conservacao: (typeof CONSERVACOES)[number]["valor"] | null;
   /** De 5 a 10; vazia nas peças sem nota (como as importadas). */
   nota: number | null;

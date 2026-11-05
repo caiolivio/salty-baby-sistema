@@ -28,13 +28,13 @@ import { FotosNovas, type FotoNova } from "./fotos-novas";
 import {
   CONSERVACOES,
   FORNECEDORA_LOJA,
-  GENEROS,
   NOTA_MAXIMA,
   NOTA_MINIMA,
   OPCAO_VENDER,
   SITUACOES_DO_CADASTRO,
 } from "@/lib/pecas/dados";
 import { TAMANHOS } from "@/lib/tamanhos";
+import { CAIXAS_DE_GENERO, generosMarcados } from "@/lib/pecas/generos";
 import estilos from "../formulario.module.css";
 import type { EstadoPeca } from "./acoes";
 import { EscolherCategorias } from "./escolher-categorias";
@@ -59,6 +59,7 @@ export type ValoresPeca = Partial<
     | "nome"
     | "tamanho"
     | "genero"
+    | "unissex"
     | "conservacao"
     | "nota"
     | "variacao"
@@ -390,17 +391,23 @@ export function FormularioPeca({
               ))}
             </select>
           </label>
-          <label className={estilos.campo}>
-            Gênero
-            <select name="genero" defaultValue={v("genero") ?? ""}>
-              <option value="">Escolha…</option>
-              {GENEROS.map((g) => (
-                <option key={g.valor} value={g.valor}>
+          <fieldset className={estilos.generos}>
+            <legend>Para</legend>
+            <div className={estilos.caixinhas}>
+              {CAIXAS_DE_GENERO.map((g) => (
+                <label key={g.valor} className={estilos.marcar}>
+                  <input
+                    type="checkbox"
+                    name="generos"
+                    value={g.valor}
+                    defaultChecked={generosMarcados(v("genero"), v("unissex") === "on").includes(g.valor)}
+                  />{" "}
                   {g.nome}
-                </option>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+            <span className={estilos.dica}>Só Unissex: aparece para menina e menino.</span>
+          </fieldset>
           <label className={estilos.campo}>
             Conservação
             <select name="conservacao" defaultValue={v("conservacao") ?? ""}>
