@@ -239,6 +239,7 @@ export async function receberProposta(id: string, hoje: string, autor: Autor): P
         nome,
         tamanho: proposta.tamanho,
         genero: proposta.genero,
+        unissex: proposta.genero === "unissex",
         conservacao: proposta.conservacao,
         nota: null,
         variacao: null,

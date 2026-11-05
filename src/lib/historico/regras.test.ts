@@ -21,6 +21,7 @@ const peca: EstadoPeca = {
   quantidade: 1,
   tamanho: "RN",
   genero: "feminino",
+  unissex: false,
   conservacao: "seminova",
   nota: 8,
   variacao: null,

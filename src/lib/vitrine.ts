@@ -5,9 +5,12 @@ import { TAMANHOS, type Tamanho } from "./tamanhos";
 export const POR_PAGINA_VITRINE = 24;
 
 /**
- * Filtro "Para": "Menina" mostra roupas femininas e unissex; "Menino",
- * masculinas e unissex; "Unissex", só as unissex. Peça sem gênero cadastrado
- * (as importadas do Notion) entra em menina e menino, mas não em unissex.
+ * Filtro "Para": "Menina" mostra as peças de gênero principal feminino ou
+ * unissex; "Menino", masculino ou unissex; "Unissex", as que têm a caixinha
+ * Unissex marcada (campo `unissex`, ver src/lib/pecas/generos.ts). Assim
+ * "Menina + Unissex" aparece em Menina e Unissex, mas não em Menino. Peça sem
+ * gênero cadastrado (as importadas do Notion) entra em menina e menino, mas não
+ * em unissex.
  */
 export const PUBLICOS = [
   { valor: "menina", nome: "Menina", generos: ["feminino", "unissex"], semGenero: true },
@@ -112,11 +115,27 @@ export function publicoIncluiSemGenero(publico?: string | null): boolean {
   return PUBLICOS.find((p) => p.valor === publico)?.semGenero ?? true;
 }
 
-/** "Para" mostrado na página da peça, a partir do gênero do cadastro. */
-export function paraQuem(genero: string | null): string | null {
-  if (genero === "feminino") return "Menina";
-  if (genero === "masculino") return "Menino";
-  if (genero === "unissex") return "Unissex (menina e menino)";
+/** Condição do banco para o filtro "Para" (vazia sem filtro). */
+export function condicaoDoPublico(publico?: string | null) {
+  const p = PUBLICOS.find((x) => x.valor === publico);
+  if (!p) return {};
+  if (p.valor === "unissex") return { unissex: true };
+  return { OR: [{ genero: { in: [...p.generos] } }, ...(p.semGenero ? [{ genero: null }] : [])] };
+}
+
+/** A peça entra no filtro "Para"? (Mesma regra de `condicaoDoPublico`.) */
+export function pecaNoPublico(peca: { genero: string | null; unissex: boolean }, publico?: string | null): boolean {
+  const p = PUBLICOS.find((x) => x.valor === publico);
+  if (!p) return true;
+  if (p.valor === "unissex") return peca.unissex;
+  return peca.genero ? (p.generos as readonly string[]).includes(peca.genero) : p.semGenero;
+}
+
+/** "Para" mostrado na página da peça, a partir das caixinhas do cadastro. */
+export function paraQuem(genero: string | null, unissex = genero === "unissex"): string | null {
+  if (genero === "feminino") return unissex ? "Menina (também unissex)" : "Menina";
+  if (genero === "masculino") return unissex ? "Menino (também unissex)" : "Menino";
+  if (genero === "unissex") return unissex ? "Unissex (menina e menino)" : "Menina e menino";
   return null;
 }
 

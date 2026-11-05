@@ -77,6 +77,10 @@ jobs:
           codigo-primeiro-acesso: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
           google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
           google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          smtp-host: ${{ secrets.SMTP_HOST }}
+          smtp-porta: ${{ secrets.SMTP_PORTA }}
+          smtp-usuario: ${{ secrets.SMTP_USUARIO }}
+          smtp-senha: ${{ secrets.SMTP_SENHA }}
 
   publicar-app:
     name: Publicar no app.saltybaby.com.br
@@ -107,3 +111,7 @@ jobs:
           codigo-primeiro-acesso: ${{ secrets.CODIGO_PRIMEIRO_ACESSO }}
           google-client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
           google-client-secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          smtp-host: ${{ secrets.SMTP_HOST }}
+          smtp-porta: ${{ secrets.SMTP_PORTA }}
+          smtp-usuario: ${{ secrets.SMTP_USUARIO }}
+          smtp-senha: ${{ secrets.SMTP_SENHA }}

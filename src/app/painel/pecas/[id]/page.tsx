@@ -298,6 +298,7 @@ export default async function Peca({ params, searchParams }: PageProps<"/painel/
           nome: p.nome,
           tamanho: p.tamanho ?? "",
           genero: p.genero ?? "",
+          unissex: p.unissex ? "on" : "",
           conservacao: p.conservacao ?? "",
           nota: p.nota === null ? "" : String(p.nota),
           variacao: p.variacao ?? "",

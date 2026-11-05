@@ -31,10 +31,10 @@ export default async function CriarSenha({ params }: PageProps<"/criar-senha/[co
           <>
             <h1 className={estilos.titulo}>Este link não vale mais</h1>
             <p className={estilos.explicacao}>
-              O link já foi usado ou passou do prazo. Peça um novo à loja pelo WhatsApp, ou entre com a senha que você já criou.
+              O link já foi usado ou passou do prazo. Peça um novo, ou entre com a senha que você já criou.
             </p>
             <p className={estilos.rodape}>
-              <Link href="/entrar">Entrar</Link>
+              <Link href="/esqueci-senha">Pedir um link novo</Link> · <Link href="/entrar">Entrar</Link>
             </p>
           </>
         )}

@@ -12,6 +12,7 @@ const SELECAO_PECA = {
   nome: true,
   tamanho: true,
   genero: true,
+  unissex: true,
   marca: true,
   precoCentavos: true,
   criadoEm: true,
